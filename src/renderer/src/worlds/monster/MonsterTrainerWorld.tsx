@@ -184,6 +184,7 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
       };
       try {
         render();
+        app.renderer.render(app.stage);
       } catch (cause) {
         reportFailure(cause);
         return;

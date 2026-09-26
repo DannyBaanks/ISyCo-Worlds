@@ -16,6 +16,7 @@ test('MonsterTrainerWorld owns exactly one Pixi lifecycle and destroys it', () =
   assert.match(world, /archived/, 'archived agents are filtered out');
   assert.match(world, /roundPixels|roundPixels:\s*true|Math\.round/, 'nearest-pixel rendering');
   assert.match(world, /onReady\?\.\(\)/, 'first successful render marks the staged world ready');
+  assert.match(world, /app\.renderer\.render\(app\.stage\)[\s\S]*onReady\?\.\(\)/, 'READY follows a complete first Pixi frame');
 });
 
 test('MonsterTrainerWorld receives only props and callbacks, never operational state', () => {
