@@ -256,8 +256,8 @@ Desde el código: `git clone`, `npm install` y `./start.sh` (Node 18+ y herramie
 <details>
 <summary><b>Para desarrolladores: todo lo que cambia este fork, con detalle técnico</b></summary>
 
-### 1. Español primero
-Selector de idioma en el onboarding (`en/es/zh-CN/ar`). El inglés sigue siendo el idioma por defecto: nada cambia hasta que eliges otro en Settings. `es.json` está completo, en Title Case y sin artefactos de traducción automática.
+### 1. Español primero, japonés después
+Selector de idioma en el onboarding (`en/es/zh-CN/ar/ja`). El inglés sigue siendo el idioma por defecto: nada cambia hasta que eliges otro en Settings. `es.json` está completo, en Title Case y sin artefactos de traducción automática. `ja.json` salió del loop de IntentLang: el pipeline M0–M4 (roundtrip 100%) aporta la capa de diccionario y el resto está escrito a mano — mismo veredicto que `es` y `ar` cuando la prosa del materializador sale en ensalada.
 
 ### 2. Canal de control local (`127.0.0.1`)
 Canal solo de loopback, con un token `0600` guardado en userData. Rutas: `munder ctl ping`, `GET /salud`, `GET /sesion`, `POST/DELETE /sesion/agentes`, y repintado bajo demanda sin reiniciar. Sin token se rehúsa, y nada de este puerto sale de la máquina.
