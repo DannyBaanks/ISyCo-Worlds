@@ -45,9 +45,9 @@ Implemented after the original visual-engine slice:
 
 ### Commands and results (transactional runtime)
 
-- `node --test test/world-engine.test.cjs test/office-world-lifecycle.test.cjs test/monster-trainer-world.test.cjs` — PASS: 14/14.
+- `node --test test/world-engine.test.cjs test/office-world-lifecycle.test.cjs test/monster-trainer-world.test.cjs test/world-shell.test.cjs` — PASS: 20/20.
 - `npm run typecheck` — PASS, exit 0.
-- `npm run test:focused` — PASS: 1100 pass, 0 fail, 6 skipped (1106 total).
+- `npm run test:focused` — PASS: 1102 pass, 0 fail, 6 skipped (1108 total).
 - `npm run build` — PASS. Production output contains the bundled Office assets, including `interiors-*.png` and `office-tileset-*.png`.
 - `git diff --check` — PASS.
 
