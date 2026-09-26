@@ -8,7 +8,13 @@ import { MonsterTrainerWorld } from './MonsterTrainerWorld';
  * file in this world that reads the projection hook or the agent store, so the
  * renderer below it stays a props-and-callbacks component.
  */
-export function MonsterTrainerSurface({ onRenderFailure }: { onRenderFailure?: () => void }) {
+export function MonsterTrainerSurface({
+  onReady,
+  onRenderFailure
+}: {
+  onReady?: () => void;
+  onRenderFailure?: (cause: unknown) => void;
+}) {
   const { snapshot, transitions, identityFor } = useWorldProjection();
   const reducedMotion = useMemo(
     () => typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
@@ -23,6 +29,7 @@ export function MonsterTrainerSurface({ onRenderFailure }: { onRenderFailure?: (
       onAgentSelect={(agentId) => useStore.getState().select(agentId)}
       onTaskOpen={(taskId) => useStore.getState().openTaskDetail(taskId)}
       reducedMotion={reducedMotion}
+      onReady={onReady}
       onRenderFailure={onRenderFailure}
     />
   );

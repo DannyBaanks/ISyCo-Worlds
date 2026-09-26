@@ -15,6 +15,7 @@ test('MonsterTrainerWorld owns exactly one Pixi lifecycle and destroys it', () =
   assert.match(world, /\.slice\(0,\s*2\)/, 'at most two non-archived agents render');
   assert.match(world, /archived/, 'archived agents are filtered out');
   assert.match(world, /roundPixels|roundPixels:\s*true|Math\.round/, 'nearest-pixel rendering');
+  assert.match(world, /onReady\?\.\(\)/, 'first successful render marks the staged world ready');
 });
 
 test('MonsterTrainerWorld receives only props and callbacks, never operational state', () => {
@@ -34,13 +35,14 @@ test('MonsterTrainerSurface is the only component that reads the live projection
 
 test('WorldHost renders the registered Monster surface inside its error boundary', () => {
   const host = source('src/renderer/src/worlds/WorldHost.tsx');
+  const registry = source('src/renderer/src/worlds/worldRegistry.ts');
   const surface = source('src/renderer/src/worlds/monster/MonsterTrainerSurface.tsx');
   const world = source('src/renderer/src/worlds/monster/MonsterTrainerWorld.tsx');
-  assert.match(host, /MonsterTrainerSurface/);
-  assert.match(host, /WorldErrorBoundary/);
-  assert.match(host, /onRenderFailure=\{returnToOffice\}/, 'async Pixi failures also return to Office');
+  assert.match(registry, /MonsterTrainerSurface/);
+  assert.match(host, /WorldRuntimeSurface/);
+  assert.match(host, /onRenderFailure/);
   assert.match(surface, /onRenderFailure/, 'the surface forwards the recovery callback');
-  assert.match(world, /onRenderFailure\?\.\(\)/, 'failed Pixi initialization reports to the host');
-  assert.match(world, /function reportFailure\(/, 'one guarded recovery path covers async rendering too');
-  assert.match(world, /catch\s*\{\s*reportFailure\(\);\s*\}/, 'ticker/render exceptions trigger the Office fallback');
+  assert.match(world, /onRenderFailure\?\.\(cause\)/, 'failed Pixi initialization reports its cause to the host');
+  assert.match(world, /function reportFailure\(cause: unknown\)/, 'one guarded recovery path covers async rendering too');
+  assert.match(world, /catch \(cause\)\s*\{\s*reportFailure\(cause\);\s*\}/, 'ticker\/render exceptions trigger the Office fallback');
 });

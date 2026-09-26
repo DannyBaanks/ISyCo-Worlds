@@ -140,6 +140,22 @@ test('an async renderer failure stages Office while the failed mount remains vis
   assert.equal(engine.getState().active.worldId, 'office');
 });
 
+test('an async renderer failure whose Office fallback also fails enters Recovery without retaining the broken world', async () => {
+  const fail = new Set();
+  const { engine } = engineFor({ fail });
+  const officeMount = await makeReady(engine, 'office');
+  const monsterMount = await makeReady(engine, 'monster-trainer');
+  engine.markDisposed(officeMount.token);
+  fail.add('office/office-tiles');
+
+  await engine.markFailed(monsterMount.token, new Error('renderer lost'));
+  const state = engine.getState();
+  assert.equal(state.phase, 'RECOVERY');
+  assert.equal(state.active, undefined);
+  assert.equal(state.error.worldId, 'office');
+  assert.deepEqual(state.pendingDisposals.map((mount) => mount.token), [monsterMount.token]);
+});
+
 test('consecutive failed staged switches retain READY Office and release every staged mount once', async () => {
   const { engine } = engineFor();
   await makeReady(engine, 'office');

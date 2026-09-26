@@ -17,7 +17,8 @@ export interface MonsterTrainerWorldProps {
   onAgentSelect: (agentId: string) => void;
   onTaskOpen: (taskId: string) => void;
   reducedMotion: boolean;
-  onRenderFailure?: () => void;
+  onReady?: () => void;
+  onRenderFailure?: (cause: unknown) => void;
 }
 
 interface Ctx {
@@ -124,14 +125,15 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
     const app = new Application();
     let ticker: (() => void) | null = null;
     let alive = true;
-    let ready = false;
+    let initialized = false;
+    let readyReported = false;
     let failed = false;
     const pulseStart = performance.now();
-    function reportFailure(): void {
+    function reportFailure(cause: unknown): void {
       if (failed) return;
       failed = true;
       if (ticker) app.ticker.remove(ticker);
-      props.onRenderFailure?.();
+      props.onRenderFailure?.(cause);
     }
 
     void (async () => {
@@ -145,14 +147,14 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
           autoDensity: true,
           preference: 'webgl'
         });
-      } catch {
+      } catch (cause) {
         // Async initialization errors bypass React error boundaries, so report
         // them explicitly and let the host restore Office immediately.
-        reportFailure();
+        reportFailure(cause);
         return;
       }
       if (!alive) { app.destroy(true); return; }
-      ready = true;
+      initialized = true;
       host.appendChild(app.canvas);
       const pulseStartNow = () => (performance.now() - pulseStart) / 300;
       let lastSignature = '';
@@ -182,8 +184,13 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
       };
       try {
         render();
-      } catch {
-        reportFailure();
+      } catch (cause) {
+        reportFailure(cause);
+        return;
+      }
+      if (!readyReported) {
+        readyReported = true;
+        props.onReady?.();
       }
       ticker = () => {
         try {
@@ -204,8 +211,8 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
             const alpha = 0.85 + 0.15 * Math.sin(pulseStartNow());
             for (const creature of pulsingCreatures) creature.alpha = alpha;
           }
-        } catch {
-          reportFailure();
+        } catch (cause) {
+          reportFailure(cause);
         }
       };
       app.ticker.add(ticker);
@@ -215,7 +222,7 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
       alive = false;
       // Destroying before init() resolves crashes inside Pixi (React StrictMode
       // unmounts once right after mount in dev); then the init path destroys.
-      if (!ready) return;
+      if (!initialized) return;
       if (ticker) app.ticker.remove(ticker);
       app.destroy(true);
     };

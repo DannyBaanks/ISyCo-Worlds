@@ -168,7 +168,12 @@ function firstWords(prompt: string | undefined, maxWords = 6, maxChars = 42): st
   return out;
 }
 
-export function OfficeFloor() {
+export interface OfficeFloorProps {
+  onReady?: () => void;
+  onRenderFailure?: (cause: unknown) => void;
+}
+
+export function OfficeFloor({ onReady, onRenderFailure }: OfficeFloorProps) {
   const { t, i18n } = useTranslation();
   const hostRef = useRef<HTMLDivElement | null>(null);
   const appRef = useRef<Application | null>(null);
@@ -181,6 +186,10 @@ export function OfficeFloor() {
   // A ref, not state: the budget has to survive the rebuilds it schedules, which
   // re-run the effect below and would reset anything scoped to it.
   const initRetriesRef = useRef(0);
+  // Lifecycle callbacks are replaced by the host on every React render without
+  // forcing a Pixi rebuild; async init paths always call the current owner.
+  const lifecycleRef = useRef({ onReady, onRenderFailure });
+  lifecycleRef.current = { onReady, onRenderFailure };
   // The active office theme (store mirror of config.officeTheme). Changing it
   // tears down and rebuilds the whole scene on the new map/cast (see deps below).
   const officeTheme = useStore((s) => s.officeTheme);
@@ -236,6 +245,19 @@ export function OfficeFloor() {
     const mountId = ++mountIdRef.current;
     const app = new Application();
     appRef.current = app;
+    let readyReported = false;
+    let failureReported = false;
+    const reportReady = () => {
+      if (readyReported || mountIdRef.current !== mountId) return;
+      readyReported = true;
+      lifecycleRef.current.onReady?.();
+    };
+    const reportFailure = (cause: unknown) => {
+      if (failureReported || mountIdRef.current !== mountId) return;
+      failureReported = true;
+      try { app.ticker.stop(); } catch { /* app may not be initialized yet */ }
+      lifecycleRef.current.onRenderFailure?.(cause);
+    };
 
     const runtimes = new Map<string, Runtime>();
     const seatClaims = new Set<number>();
@@ -275,6 +297,7 @@ export function OfficeFloor() {
         onRebuild: () => { if (mountIdRef.current === mountId) setGlGeneration((n) => n + 1); },
         onGiveUp: () => {
           if (mountIdRef.current !== mountId) return;
+          reportFailure(new Error(t('office.gpuError')));
           host.appendChild(floorNote(t('office.gpuError')));
         }
       });
@@ -1655,27 +1678,31 @@ export function OfficeFloor() {
       };
 
       const onTick = (ticker: Ticker) => {
-        const dt = ticker.deltaMS / 1000;
-        camera.update(dt);
-        // Thought clouds counter-scale against the camera so their text never
-        // renders below 1:1 screen size when the window/world shrinks.
-        const zoom = world.scale.x;
-        for (const rt of runtimes.values()) {
-          rt.character.setBubbleZoom(zoom);
-          rt.character.update(dt);
-        }
-        updateCafeteria(dt);
-        updateCoffeeRuns(dt);
-        updateErrands(dt);
-        updateBossAura(dt);
-        updateDeskLife(dt);
-        updateBoardMoves(dt);
-        resolveBubbleOverlaps();
-        for (let i = envelopes.length - 1; i >= 0; i--) {
-          if (envelopes[i].update(dt)) {
-            envelopes[i].destroy();
-            envelopes.splice(i, 1);
+        try {
+          const dt = ticker.deltaMS / 1000;
+          camera.update(dt);
+          // Thought clouds counter-scale against the camera so their text never
+          // renders below 1:1 screen size when the window/world shrinks.
+          const zoom = world.scale.x;
+          for (const rt of runtimes.values()) {
+            rt.character.setBubbleZoom(zoom);
+            rt.character.update(dt);
           }
+          updateCafeteria(dt);
+          updateCoffeeRuns(dt);
+          updateErrands(dt);
+          updateBossAura(dt);
+          updateDeskLife(dt);
+          updateBoardMoves(dt);
+          resolveBubbleOverlaps();
+          for (let i = envelopes.length - 1; i >= 0; i--) {
+            if (envelopes[i].update(dt)) {
+              envelopes[i].destroy();
+              envelopes.splice(i, 1);
+            }
+          }
+        } catch (err) {
+          reportFailure(err);
         }
       };
       app.ticker.add(onTick);
@@ -1693,6 +1720,10 @@ export function OfficeFloor() {
       });
       resize.observe(host);
       (app as any).__resize = resize;
+      // A complete scene exists before this mount becomes eligible for the
+      // engine's atomic swap. Subsequent ticker failures are reported above.
+      app.renderer.render(app.stage);
+      reportReady();
       // The floor is up: give the next crowded start-up a full budget again.
       initRetriesRef.current = 0;
     };
@@ -1718,6 +1749,7 @@ export function OfficeFloor() {
       // both untrue and unactionable; say what actually helps instead.
       if (plan.action === 'give-up') {
         console.error(`[OfficeFloor] still no WebGL context after ${DEFAULT_MAX_INIT_RETRIES} retries:`, err);
+        reportFailure(err);
         host.appendChild(floorNote(
           'The office floor could not get a GPU context.\n\n' +
           'The GPU may still be restarting, or too many terminals are\n' +
@@ -1727,6 +1759,7 @@ export function OfficeFloor() {
       }
 
       console.error('[OfficeFloor] init failed:', err);
+      reportFailure(err);
       host.appendChild(floorNote(
         'OfficeFloor failed to start:\n' + (err?.stack || err?.message || String(err))));
     });

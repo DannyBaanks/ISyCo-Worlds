@@ -183,7 +183,7 @@ export class WorldEngine {
     const failure = this.lifecycleError(worldId, phase, cause);
     const active = this.state.active;
 
-    if (active && active.worldId !== worldId) {
+    if (active && active.worldId !== worldId && !fallbackAttempt) {
       // A candidate failed while a committed world remains healthy.
       this.setState({ ...this.state, phase: 'READY', candidate: undefined, error: failure });
       return;
