@@ -41,4 +41,6 @@ test('WorldHost renders the registered Monster surface inside its error boundary
   assert.match(host, /onRenderFailure=\{returnToOffice\}/, 'async Pixi failures also return to Office');
   assert.match(surface, /onRenderFailure/, 'the surface forwards the recovery callback');
   assert.match(world, /onRenderFailure\?\.\(\)/, 'failed Pixi initialization reports to the host');
+  assert.match(world, /function reportFailure\(/, 'one guarded recovery path covers async rendering too');
+  assert.match(world, /catch\s*\{\s*reportFailure\(\);\s*\}/, 'ticker/render exceptions trigger the Office fallback');
 });

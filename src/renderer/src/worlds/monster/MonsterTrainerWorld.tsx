@@ -125,7 +125,14 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
     let ticker: (() => void) | null = null;
     let alive = true;
     let ready = false;
+    let failed = false;
     const pulseStart = performance.now();
+    function reportFailure(): void {
+      if (failed) return;
+      failed = true;
+      if (ticker) app.ticker.remove(ticker);
+      props.onRenderFailure?.();
+    }
 
     void (async () => {
       try {
@@ -141,7 +148,7 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
       } catch {
         // Async initialization errors bypass React error boundaries, so report
         // them explicitly and let the host restore Office immediately.
-        props.onRenderFailure?.();
+        reportFailure();
         return;
       }
       if (!alive) { app.destroy(true); return; }
@@ -173,24 +180,32 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
         app.stage.removeChildren().forEach((child) => child.destroy({ children: true }));
         app.stage.addChild(layer);
       };
-      render();
+      try {
+        render();
+      } catch {
+        reportFailure();
+      }
       ticker = () => {
-        const ctx = ctxRef.current;
-        if (!ctx) return;
-        // Rebuild only when visible state changes; rebuilding mid-gesture would
-        // destroy the Graphic under the cursor and swallow the click. The
-        // blocked/awaiting pulse animates alpha on the existing Graphics instead.
-        const signature = JSON.stringify([
-          ctx.agents.map((a) => [a.id, a.name, a.state]),
-          ctx.tasks.map((t) => [t.id, t.title, t.assignee, t.status, t.awaitsHuman])
-        ]);
-        if (signature !== lastSignature) {
-          lastSignature = signature;
-          render();
-        }
-        if (!ctx.reducedMotion && pulsingCreatures.length > 0) {
-          const alpha = 0.85 + 0.15 * Math.sin(pulseStartNow());
-          for (const creature of pulsingCreatures) creature.alpha = alpha;
+        try {
+          const ctx = ctxRef.current;
+          if (!ctx || failed) return;
+          // Rebuild only when visible state changes; rebuilding mid-gesture would
+          // destroy the Graphic under the cursor and swallow the click. The
+          // blocked/awaiting pulse animates alpha on the existing Graphics instead.
+          const signature = JSON.stringify([
+            ctx.agents.map((a) => [a.id, a.name, a.state]),
+            ctx.tasks.map((t) => [t.id, t.title, t.assignee, t.status, t.awaitsHuman])
+          ]);
+          if (signature !== lastSignature) {
+            lastSignature = signature;
+            render();
+          }
+          if (!ctx.reducedMotion && pulsingCreatures.length > 0) {
+            const alpha = 0.85 + 0.15 * Math.sin(pulseStartNow());
+            for (const creature of pulsingCreatures) creature.alpha = alpha;
+          }
+        } catch {
+          reportFailure();
         }
       };
       app.ticker.add(ticker);
