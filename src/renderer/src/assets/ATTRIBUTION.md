@@ -30,6 +30,13 @@ This was not always true. The cast was once recoloured from LimeZu's `Adam/Alex/
 sheets; those sheets were deleted on 2026-08-20 once nothing referenced them any more. If you are
 reading old commits or an old copy of this file, that is the change you are looking at.
 
+## Starter Village atlas is original Munder Worlds art
+
+`worlds/starter-village/starter-village-atlas.svg` is hand-authored source-pixel artwork created
+for this project in 2026. It contains original terrain, route, laboratory, stable, vegetation and
+prop tiles for Monster Trainer's Starter Village. It is not derived from, traced from, or licensed
+from Pokémon, Nintendo, Game Freak, LimeZu, or any other third party.
+
 ## Tiled map
 
 `maps/office.tmj` and `maps/brooklyn99.tmj` are Tiled JSON maps built on the LimeZu tilesets
