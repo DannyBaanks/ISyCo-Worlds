@@ -103,9 +103,10 @@ Dos botones **no** se pueden desde el celular, por diseño:
 - **Demo:** `adb shell am start -n mx.isyco.munder.mobile.debug/.MainActivity --ez MunderDemo true --ei MunderTab 2`
   abre el tablero de ejemplo sin red (N = 0..4, igual que `-MunderTab N` en iOS).
 - **Capturas:** el CI (`screenshots`, espejo del de ios.yml) dibuja las pantallas
-  con la oficina demo sin red y sube 13 PNG al artifact
+  con la oficina demo sin red y sube 18 PNG al artifact
   `munder-android-screenshots`: `pair-light` más
-  `office/questions/board/link/panel/locked` en light y dark.
+  `office/questions/board/link/panel/locked` en light y dark, más `tab-0` a
+  `tab-4` para comprobar que cada pestaña abre directamente.
   Son Roborazzi en JVM, no emulador: los runners hospedados no tienen KVM
   (Linux) ni HVF (macOS) y el emulador nunca termina el boot ahí.
   Local: `./gradlew :app:recordRoborazziDebug`
