@@ -150,6 +150,8 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
       } catch (cause) {
         // Async initialization errors bypass React error boundaries, so report
         // them explicitly and let the host restore Office immediately.
+        try { app.destroy(true); } catch { /* app.init() rejected after partial allocation */ }
+        if (!alive) return;
         reportFailure(cause);
         return;
       }

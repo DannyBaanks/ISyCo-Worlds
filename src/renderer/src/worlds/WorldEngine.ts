@@ -30,7 +30,10 @@ export interface WorldLifecycleError {
   worldId: WorldId;
   cause: Error;
   runtime: string;
+  category: WorldFailureCategory;
 }
+
+export type WorldFailureCategory = 'manifest' | 'resource' | 'external-resource' | 'renderer';
 
 export interface WorldEngineState {
   phase: WorldPhase;
@@ -183,7 +186,7 @@ export class WorldEngine {
     const failure = this.lifecycleError(worldId, phase, cause);
     const active = this.state.active;
 
-    if (active && active.worldId !== worldId && !fallbackAttempt) {
+    if (active && !fallbackAttempt) {
       // A candidate failed while a committed world remains healthy.
       this.setState({ ...this.state, phase: 'READY', candidate: undefined, error: failure });
       return;
@@ -230,7 +233,13 @@ export class WorldEngine {
   }
 
   private lifecycleError(worldId: WorldId, phase: WorldPhase, cause: Error): WorldLifecycleError {
-    return { phase, worldId, cause, runtime: this.resolver.runtime };
+    return {
+      phase,
+      worldId,
+      cause,
+      runtime: this.resolver.runtime,
+      category: failureCategory(cause, phase, this.resolver.runtime)
+    };
   }
 
   private setState(state: WorldEngineState): void {
@@ -241,4 +250,14 @@ export class WorldEngine {
 
 function asError(cause: unknown): Error {
   return cause instanceof Error ? cause : new Error(String(cause));
+}
+
+function failureCategory(cause: Error, phase: WorldPhase, runtime: string): WorldFailureCategory {
+  const declared = (cause as Error & { category?: unknown }).category;
+  if (declared === 'manifest' || declared === 'resource' || declared === 'external-resource' || declared === 'renderer') {
+    return declared;
+  }
+  if (phase === 'VALIDATING') return 'manifest';
+  if (phase === 'BOOTSTRAPPING') return runtime === 'dev' ? 'external-resource' : 'resource';
+  return 'renderer';
 }

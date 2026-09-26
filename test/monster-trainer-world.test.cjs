@@ -17,6 +17,8 @@ test('MonsterTrainerWorld owns exactly one Pixi lifecycle and destroys it', () =
   assert.match(world, /roundPixels|roundPixels:\s*true|Math\.round/, 'nearest-pixel rendering');
   assert.match(world, /onReady\?\.\(\)/, 'first successful render marks the staged world ready');
   assert.match(world, /app\.renderer\.render\(app\.stage\)[\s\S]*onReady\?\.\(\)/, 'READY follows a complete first Pixi frame');
+  assert.match(world, /catch \(cause\) \{[\s\S]*if \(!alive\) return;[\s\S]*reportFailure\(cause\)/, 'a discarded async init cannot fail a newer staged mount');
+  assert.match(world, /catch \(cause\) \{[\s\S]*app\.destroy\(true\)[\s\S]*if \(!alive\) return;/, 'a rejected init releases its partially allocated Pixi application');
 });
 
 test('MonsterTrainerWorld receives only props and callbacks, never operational state', () => {

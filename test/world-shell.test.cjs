@@ -36,6 +36,7 @@ test('WorldHost delegates selection to transactional lifecycle layers instead of
   assert.match(runtime, /data-world-layer/);
   assert.match(runtime, /RECOVERY/);
   assert.match(host, /markDisposed/);
+  assert.match(host, /setRetiredTokens[\s\S]*filter\(/, 'retired token bookkeeping is pruned after disposal');
 });
 
 test('World translations expose the same key set in every supported locale', () => {

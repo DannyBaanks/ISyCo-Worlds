@@ -21,9 +21,10 @@ class SurfaceErrorBoundary extends Component<{
 }
 
 export function createBrowserResourceResolver(): WorldResourceResolver {
+  const runtime = import.meta.env.DEV ? 'dev' : 'packaged';
   return {
-    runtime: import.meta.env.DEV ? 'dev' : 'packaged',
-    resolve: (_world, resource) => preloadImage(resource.url)
+    runtime,
+    resolve: (_world, resource) => preloadImage(resource.url, runtime)
   };
 }
 
@@ -86,11 +87,14 @@ export function WorldRecoverySurface({ error, onRetry }: {
   );
 }
 
-function preloadImage(url: string): Promise<void> {
+function preloadImage(url: string, runtime: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => resolve();
-    image.onerror = () => reject(new Error(`failed to load ${url}`));
+    image.onerror = () => reject(Object.assign(
+      new Error(`failed to load ${url}`),
+      { category: runtime === 'dev' ? 'external-resource' : 'resource' }
+    ));
     image.src = url;
   });
 }

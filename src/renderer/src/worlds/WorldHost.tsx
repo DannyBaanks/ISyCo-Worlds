@@ -29,6 +29,14 @@ export function WorldHost({ config }: { config: HarnessConfig }) {
     void engine.select(selectedWorld);
   }, [engine, selectedWorld]);
 
+  useEffect(() => {
+    const pendingTokens = new Set(state.pendingDisposals.map((mount) => mount.token));
+    setRetiredTokens((previous) => {
+      const next = new Set([...previous].filter((token) => pendingTokens.has(token)));
+      return next.size === previous.size ? previous : next;
+    });
+  }, [state.pendingDisposals]);
+
   const retiring = state.pendingDisposals.filter((mount) => !retiredTokens.has(mount.token));
   useLayoutEffect(() => {
     if (retiring.length === 0) return;

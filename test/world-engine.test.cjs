@@ -73,6 +73,38 @@ test('a missing target resource fails closed and retains the last READY world wi
   assert.match(state.error.cause.message, /missing monster:\/\/stage/);
 });
 
+test('a dev resource resolver can classify an unavailable external runtime without reviving it', async () => {
+  const unavailable = Object.assign(new Error('Vite origin unavailable'), { category: 'external-resource' });
+  const { engine } = engineFor({
+    resources: {
+      runtime: 'dev',
+      async resolve() { throw unavailable; }
+    }
+  });
+
+  await engine.select('office');
+  const state = engine.getState();
+  assert.equal(state.phase, 'RECOVERY');
+  assert.equal(state.error.category, 'external-resource');
+  assert.equal(state.error.runtime, 'dev');
+  assert.equal(state.error.cause, unavailable);
+});
+
+test('a failed Office replacement retains the previously READY Office mount', async () => {
+  const { engine } = engineFor();
+  const readyOffice = await makeReady(engine, 'office');
+
+  await engine.select('office');
+  const replacement = engine.getState().candidate;
+  assert.notEqual(replacement.token, readyOffice.token);
+  assert.equal(await engine.markFailed(replacement.token, new Error('Office reload failed')), true);
+
+  const state = engine.getState();
+  assert.equal(state.phase, 'READY');
+  assert.equal(state.active.token, readyOffice.token);
+  assert.deepEqual(state.pendingDisposals.map((mount) => mount.token), [replacement.token]);
+});
+
 test('without a READY world, a failed target attempts Office exactly once', async () => {
   const calls = [];
   const { engine } = engineFor({
