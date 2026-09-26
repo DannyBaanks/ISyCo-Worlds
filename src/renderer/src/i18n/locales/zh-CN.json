@@ -248,7 +248,16 @@
       "resetStartOver": "重置并重新开始",
       "arabicTerminal": "终端中的阿拉伯语 / RTL 文本",
       "arabicTerminalDesc": "用浏览器的文本引擎渲染终端，让阿拉伯语正确连写并从右向左阅读（xterm 自身没有双向文本支持）。关闭则使用 GPU 渲染器：更快，但无法处理从右向左的文本。对已打开和新开的终端同时生效。",
-      "arabicTerminalFollowsLanguage": "当前跟随应用语言。在此切换即可覆盖，两个方向都可以——你的选择会保留，即使之后再更改语言。"
+      "arabicTerminalFollowsLanguage": "当前跟随应用语言。在此切换即可覆盖，两个方向都可以——你的选择会保留，即使之后再更改语言。",
+      "worlds": {
+        "title": "世界",
+        "enable": "启用可视化世界",
+        "description": "试用同一批在线智能体的实验性视图。办公室仍是默认视图，随时可切回。",
+        "selector": "世界",
+        "office": "办公室",
+        "monsterTrainer": "怪兽训练师（实验性）",
+        "returnToOffice": "返回办公室"
+      }
     },
     "agentsModels": {
       "defaultModel": "默认智能体模型",

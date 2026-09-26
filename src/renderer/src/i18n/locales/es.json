@@ -248,7 +248,16 @@
       "resetStartOver": "restablecer & empezar de nuevo",
       "arabicTerminal": "Texto árabe / RTL en terminales",
       "arabicTerminalDesc": "Representa terminales con el motor de texto del navegador para que el árabe se una y se lea de derecha a izquierda (xterm no tiene bidi propio). Desactivado está el renderizador GPU: más rápido, pero ciego a RTL. Aplica tanto para terminales abiertos como nuevos.",
-      "arabicTerminalFollowsLanguage": "Siguiendo el idioma de tu aplicación. Cámbialo aquí para anularlo de cualquier manera: la opción se mantiene incluso si cambias de idioma de nuevo."
+      "arabicTerminalFollowsLanguage": "Siguiendo el idioma de tu aplicación. Cámbialo aquí para anularlo de cualquier manera: la opción se mantiene incluso si cambias de idioma de nuevo.",
+      "worlds": {
+        "title": "Mundos",
+        "enable": "Activar mundos visuales",
+        "description": "Prueba vistas experimentales de los mismos agentes activos. La Oficina sigue siendo la opción por defecto y puedes volver cuando quieras.",
+        "selector": "MUNDO",
+        "office": "Oficina",
+        "monsterTrainer": "Monster Trainer (experimental)",
+        "returnToOffice": "Volver a la Oficina"
+      }
     },
     "agentsModels": {
       "defaultModel": "Modelo de agente predeterminado",
