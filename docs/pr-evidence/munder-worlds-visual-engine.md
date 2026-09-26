@@ -60,3 +60,23 @@ Implemented after the original visual-engine slice:
 ### Design boundary actually used
 
 React has no safe general-purpose API to reparent a live Pixi canvas without remounting it. The implementation therefore uses keyed, full-size, opacity-hidden staging layers in the same host. The candidate's Pixi application is genuinely initialized before it becomes visible; React commits its visibility swap before the retired layer is unmounted in the following layout turn. This is the documented transactional boundary; there is no claim of an OS-level/offscreen renderer transaction.
+
+## Starter Village evidence
+
+- `Starter Village` replaces Monster Trainer's former agent-card slots with one static 24 x 16 scene of 16 x 16 source-pixel tiles. Its layer order is backdrop, terrain, roads, structures, foreground, then guide/workers/markers.
+- The scenario preserves five semantic ids independently from the replaceable map geometry: `professor`, `stable`, `training-grass`, `village-idle`, and `route-exit`.
+- `starter-village-atlas.svg` is hand-authored original Munder Worlds source-pixel art. It contains the scene's terrain, route, Guide House, stable, vegetation, fence and props; provenance is recorded in `src/renderer/src/assets/ATTRIBUTION.md`. The image-generation candidate was rejected and is not in this repository.
+- The Monster Trainer manifest requires the atlas. The existing WorldEngine resource resolver now preloads it through Pixi `Assets`; missing-atlas tests report `BOOTSTRAPPING` and retain the prior READY Office world.
+- The renderer selects only 4x, 3x, 2x or 1x scales. A host smaller than the 1x 384 x 256 scene retains a scrollable 1x viewport rather than using a fractional scale.
+
+### Commands and results (Starter Village)
+
+- `node --test test/world-engine.test.cjs test/world-registry.test.cjs test/starter-village-scenario.test.cjs test/monster-trainer-world.test.cjs test/world-shell.test.cjs` — PASS: 25/25.
+- `npm run typecheck` — PASS, exit 0.
+- `npm run test:focused` — PASS: 1108 pass, 0 fail, 6 skipped (1114 total).
+- `npm run build` — PASS. Production output contains `starter-village-atlas-B9oMm7Uv.svg`.
+- `git diff --check` — PASS.
+
+### SVG witness status
+
+MANUAL_PENDING: this verification host exposes no Electron/native display surface, so the real Pixi SVG rasterization could not be inspected at reachable integer scales. The SVG is packaged and loaded through Pixi `Assets`, but seams/anti-aliasing are not declared visually demonstrated. If a live Electron witness finds artifacts, replace it with an equivalent original PNG atlas and keep the same scenario/manifest contract.
