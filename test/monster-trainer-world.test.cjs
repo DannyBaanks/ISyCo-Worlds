@@ -1,0 +1,39 @@
+'use strict';
+
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+
+const root = process.cwd();
+const source = (file) => fs.readFileSync(path.join(root, file), 'utf8');
+
+test('MonsterTrainerWorld owns exactly one Pixi lifecycle and destroys it', () => {
+  const world = source('src/renderer/src/worlds/monster/MonsterTrainerWorld.tsx');
+  assert.match(world, /new Application\(/);
+  assert.match(world, /app\.destroy\(/, 'the Pixi app is destroyed on unmount');
+  assert.match(world, /\.slice\(0,\s*2\)/, 'at most two non-archived agents render');
+  assert.match(world, /archived/, 'archived agents are filtered out');
+  assert.match(world, /roundPixels|roundPixels:\s*true|Math\.round/, 'nearest-pixel rendering');
+});
+
+test('MonsterTrainerWorld receives only props and callbacks, never operational state', () => {
+  const world = source('src/renderer/src/worlds/monster/MonsterTrainerWorld.tsx');
+  assert.doesNotMatch(world, /useWorldProjection|hiveTasks|worldProfiles|useStore/, 'no operational imports or hooks');
+  assert.doesNotMatch(world, /updateConfig|saveWorldProfile/, 'no writes');
+  assert.match(world, /onAgentSelect/);
+  assert.match(world, /onTaskOpen/);
+});
+
+test('MonsterTrainerSurface is the only component that reads the live projection', () => {
+  const surface = source('src/renderer/src/worlds/monster/MonsterTrainerSurface.tsx');
+  assert.match(surface, /useWorldProjection\(\)/);
+  assert.match(surface, /onAgentSelect|select\(/, 'surface supplies the selection callback');
+  assert.match(surface, /openTaskDetail|onTaskOpen/, 'surface supplies the task-open callback');
+});
+
+test('WorldHost renders the registered Monster surface inside its error boundary', () => {
+  const host = source('src/renderer/src/worlds/WorldHost.tsx');
+  assert.match(host, /MonsterTrainerSurface/);
+  assert.match(host, /WorldErrorBoundary/);
+});
