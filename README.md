@@ -137,7 +137,7 @@ La misma app del iPhone, como APK nativo (Kotlin + Compose). No es otra forma de
   <img src="./docs/isyco/mobile/android/board-light.png" alt="App de Android, pestaña Tablero con las tareas" width="170">
   <img src="./docs/isyco/mobile/android/panel-light.png" alt="App de Android, pestaña Panel para manejar la computadora" width="170">
 </p>
-<p align="center"><sub>Las cuatro son del CI en JVM con la oficina demo; más en modo oscuro y bloqueo en <code>docs/isyco/mobile/android/</code>.</sub></p>
+<p align="center"><sub>Las cuatro son del CI en JVM con la oficina demo; las 18 capturas (incluidos modo oscuro, bloqueo y arranque de cada pestaña) están en <code>docs/isyco/mobile/android/</code>.</sub></p>
 
 Trae una pestaña más que el iPhone no tenía al principio: **Panel**. Desde ahí abres y cierras Munder, prendes y apagas el enlace, enciendes GPT y manejas el revividor — los mismos botones del Panel de escritorio, ejecutando lo mismo. Eso sí: emparejar no da ese poder; se concede en la computadora con `munder link panel <celular>`.
 
