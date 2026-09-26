@@ -1,6 +1,6 @@
 # Munder Worlds Visual Engine Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Add a feature-gated visual-world engine with agent-keyed visual identities and a small, real-state-driven Monster Trainer canvas while preserving the Office renderer.
 
@@ -42,23 +42,23 @@
 - Produces `WorldId = 'office' | 'monster-trainer'`, `WORLD_IDS`, and `isWorldId(value: unknown): value is WorldId`.
 - Produces optional `worldsEnabled?: boolean` and `selectedWorld?: WorldId` at every `HarnessConfig` boundary.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `test/world-config.test.cjs`. Load `src/shared/worlds.ts` through `test/load-ts.cjs`; assert only the two known ids validate. Mock Electron user data as in `test/config-write-notify.test.cjs`; assert a fresh `readConfig()` exposes `worldsEnabled === false` and `selectedWorld === 'office'`, and a write of `{ worldsEnabled: true, selectedWorld: 'monster-trainer' }` round-trips.
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run `node --test test/world-config.test.cjs`. Expect a missing module/export/default failure.
 
-- [ ] **Step 3: Implement the shared config contract**
+- [x] **Step 3: Implement the shared config contract**
 
 Create `src/shared/worlds.ts`. Add fields/defaults to main config and mirror them in preload and renderer config. On an invalid stored selected-world value, read `office`; never pass arbitrary ids to renderers.
 
-- [ ] **Step 4: Verify GREEN**
+- [x] **Step 4: Verify GREEN**
 
 Run `node --test test/world-config.test.cjs && npm run typecheck`. Expect PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Run `git add src/shared/worlds.ts src/main/config.ts src/preload/index.ts src/renderer/src/store/config.ts test/world-config.test.cjs && git commit -m "feat(worlds): add feature configuration contract"`.
 
@@ -76,23 +76,23 @@ Run `git add src/shared/worlds.ts src/main/config.ts src/preload/index.ts src/re
 - Produces shared `VisualIdentityProfileV1`, `WorldProfilesFileV1`, and structural validation from `src/shared/worldProfiles.ts`; main produces `readWorldProfiles()`, `profileForAgent(profiles, agentId)`, and validated `saveWorldProfile(profile)`.
 - Produces read-only `window.cth.worldProfiles(): Promise<Record<string, VisualIdentityProfileV1>>`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `test/world-profiles.test.cjs` with mocked Electron user data. Assert the shared profile contract rejects invalid fields; the same valid `agentId` gets the same default seed; reading it creates no file; a saved profile round-trips without affecting a second agent; malformed JSON returns an empty record without rewriting it; and an empty id, a non-1 version, or non-object `appearances` is rejected.
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run `node --test test/world-profiles.test.cjs`. Expect a missing `worldProfiles` module failure.
 
-- [ ] **Step 3: Implement repository and bridge**
+- [x] **Step 3: Implement repository and bridge**
 
 Store `{ version: 1, profiles }` in `world-profiles.json` under user data with temp-file/rename writes. Validate/deep-copy valid records and preserve unknown values only inside a valid world-keyed `appearances` object. Derive defaults as `munder-worlds:v1:${agentId}` without writing. Register `worlds:getProfiles` in main and expose `worldProfiles()` in preload; do not expose writes to arbitrary renderer callers.
 
-- [ ] **Step 4: Verify GREEN**
+- [x] **Step 4: Verify GREEN**
 
 Run `node --test test/world-profiles.test.cjs && npm run typecheck`. Expect PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Run `git add src/shared/worldProfiles.ts src/main/worldProfiles.ts src/main/index.ts src/preload/index.ts test/world-profiles.test.cjs && git commit -m "feat(worlds): add agent visual identity repository"`.
 
@@ -106,23 +106,23 @@ Run `git add src/shared/worldProfiles.ts src/main/worldProfiles.ts src/main/inde
 - Produces `CanonicalWorldSnapshot`, `WorldAgent`, `WorldTask`, `normalizeWorldSnapshot(agents, rawTasks)`, and `deriveVisualTransitions(previous, next)`.
 - Has no dependency on Zustand, preload IPC, or UI components.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `test/world-projection.test.cjs` through `test/load-ts.cjs`. Assert agent status normalization to `idle | working | waiting | blocked | other`; safe malformed task handling; `awaitsHuman` only for a blocked task with unanswered, undismissed `humanQA`; false for a done task; and no transitions for equal snapshots.
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run `node --test test/world-projection.test.cjs`. Expect a missing module failure.
 
-- [ ] **Step 3: Implement pure normalization and diffing**
+- [x] **Step 3: Implement pure normalization and diffing**
 
 Keep normalized arrays immutable and stably sorted by id. Use only ledger evidence: id, title, assignee, status, humanQA. Emit transitions only for additions/removals, normalized state changes, assignee changes, or `awaitsHuman` changes. Never derive success, artifacts, collaboration, remote nodes, or XP.
 
-- [ ] **Step 4: Verify GREEN**
+- [x] **Step 4: Verify GREEN**
 
 Run `node --test test/world-projection.test.cjs && npm run typecheck`. Expect PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Run `git add src/renderer/src/worlds/worldProjection.ts test/world-projection.test.cjs && git commit -m "feat(worlds): add canonical visual projection"`.
 
@@ -137,23 +137,23 @@ Run `git add src/renderer/src/worlds/worldProjection.ts test/world-projection.te
 - Consumes the pure projection, `window.cth.hiveTasks()`, `window.cth.worldProfiles()`, and Zustand.
 - Produces `useWorldProjection(): { snapshot; transitions; identityFor(agentId) }` for a world host to pass down as props.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `test/world-projection-controller.test.cjs`. Assert a stored profile wins, an unknown agent derives the expected default without a persistence call, and profiles cannot leak across ids. Add source assertions that the hook has one `hiveTasks` interval, clears it, subscribes to Zustand, and never calls a profile write.
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run `node --test test/world-projection-controller.test.cjs`. Expect missing module failures.
 
-- [ ] **Step 3: Implement the controller**
+- [x] **Step 3: Implement the controller**
 
 Implement the resolver as map lookup plus deterministic fallback. On mount fetch profiles once, poll tasks immediately and then every 5 seconds, subscribe to agent-store changes, retain the last valid snapshot on task-read failure, and clean every timer/subscription. Calculate transitions only after normalizing a fresh successful snapshot. The hook may not write config, profiles, tasks, or agents.
 
-- [ ] **Step 4: Verify GREEN**
+- [x] **Step 4: Verify GREEN**
 
 Run `node --test test/world-projection-controller.test.cjs && npm run typecheck`. Expect PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Run `git add src/renderer/src/worlds/identityResolver.ts src/renderer/src/worlds/useWorldProjection.ts test/world-projection-controller.test.cjs && git commit -m "feat(worlds): connect projection to live state"`.
 
@@ -178,27 +178,27 @@ Run `git add src/renderer/src/worlds/identityResolver.ts src/renderer/src/worlds
 - Produces controls that write only `{ worldsEnabled, selectedWorld }` through existing config IPC.
 - Reserves the experimental Monster Trainer registry entry; until Task 6 wires its renderer, the host resolves that selection safely back to Office.
 
-- [ ] **Step 1: Write failing registry/shell tests**
+- [x] **Step 1: Write failing registry/shell tests**
 
 Create `test/world-registry.test.cjs` to assert stable ids, Office default, and unknown-id fallback. Create `test/world-shell.test.cjs` to assert `App` mounts `WorldHost` in the current floor slot while retaining `MemoryPanel`, sidebar, and `AgentStrip`; selector/settings only update Worlds fields; and locale key sets match in all four languages.
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run `node --test test/world-registry.test.cjs test/world-shell.test.cjs`. Expect missing registry/host/control failures.
 
-- [ ] **Step 3: Implement registry and user controls**
+- [x] **Step 3: Implement registry and user controls**
 
 Create registry entries for Office and experimental Monster Trainer. Add a non-destructive Worlds toggle in General settings and a title-bar selector only while Worlds is enabled. Persist selection with `updateConfig`; disabling Worlds preserves the saved choice but makes the host render Office. Add matching translations.
 
-- [ ] **Step 4: Implement the fallback host**
+- [x] **Step 4: Implement the fallback host**
 
 Replace the unconditional `<OfficeFloor />` with `WorldHost`. When disabled, selected id invalid, or a non-Office renderer throws, render Office and show a recoverable return-to-Office action. It may update only visual selection preference, never hive/agent/task data.
 
-- [ ] **Step 5: Verify GREEN**
+- [x] **Step 5: Verify GREEN**
 
 Run `node --test test/world-registry.test.cjs test/world-shell.test.cjs && npm run typecheck`. Expect PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run `git add src/renderer/src/worlds/worldRegistry.ts src/renderer/src/worlds/WorldHost.tsx src/renderer/src/components/WorldSelector.tsx src/renderer/src/components/WorldsSettings.tsx src/renderer/src/App.tsx src/renderer/src/components/SettingsModal.tsx src/renderer/src/i18n/locales/en.json src/renderer/src/i18n/locales/es.json src/renderer/src/i18n/locales/zh-CN.json src/renderer/src/i18n/locales/ar.json test/world-registry.test.cjs test/world-shell.test.cjs && git commit -m "feat(worlds): add registry and Office fallback host"`.
 
@@ -217,27 +217,27 @@ Run `git add src/renderer/src/worlds/worldRegistry.ts src/renderer/src/worlds/Wo
 - Consumes snapshot, visual identity, Pixi primitives, and selection callbacks from `WorldHost`.
 - Produces deterministic original creature art, a `MonsterTrainerSurface` that owns the projection hook, and a self-contained Pixi lifecycle component that receives only props.
 
-- [ ] **Step 1: Write failing art/component tests**
+- [x] **Step 1: Write failing art/component tests**
 
 Create `test/monster-trainer-art.test.cjs`: same seed/appearance gives equal primitives, differing seeds choose valid variants/palettes, every coordinate is whole-pixel, and each supported state has a distinct non-color-only marker. Create `test/monster-trainer-world.test.cjs`: source checks enforce Pixi cleanup and at-most-two non-archived agents in `MonsterTrainerWorld`, callbacks rather than operational imports there, and use of the projection hook only in `MonsterTrainerSurface`.
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run `node --test test/monster-trainer-art.test.cjs test/monster-trainer-world.test.cjs`. Expect missing module failures.
 
-- [ ] **Step 3: Implement deterministic creature art**
+- [x] **Step 3: Implement deterministic creature art**
 
 Use bounded palette and original Pixi `Graphics` rectangles only; import no images or franchise references. Derive variant/palette from profile seed. Permit only validated `appearances['monster-trainer']` palette/variant overrides. Add distinct shapes/icons for idle, working, blocked, and awaiting-human, plus static reduced-motion rendering.
 
-- [ ] **Step 4: Implement canvas lifecycle and interaction**
+- [x] **Step 4: Implement canvas lifecycle and interaction**
 
 Implement `MonsterTrainerSurface` to obtain the live projection/identity resolver and convert it to renderer props. Mount one Pixi application/ticker in `MonsterTrainerWorld`, use nearest-pixel rendering, and fully destroy it on unmount. Draw a compact region, real task markers, and at most two non-archived agents. Creature click calls `onAgentSelect`; task click calls `onTaskOpen`; unknown profiles/tasks use safe placeholders. Transitions drive only short effects. Update `WorldHost` to render this surface for the registered Monster world.
 
-- [ ] **Step 5: Verify GREEN**
+- [x] **Step 5: Verify GREEN**
 
 Run `node --test test/monster-trainer-art.test.cjs test/monster-trainer-world.test.cjs && npm run typecheck`. Expect PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run `git add src/renderer/src/worlds/monster/monsterArt.ts src/renderer/src/worlds/monster/MonsterTrainerWorld.tsx src/renderer/src/worlds/monster/MonsterTrainerSurface.tsx src/renderer/src/worlds/worldRegistry.ts src/renderer/src/worlds/WorldHost.tsx test/monster-trainer-art.test.cjs test/monster-trainer-world.test.cjs && git commit -m "feat(worlds): add Monster Trainer visual slice"`.
 
@@ -247,18 +247,18 @@ Run `git add src/renderer/src/worlds/monster/monsterArt.ts src/renderer/src/worl
 - Create: `docs/pr-evidence/munder-worlds-visual-engine.md`
 - Modify: `docs/superpowers/specs/2026-09-26-munder-worlds-visual-engine-design.md` only for an evidence-backed contract correction.
 
-- [ ] **Step 1: Run complete automated verification**
+- [x] **Step 1: Run complete automated verification**
 
 Run `npm run typecheck && npm run test:focused`. Expect PASS; record any unrelated existing failure by exact test name/output.
 
-- [ ] **Step 2: Verify the live feature gates**
+- [x] **Step 2: Verify the live feature gates**
 
 Run the development app. Check: Worlds disabled retains Office; enable Worlds in Settings; choose Monster Trainer; observe one or two real agents; exercise idle, working, blocked, and awaiting-human from actual state; click creature/task; switch back to Office; reload; confirm no hive/task/agent change.
 
-- [ ] **Step 3: Record evidence and rollback**
+- [x] **Step 3: Record evidence and rollback**
 
 Create evidence with base commit, commands/results, screenshots if generated, supported mappings, intentional omissions (artifacts, collaboration, remote nodes, XP/evolution), profile behavior, and rollback: disable Worlds or choose Office.
 
-- [ ] **Step 4: Final verify and commit**
+- [x] **Step 4: Final verify and commit**
 
 Run `git diff --check && npm run typecheck && npm run test:focused`, then run `git add docs/pr-evidence/munder-worlds-visual-engine.md docs/superpowers/specs/2026-09-26-munder-worlds-visual-engine-design.md && git commit -m "docs: record Munder Worlds verification"`. Expect no whitespace errors and all checks PASS.
