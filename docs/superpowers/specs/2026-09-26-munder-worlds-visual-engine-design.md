@@ -165,3 +165,64 @@ Worlds starts disabled and Office remains default. The work is reversible by dis
 ## Future Extensions
 
 Once the vertical slice is stable, future work may add an approved profile editor, model-generated asset proposals, an asset bank with provenance, richer semantic contracts for artifacts and collaboration, an Office identity adapter, more Monster creature variants, progression, and additional worlds. Each addition must consume real state or explicitly labeled presentation metadata.
+
+## Transactional World Runtime Amendment
+
+### Boundary
+
+`WorldEngine` owns only visual lifecycle: resource validation, renderer bootstrap,
+mount, atomic activation, rollback, and disposal. It does not read or write Hive,
+agents, tasks, profiles, or configuration directly. The existing world surfaces
+remain the boundary to live read models and interaction callbacks.
+
+Every registry entry, including Office, declares a resource manifest and a visual
+surface. The resource resolver is injected into the engine. In development it
+preflights Vite-generated `?url` addresses; in a packaged app it preflights the
+bundled addresses. Both paths execute the same `WorldEngine` state machine.
+
+### Lifecycle and Transaction Rule
+
+The engine emits structured lifecycle state with a phase, world id, and optional
+cause:
+
+`VALIDATING -> BOOTSTRAPPING -> MOUNTING -> READY`.
+
+The selected world is a candidate until its surface reports `READY`. The currently
+READY world stays mounted and undisposed during candidate validation/bootstrap/mount.
+On candidate readiness, the host performs one explicit visual swap, then disposes
+the previous world exactly once. React does not provide an offscreen DOM staging
+primitive suitable for both existing Pixi surfaces, so the boundary is: candidate
+preflight is transactional; the React surface is mounted in a hidden staging layer;
+the visible-layer swap occurs only after that surface signals ready. A world that
+cannot signal ready is never committed.
+
+### Finite Failure Policy
+
+1. A target candidate fails: retain the last READY world and show a structured,
+   recoverable error.
+2. If no READY world exists, attempt the registry-declared Office fallback once.
+3. If that Office attempt fails, render the engine Recovery Surface.
+
+The fallback attempt is carried in the request, so Office cannot recursively
+fallback to itself. An async renderer failure after READY is handled as a failed
+replacement request under this same finite policy; it cannot leave a blank canvas.
+
+An unavailable Vite server is classified as an external resource-resolver failure.
+The engine never tries to start or revive Vite; it preserves the current valid
+world or shows Recovery Surface. `npm run dev` remains responsible for the dev
+server process.
+
+### Semantic-State Invariant
+
+Switches affect only the visual projection. The Zustand/Hive/task data and their
+existing subscriptions stay outside `WorldEngine`; surfaces receive their existing
+read-only projections and callbacks. A world switch therefore cannot mutate
+operational truth.
+
+### Verification Contract
+
+The runtime must prove: Office bootstrap; Monster Trainer bootstrap; successful
+Office -> Monster -> Office swaps without semantic-state mutation; missing-resource
+closed failure and fallback; equivalent engine path with dev and packaged resolvers;
+async renderer failure recovery without a blank screen; and repeated failed switches
+that neither dispose the prior READY mount nor accumulate staged resources/listeners.

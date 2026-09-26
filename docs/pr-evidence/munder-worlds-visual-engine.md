@@ -32,3 +32,31 @@ NOT VERIFIED in this environment: the manual app walkthrough (enable Worlds in S
 ## Rollback
 
 Disable Worlds in Settings or select Office; neither writes runtime/hive/task/agent state nor deletes visual profiles. All World UI sits behind `worldsEnabled` (default false).
+
+## Transactional Runtime Addendum
+
+Implemented after the original visual-engine slice:
+
+- `WorldEngine` owns `VALIDATING`, `BOOTSTRAPPING`, `MOUNTING`, `READY`, and `RECOVERY`, with structured `{ phase, worldId, cause, runtime }` failures.
+- `WorldHost` keeps the committed keyed layer mounted while a full-size, invisible candidate surface bootstraps. It makes the candidate visible before scheduling the prior layer's unmount; the engine records that cleanup once through `markDisposed`.
+- Registry entries now declare their own surface and resource manifest. Office is the registry-declared fallback, not a host-only rendering branch.
+- Browser resource resolution preloads Vite-produced image URLs. The engine receives the same resolver contract in dev and packaged mode; only the resolver's runtime/url inputs differ. A dead Vite server is surfaced as a `BOOTSTRAPPING` error and is never restarted by the renderer.
+- The finite policy is tested: target failure retains a valid READY world; without one, Office is attempted once; a failed Office attempt enters Recovery Surface. A failed async renderer gets the same finite fallback path.
+
+### Commands and results (transactional runtime)
+
+- `node --test test/world-engine.test.cjs test/office-world-lifecycle.test.cjs test/monster-trainer-world.test.cjs` — PASS: 14/14.
+- `npm run typecheck` — PASS, exit 0.
+- `npm run test:focused` — PASS: 1100 pass, 0 fail, 6 skipped (1106 total).
+- `npm run build` — PASS. Production output contains the bundled Office assets, including `interiors-*.png` and `office-tileset-*.png`.
+- `git diff --check` — PASS.
+
+### Manual checks still required
+
+1. Launch through `npm run dev` with Vite actively running; switch Office -> Monster Trainer -> Office and verify the visual swap is seamless and interactions remain usable.
+2. Launch the packaged output; repeat Office/Monster/Office and confirm the bundled assets load through `file:`/packaged URLs.
+3. With a safe disposable dev session, stop Vite after Monster is READY, select Office, and verify the active Monster layer remains visible with the structured recovery message rather than a blank/partial Office canvas.
+
+### Design boundary actually used
+
+React has no safe general-purpose API to reparent a live Pixi canvas without remounting it. The implementation therefore uses keyed, full-size, opacity-hidden staging layers in the same host. The candidate's Pixi application is genuinely initialized before it becomes visible; React commits its visibility swap before the retired layer is unmounted in the following layout turn. This is the documented transactional boundary; there is no claim of an OS-level/offscreen renderer transaction.
