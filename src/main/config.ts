@@ -12,6 +12,7 @@ import {
 } from '../shared/agentProvider';
 import { defaultMcpDefaults } from '../shared/mcpCatalog';
 import { MAX_AGENT_TOKEN_CAP } from '../shared/tokenCaps';
+import { isWorldId, type WorldId } from '../shared/worlds';
 import { ensureHarnessGitignore, expandTilde, normalizeHiveHome } from './fs';
 import type { IntegrationRecord } from '../shared/integrations';
 import {
@@ -319,6 +320,10 @@ export interface HarnessConfig {
    *  `tvShowOffices` is on; otherwise the office theme is used. Unbuilt show
    *  themes fall back to 'office' in the loader. */
   officeTheme?: 'office' | 'friends' | 'brooklyn99' | 'siliconvalley' | 'got' | 'hogwarts';
+  /** Experimental visual-world renderer switch. Default false preserves Office. */
+  worldsEnabled?: boolean;
+  /** The selected visual renderer. Invalid persisted values fall back to Office. */
+  selectedWorld?: WorldId;
   /** Per-CLI-provider local/self-hosted base URL (Ollama/LM Studio/vLLM, …) for the
    *  OpenCode/OpenISy/Crush/pi/qwen engines; applied at spawn (config-injection or proxy
    *  upstream). API KEYS are NOT stored here — they live write-only in the secret
@@ -451,6 +456,8 @@ const DEFAULTS: HarnessConfig = {
   multiWindow: true,
   tvShowOffices: false,
   officeTheme: 'office',
+  worldsEnabled: false,
+  selectedWorld: 'office',
   slackEnabled: false,
   slackSigningSecret: undefined,
   slackBotToken: undefined,
@@ -591,14 +598,22 @@ export function readConfig(): HarnessConfig {
   // No file yet = a first run with nothing to migrate; the defaults ARE the
   // post-migration shape. Deliberately does not persist — a bare read must not
   // conjure a config.json before onboarding has written one.
-  if (!existsSync(p)) return withTriggerDefaults({ ...DEFAULTS });
+  if (!existsSync(p)) return normalizeWorldPreferences(withTriggerDefaults({ ...DEFAULTS }));
   try {
     const raw = readFileSync(p, 'utf8');
     const parsed = JSON.parse(raw);
-    return normalizeStoredHomes(migrateTriggersV1(withTriggerDefaults({ ...DEFAULTS, ...parsed })));
+    return normalizeWorldPreferences(normalizeStoredHomes(migrateTriggersV1(withTriggerDefaults({ ...DEFAULTS, ...parsed }))));
   } catch {
-    return withTriggerDefaults({ ...DEFAULTS });
+    return normalizeWorldPreferences(withTriggerDefaults({ ...DEFAULTS }));
   }
+}
+
+function normalizeWorldPreferences(cfg: HarnessConfig): HarnessConfig {
+  return {
+    ...cfg,
+    worldsEnabled: cfg.worldsEnabled === true,
+    selectedWorld: isWorldId(cfg.selectedWorld) ? cfg.selectedWorld : 'office'
+  };
 }
 
 /** (#140, the upgrade path) A config.json persisted BEFORE `writeConfig`
@@ -669,6 +684,8 @@ function persistConfig(next: HarnessConfig): HarnessConfig {
 export function writeConfig(patch: Partial<HarnessConfig>): HarnessConfig {
   const current = readConfig();
   const next: HarnessConfig = { ...current, ...patch };
+  next.worldsEnabled = next.worldsEnabled === true;
+  next.selectedWorld = isWorldId(next.selectedWorld) ? next.selectedWorld : 'office';
   // Project INGESTION — a registered repo is typed by hand ("~/dev/foo") as often
   // as it is picked from the folder dialog. Expand `~` here so the persisted list
   // (and therefore every agent's default cwd) is ABSOLUTE; Node's fs/spawn treat
