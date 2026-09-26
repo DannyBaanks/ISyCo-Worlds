@@ -3,6 +3,7 @@ import type { WorldId } from '@shared/worlds';
 import { OfficeFloor } from '@/scene/office/OfficeFloor';
 import { OFFICE_THEME } from '@/scene/office/themeRegistry';
 import { MonsterTrainerSurface } from './monster/MonsterTrainerSurface';
+import { STARTER_VILLAGE_SCENARIO } from './monster/StarterVillageScenario';
 import type { WorldManifest } from './WorldEngine';
 
 export const FALLBACK_WORLD_ID: WorldId = 'office';
@@ -39,7 +40,7 @@ export const WORLD_REGISTRY: readonly WorldDefinition[] = [
     id: 'monster-trainer',
     labelKey: 'settings.general.worlds.monsterTrainer',
     experimental: true,
-    resources: [],
+    resources: STARTER_VILLAGE_SCENARIO.resources,
     render: (lifecycle) => createElement(MonsterSurface, lifecycle)
   }
 ];

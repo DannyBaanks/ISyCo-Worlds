@@ -11,7 +11,8 @@ test('registry declares Office as its stable fallback and every world owns a res
   assert.match(registry, /id: 'office'/);
   assert.match(registry, /id: 'monster-trainer'/);
   assert.match(registry, /resources: OFFICE_THEME\.tilesets\.map/);
-  assert.match(registry, /resources: \[\]/);
+  assert.match(registry, /STARTER_VILLAGE_SCENARIO/);
+  assert.match(registry, /resources: STARTER_VILLAGE_SCENARIO\.resources/);
   assert.match(registry, /render: \(lifecycle\)/);
   assert.match(registry, /world\.id === id/);
 });

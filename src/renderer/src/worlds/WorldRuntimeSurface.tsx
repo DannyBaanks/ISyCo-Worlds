@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Assets } from 'pixi.js';
 import { PixelButton } from '@/components/PixelButton';
 import type { WorldLifecycleError, WorldMount, WorldResourceResolver } from './WorldEngine';
 import { worldById } from './worldRegistry';
@@ -24,7 +25,16 @@ export function createBrowserResourceResolver(): WorldResourceResolver {
   const runtime = import.meta.env.DEV ? 'dev' : 'packaged';
   return {
     runtime,
-    resolve: (_world, resource) => preloadImage(resource.url, runtime)
+    async resolve(_world, resource) {
+      try {
+        await Assets.load({ alias: resource.url, src: resource.url, data: { scaleMode: 'nearest' } });
+      } catch (cause) {
+        throw Object.assign(
+          cause instanceof Error ? cause : new Error(`failed to load ${resource.url}`),
+          { category: runtime === 'dev' ? 'external-resource' : 'resource' }
+        );
+      }
+    }
   };
 }
 
@@ -85,16 +95,4 @@ export function WorldRecoverySurface({ error, onRetry }: {
       </div>
     </div>
   );
-}
-
-function preloadImage(url: string, runtime: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve();
-    image.onerror = () => reject(Object.assign(
-      new Error(`failed to load ${url}`),
-      { category: runtime === 'dev' ? 'external-resource' : 'resource' }
-    ));
-    image.src = url;
-  });
 }

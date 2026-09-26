@@ -8,6 +8,7 @@ const { WorldEngine } = loadTs('src/renderer/src/worlds/WorldEngine.ts');
 
 const office = { id: 'office', resources: [{ id: 'office-tiles', url: 'office://tiles' }] };
 const monster = { id: 'monster-trainer', resources: [{ id: 'monster-stage', url: 'monster://stage' }] };
+const starterVillageAtlas = { id: 'starter-village-atlas', url: 'monster://starter-village-atlas' };
 
 function resolver({ runtime = 'dev', fail = new Set(), calls = [] } = {}) {
   return {
@@ -71,6 +72,22 @@ test('a missing target resource fails closed and retains the last READY world wi
   assert.equal(state.error.phase, 'BOOTSTRAPPING');
   assert.equal(state.error.worldId, 'monster-trainer');
   assert.match(state.error.cause.message, /missing monster:\/\/stage/);
+});
+
+test('a missing required Starter Village atlas is a BOOTSTRAPPING failure that retains READY Office', async () => {
+  const { engine } = engineFor({
+    worlds: [office, { id: 'monster-trainer', resources: [starterVillageAtlas] }],
+    fail: new Set(['monster-trainer/starter-village-atlas'])
+  });
+  await makeReady(engine, 'office');
+
+  await engine.select('monster-trainer');
+  const state = engine.getState();
+  assert.equal(state.phase, 'READY');
+  assert.equal(state.active.worldId, 'office');
+  assert.equal(state.error.phase, 'BOOTSTRAPPING');
+  assert.equal(state.error.worldId, 'monster-trainer');
+  assert.match(state.error.cause.message, /starter-village-atlas/);
 });
 
 test('a dev resource resolver can classify an unavailable external runtime without reviving it', async () => {
