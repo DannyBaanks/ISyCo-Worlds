@@ -22,6 +22,7 @@ import { LinkSettings } from './LinkSettings';
 import { McpDefaultsSettings } from './McpDefaultsSettings';
 import { IntegrationsRegistry } from './IntegrationsRegistry';
 import { AiEnginesSettings } from './AiEnginesSettings';
+import { WorldsSettings } from './WorldsSettings';
 import { REALTIME_MODEL } from '@shared/realtimePricing';
 import { RealtimeDevicePicker } from '@/realtime/DevicePicker';
 import { CostHud } from '@/realtime/CostHud';
@@ -981,6 +982,11 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                           answer, and the toolbar chip says nothing at all when
                           the answer is yes. */}
                       <UpdatesSection />
+
+                      <div style={{ height: 1, background: 'var(--cth-ink-300)' }} />
+
+                      {/* Worlds — visual-only feature gate; never touches hive/task/agent state */}
+                      <WorldsSettings config={config} />
 
                       <div style={{ height: 1, background: 'var(--cth-ink-300)' }} />
 
