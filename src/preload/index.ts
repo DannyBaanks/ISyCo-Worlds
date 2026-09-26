@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron';
 import type { AgentProvider } from '../shared/agentProvider';
 import type { WorldId } from '../shared/worlds';
+import type { VisualIdentityProfileV1 } from '../shared/worldProfiles';
 import type { HireManifest } from '../shared/hire';
 export type { HireManifest } from '../shared/hire';
 import type { IntegrationRecord, IntegrationTemplate } from '../shared/integrations';
@@ -670,6 +671,10 @@ const api = {
   /** Recetas custom por slot del cast ({slot: recipe}). Vacío si no hay. */
   getAvatarOverrides: (): Promise<Record<string, unknown>> =>
     ipcRenderer.invoke('avatar:getOverrides'),
+
+  /** World-neutral visual identities, indexed by real agent id. */
+  worldProfiles: (): Promise<Record<string, VisualIdentityProfileV1>> =>
+    ipcRenderer.invoke('worlds:getProfiles'),
 
   // ─── Config ──────────────────────────────────────────────────────────────
   getConfig: (): Promise<HarnessConfig> =>
