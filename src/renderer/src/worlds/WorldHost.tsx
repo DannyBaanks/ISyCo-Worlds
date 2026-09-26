@@ -1,71 +1,79 @@
-import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { HarnessConfig } from '@/store/config';
-import { OfficeFloor } from '@/scene/office/OfficeFloor';
-import { PixelButton } from '@/components/PixelButton';
-import { worldById } from './worldRegistry';
-import { MonsterTrainerSurface } from './monster/MonsterTrainerSurface';
+import { WorldEngine, type WorldEngineState, type WorldMount } from './WorldEngine';
+import { FALLBACK_WORLD_ID, WORLD_REGISTRY } from './worldRegistry';
+import { createBrowserResourceResolver, WorldRecoverySurface, WorldRuntimeSurface } from './WorldRuntimeSurface';
 
-class WorldErrorBoundary extends Component<{
-  onFailure: () => void;
-  fallback: ReactNode;
-  children: ReactNode;
-}, { failed: boolean }> {
-  state = { failed: false };
-
-  static getDerivedStateFromError(): { failed: boolean } { return { failed: true }; }
-
-  componentDidCatch(_error: Error, _info: ErrorInfo): void {
-    this.props.onFailure();
-  }
-
-  render(): ReactNode {
-    return this.state.failed ? this.props.fallback : this.props.children;
-  }
-}
-
-function OfficeFallback({ onReturn }: { onReturn?: () => void }) {
-  const { t } = useTranslation();
-  return (
-    <>
-      <OfficeFloor />
-      {onReturn && (
-        <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 20 }}>
-          <PixelButton variant="secondary" size="sm" onClick={onReturn}>
-            {t('settings.general.worlds.returnToOffice')}
-          </PixelButton>
-        </div>
-      )}
-    </>
-  );
-}
+const IDLE: WorldEngineState = { phase: 'IDLE', pendingDisposals: [] };
 
 /**
- * The host is the only switchpoint. Until a registered experimental renderer
- * exists, it falls back to Office; neither route changes hive or task state.
+ * React adapter for the transactional engine. Mounts retain their keyed layers:
+ * a staging layer becomes visible before the retiring layer is unmounted.
  */
 export function WorldHost({ config }: { config: HarnessConfig }) {
-  const { t } = useTranslation();
-  const requestedId = config.worldsEnabled ? config.selectedWorld : 'office';
-  const world = worldById(requestedId);
-  const [rendererFailed, setRendererFailed] = useState(false);
-  useEffect(() => { setRendererFailed(false); }, [requestedId]);
-  const returnToOffice = () => {
-    setRendererFailed(true);
-    void window.cth.updateConfig({ selectedWorld: 'office' });
-  };
+  const [state, setState] = useState<WorldEngineState>(IDLE);
+  const [retiredTokens, setRetiredTokens] = useState<ReadonlySet<number>>(() => new Set());
+  const engineRef = useRef<WorldEngine | null>(null);
+  if (!engineRef.current) {
+    engineRef.current = new WorldEngine({
+      worlds: WORLD_REGISTRY,
+      fallbackWorldId: FALLBACK_WORLD_ID,
+      resolver: createBrowserResourceResolver(),
+      onStateChange: setState
+    });
+  }
+  const engine = engineRef.current;
+  const selectedWorld = config.worldsEnabled ? (config.selectedWorld ?? FALLBACK_WORLD_ID) : FALLBACK_WORLD_ID;
 
-  if (!config.worldsEnabled || world.id === 'office') return <OfficeFallback />;
-  if (rendererFailed) return <OfficeFallback onReturn={returnToOffice} />;
+  useEffect(() => {
+    void engine.select(selectedWorld);
+  }, [engine, selectedWorld]);
 
+  const retiring = state.pendingDisposals.filter((mount) => !retiredTokens.has(mount.token));
+  useLayoutEffect(() => {
+    if (retiring.length === 0) return;
+    setRetiredTokens((previous) => {
+      const next = new Set(previous);
+      for (const mount of retiring) next.add(mount.token);
+      return next;
+    });
+    // The setState above removes the layer in this layout turn; acknowledge its
+    // synchronous Pixi cleanup after React has applied that explicit swap.
+    queueMicrotask(() => retiring.forEach((mount) => engine.markDisposed(mount.token)));
+  }, [engine, retiring]);
+
+  const mounts = visibleMounts(state, retiredTokens);
+  const activeToken = state.active?.token;
   return (
-    <WorldErrorBoundary onFailure={returnToOffice} fallback={<OfficeFallback onReturn={returnToOffice} />}>
-      {world.id === 'monster-trainer' ? <MonsterTrainerSurface onRenderFailure={returnToOffice} /> : <OfficeFallback />}
-      <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 20 }}>
-        <PixelButton variant="secondary" size="sm" onClick={returnToOffice}>
-          {t('settings.general.worlds.returnToOffice')}
-        </PixelButton>
-      </div>
-    </WorldErrorBoundary>
+    <div style={{ position: 'absolute', inset: 0 }}>
+      {mounts.map((mount) => (
+        <WorldRuntimeSurface
+          key={mount.token}
+          mount={mount}
+          active={mount.token === activeToken}
+          onReady={(token) => engine.markReady(token)}
+          onRenderFailure={(token, cause) => { void engine.markFailed(token, cause); }}
+        />
+      ))}
+      {!state.active && state.phase !== 'RECOVERY' && (
+        <div data-world-loading={state.phase} style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
+          Loading world…
+        </div>
+      )}
+      {state.error && state.phase !== 'RECOVERY' && (
+        <div data-world-error={`${state.error.phase}:${state.error.worldId}`} style={{ position: 'absolute', left: 12, bottom: 12, zIndex: 3, fontFamily: 'monospace', fontSize: 11 }}>
+          {state.error.phase} · {state.error.worldId}: {state.error.cause.message}
+        </div>
+      )}
+      {state.phase === 'RECOVERY' && <WorldRecoverySurface error={state.error} onRetry={() => { void engine.select(FALLBACK_WORLD_ID); }} />}
+    </div>
   );
+}
+
+function visibleMounts(state: WorldEngineState, retired: ReadonlySet<number>): readonly WorldMount[] {
+  const mounts = new Map<number, WorldMount>();
+  for (const mount of state.pendingDisposals) if (!retired.has(mount.token)) mounts.set(mount.token, mount);
+  if (state.active && !retired.has(state.active.token)) mounts.set(state.active.token, state.active);
+  if (state.candidate && !retired.has(state.candidate.token)) mounts.set(state.candidate.token, state.candidate);
+  return [...mounts.values()];
 }

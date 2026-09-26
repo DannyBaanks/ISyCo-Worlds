@@ -27,6 +27,17 @@ test('world controls change visual preferences only', () => {
   assert.match(settings, /worldsEnabled/);
 });
 
+test('WorldHost delegates selection to transactional lifecycle layers instead of branching by world id', () => {
+  const host = source('src/renderer/src/worlds/WorldHost.tsx');
+  const runtime = source('src/renderer/src/worlds/WorldRuntimeSurface.tsx');
+  assert.match(host, /WorldEngine/);
+  assert.match(host, /FALLBACK_WORLD_ID/);
+  assert.doesNotMatch(host, /world\.id\s*===/);
+  assert.match(runtime, /data-world-layer/);
+  assert.match(runtime, /RECOVERY/);
+  assert.match(host, /markDisposed/);
+});
+
 test('World translations expose the same key set in every supported locale', () => {
   const locales = ['en.json', 'es.json', 'zh-CN.json', 'ar.json'].map((file) =>
     JSON.parse(fs.readFileSync(path.join(root, 'src/renderer/src/i18n/locales', file), 'utf8')).settings.general.worlds

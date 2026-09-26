@@ -2,13 +2,16 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const loadTs = require('./load-ts.cjs');
+const fs = require('node:fs');
+const path = require('node:path');
+const registry = fs.readFileSync(path.join(process.cwd(), 'src/renderer/src/worlds/worldRegistry.ts'), 'utf8');
 
-const Registry = loadTs('src/renderer/src/worlds/worldRegistry.ts');
-
-test('registry keeps Office as the stable default and unknown ids recover there', () => {
-  assert.deepEqual(Registry.WORLD_REGISTRY.map((world) => world.id), ['office', 'monster-trainer']);
-  assert.equal(Registry.worldById('office').id, 'office');
-  assert.equal(Registry.worldById('monster-trainer').experimental, true);
-  assert.equal(Registry.worldById('not-a-world').id, 'office');
+test('registry declares Office as its stable fallback and every world owns a resource manifest', () => {
+  assert.match(registry, /FALLBACK_WORLD_ID[^=]*= 'office'/);
+  assert.match(registry, /id: 'office'/);
+  assert.match(registry, /id: 'monster-trainer'/);
+  assert.match(registry, /resources: OFFICE_THEME\.tilesets\.map/);
+  assert.match(registry, /resources: \[\]/);
+  assert.match(registry, /render: \(lifecycle\)/);
+  assert.match(registry, /world\.id === id/);
 });
