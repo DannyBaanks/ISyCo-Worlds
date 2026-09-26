@@ -12,8 +12,11 @@ import { reduceStatus, clampPercent, isNewerBuild, installerUrl, shouldShowRelea
  *
  * Primary path: electron-updater against the `publish` block in
  * electron-builder.yml — the release workflow uploads latest*.yml + zip +
- * blockmaps, macOS builds are Developer ID signed + notarized + stapled, so
- * Squirrel.Mac (zip), NSIS, and AppImage all update natively. Downloads happen
+ * blockmaps. macOS builds are Developer ID signed + notarized + stapled when
+ * signing credentials are configured; without them (current fork builds) they
+ * ship unsigned — and whether a downloaded update's signature is verified
+ * before install is NOT_DEMONSTRATED (see SECURITY.md). Squirrel.Mac (zip),
+ * NSIS and AppImage are the native targets. Downloads happen
  * in the background; installation is ALWAYS user-initiated ("restart to update"
  * → `update:restartAndInstall`). The app never restarts on its own.
  *

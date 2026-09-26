@@ -36,3 +36,16 @@ credit you (unless you prefer to stay anonymous).
   rooted at an agent's working directory.
 - The hive commits to a local git repo from a **single committer** (the main process);
   agents only write plain files.
+
+## Auto-update signatures — NOT_DEMONSTRATED (fork note, 2026-09-26)
+
+No code or test in this repo verifies the cryptographic signature of a
+downloaded update before install: `src/main/updater.ts` delegates fully to
+electron-updater defaults (no `verifyUpdateCodeSignature`, no checksum
+comparison), `test/update-download-asset.test.cjs` has no signature
+assertions, and Windows has no signing config at all in
+`electron-builder.yml`. Current fork builds also ship **unsigned** (no Apple
+secrets, no Windows cert), so even platform-level signature matching does not
+apply to them. Proving (or fixing) this needs a controlled experiment —
+staged update feed, stripped-signature installer, revoked-cert cases — which
+is researcher work with hypothesis and controls, not a blind code change.
