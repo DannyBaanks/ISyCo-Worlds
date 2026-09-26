@@ -8,6 +8,18 @@ const path = require('node:path');
 const root = process.cwd();
 const source = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
+test('Monster Trainer builds the complete Starter Village scene instead of agent cards', () => {
+  const world = source('src/renderer/src/worlds/monster/MonsterTrainerWorld.tsx');
+  const scene = source('src/renderer/src/worlds/monster/StarterVillageScene.ts');
+  assert.doesNotMatch(world, /drawSlot|SLOT_W|SLOT_H/, 'the card-slot layout is not retained behind the scene');
+  assert.match(world, /buildStarterVillageScene/);
+  assert.match(scene, /STARTER_VILLAGE_SCENARIO/);
+  assert.match(scene, /Assets\.get/);
+  assert.match(scene, /semanticAnchors|anchorPlacements/);
+  assert.match(world, /integerScaleForViewport/);
+  assert.match(scene, /scaleMode\s*=\s*'nearest'/);
+});
+
 test('MonsterTrainerWorld owns exactly one Pixi lifecycle and destroys it', () => {
   const world = source('src/renderer/src/worlds/monster/MonsterTrainerWorld.tsx');
   assert.match(world, /new Application\(/);

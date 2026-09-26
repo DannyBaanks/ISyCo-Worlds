@@ -39,6 +39,14 @@ test('WorldHost delegates selection to transactional lifecycle layers instead of
   assert.match(host, /setRetiredTokens[\s\S]*filter\(/, 'retired token bookkeeping is pruned after disposal');
 });
 
+test('Monster Trainer keeps a scrollable integer-scale viewport for Starter Village', () => {
+  const world = source('src/renderer/src/worlds/monster/MonsterTrainerWorld.tsx');
+  assert.match(world, /overflow:\s*'auto'/);
+  assert.match(world, /ResizeObserver/);
+  assert.match(world, /observer\.disconnect\(\)/);
+  assert.match(world, /integerScaleForViewport/);
+});
+
 test('World translations expose the same key set in every supported locale', () => {
   const locales = ['en.json', 'es.json', 'zh-CN.json', 'ar.json'].map((file) =>
     JSON.parse(fs.readFileSync(path.join(root, 'src/renderer/src/i18n/locales', file), 'utf8')).settings.general.worlds
