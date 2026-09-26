@@ -34,6 +34,11 @@ test('MonsterTrainerSurface is the only component that reads the live projection
 
 test('WorldHost renders the registered Monster surface inside its error boundary', () => {
   const host = source('src/renderer/src/worlds/WorldHost.tsx');
+  const surface = source('src/renderer/src/worlds/monster/MonsterTrainerSurface.tsx');
+  const world = source('src/renderer/src/worlds/monster/MonsterTrainerWorld.tsx');
   assert.match(host, /MonsterTrainerSurface/);
   assert.match(host, /WorldErrorBoundary/);
+  assert.match(host, /onRenderFailure=\{returnToOffice\}/, 'async Pixi failures also return to Office');
+  assert.match(surface, /onRenderFailure/, 'the surface forwards the recovery callback');
+  assert.match(world, /onRenderFailure\?\.\(\)/, 'failed Pixi initialization reports to the host');
 });

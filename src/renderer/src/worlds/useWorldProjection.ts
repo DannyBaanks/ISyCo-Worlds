@@ -30,7 +30,11 @@ export function useWorldProjection(): WorldProjectionState {
 
   const refreshTasks = useCallback(async () => {
     try {
-      const nextTasks = await window.cth.hiveTasks();
+      const raw = await window.cth.hiveTasks() as { tasks?: unknown } | unknown;
+      // The ledger IPC wraps the array in { tasks: [...] }; tolerate a bare
+      // array too so the projection never hard-couples to one payload shape.
+      const nextTasks = Array.isArray(raw) ? raw
+        : (raw && typeof raw === 'object' ? (raw as { tasks?: unknown }).tasks : undefined);
       // A failed/malformed task read must leave the last successful task list
       // visible rather than flashing an empty world.
       if (Array.isArray(nextTasks)) setRawTasks(nextTasks);

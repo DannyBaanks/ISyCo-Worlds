@@ -17,3 +17,6 @@
 - Task 2: complete — `node --test test/world-profiles.test.cjs` PASS (5/5); `npm run typecheck` PASS. V1 profiles are agent-id keyed, validate world keys, derive without writes, and preserve malformed files on read.
 - Task 3: complete — `node --test test/world-projection.test.cjs` PASS (3/3); `npm run typecheck` PASS. Stable pure snapshots carry only normalized agent/task evidence; equal snapshots produce no transitions.
 - Task 4: complete — `node --test test/world-projection-controller.test.cjs` PASS (2/2); `npm run typecheck` PASS. One read-only controller polls tasks, observes Zustand agents, keeps valid state on failures, and derives absent identities without persistence.
+- Task 5: complete — registry, host, reversible selector/settings, and locale parity committed in `51de0018`; focused shell tests and typecheck passed.
+- Task 6: complete — original procedural Monster Trainer canvas committed in `0600c175`; its art/lifecycle tests and typecheck passed.
+- Task 7: automated verification complete — `npm run typecheck && npm run test:focused` PASS (1089/1089); live desktop walkthrough remains explicitly pending, so its plan checkbox is intentionally open.

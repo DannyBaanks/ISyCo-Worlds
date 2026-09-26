@@ -1,4 +1,4 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { HarnessConfig } from '@/store/config';
 import { OfficeFloor } from '@/scene/office/OfficeFloor';
@@ -6,7 +6,11 @@ import { PixelButton } from '@/components/PixelButton';
 import { worldById } from './worldRegistry';
 import { MonsterTrainerSurface } from './monster/MonsterTrainerSurface';
 
-class WorldErrorBoundary extends Component<{ onFailure: () => void; children: ReactNode }, { failed: boolean }> {
+class WorldErrorBoundary extends Component<{
+  onFailure: () => void;
+  fallback: ReactNode;
+  children: ReactNode;
+}, { failed: boolean }> {
   state = { failed: false };
 
   static getDerivedStateFromError(): { failed: boolean } { return { failed: true }; }
@@ -16,7 +20,7 @@ class WorldErrorBoundary extends Component<{ onFailure: () => void; children: Re
   }
 
   render(): ReactNode {
-    return this.state.failed ? <OfficeFloor /> : this.props.children;
+    return this.state.failed ? this.props.fallback : this.props.children;
   }
 }
 
@@ -44,13 +48,19 @@ export function WorldHost({ config }: { config: HarnessConfig }) {
   const { t } = useTranslation();
   const requestedId = config.worldsEnabled ? config.selectedWorld : 'office';
   const world = worldById(requestedId);
-  const returnToOffice = () => { void window.cth.updateConfig({ selectedWorld: 'office' }); };
+  const [rendererFailed, setRendererFailed] = useState(false);
+  useEffect(() => { setRendererFailed(false); }, [requestedId]);
+  const returnToOffice = () => {
+    setRendererFailed(true);
+    void window.cth.updateConfig({ selectedWorld: 'office' });
+  };
 
   if (!config.worldsEnabled || world.id === 'office') return <OfficeFallback />;
+  if (rendererFailed) return <OfficeFallback onReturn={returnToOffice} />;
 
   return (
-    <WorldErrorBoundary onFailure={returnToOffice}>
-      {world.id === 'monster-trainer' ? <MonsterTrainerSurface /> : <OfficeFallback />}
+    <WorldErrorBoundary onFailure={returnToOffice} fallback={<OfficeFallback onReturn={returnToOffice} />}>
+      {world.id === 'monster-trainer' ? <MonsterTrainerSurface onRenderFailure={returnToOffice} /> : <OfficeFallback />}
       <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 20 }}>
         <PixelButton variant="secondary" size="sm" onClick={returnToOffice}>
           {t('settings.general.worlds.returnToOffice')}

@@ -251,7 +251,7 @@ Run `git add src/renderer/src/worlds/monster/monsterArt.ts src/renderer/src/worl
 
 Run `npm run typecheck && npm run test:focused`. Expect PASS; record any unrelated existing failure by exact test name/output.
 
-- [x] **Step 2: Verify the live feature gates**
+- [ ] **Step 2: Verify the live feature gates**
 
 Run the development app. Check: Worlds disabled retains Office; enable Worlds in Settings; choose Monster Trainer; observe one or two real agents; exercise idle, working, blocked, and awaiting-human from actual state; click creature/task; switch back to Office; reload; confirm no hive/task/agent change.
 

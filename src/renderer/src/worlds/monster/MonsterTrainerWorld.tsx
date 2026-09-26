@@ -17,6 +17,7 @@ export interface MonsterTrainerWorldProps {
   onAgentSelect: (agentId: string) => void;
   onTaskOpen: (taskId: string) => void;
   reducedMotion: boolean;
+  onRenderFailure?: () => void;
 }
 
 interface Ctx {
@@ -43,7 +44,7 @@ function drawMarker(graphics: Graphics, state: ReturnType<typeof visualStateFor>
   }
 }
 
-function drawSlot(root: Container, agent: WorldAgent, task: WorldTask | undefined, ctx: Ctx, index: number): void {
+function drawSlot(root: Container, agent: WorldAgent, task: WorldTask | undefined, ctx: Ctx, index: number): Graphics | null {
   const plan = creaturePlan(ctx.identityFor(agent.id));
   const state = visualStateFor(agent, ctx.tasks);
   const x0 = 24 + index * SLOT_W;
@@ -64,10 +65,6 @@ function drawSlot(root: Container, agent: WorldAgent, task: WorldTask | undefine
   }
   creature.x = Math.round(x0 + (SLOT_W - 16 - 16 * CELL) / 2);
   creature.y = y0 + 6;
-  // Reduced-motion users get static markers; otherwise blocked/waiting pulses softly.
-  if (!ctx.reducedMotion && (state === 'awaitsHuman' || state === 'blocked')) {
-    creature.alpha = 0.85 + 0.15 * Math.sin(ctx.pulse);
-  }
   creature.eventMode = 'static';
   creature.cursor = 'pointer';
   creature.on('pointertap', () => ctx.onAgentSelect(agent.id));
@@ -107,6 +104,7 @@ function drawSlot(root: Container, agent: WorldAgent, task: WorldTask | undefine
     label.y = y0 + SLOT_H - 20;
     root.addChild(label);
   }
+  return (state === 'awaitsHuman' || state === 'blocked') ? creature : null;
 }
 
 /**
@@ -126,28 +124,42 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
     const app = new Application();
     let ticker: (() => void) | null = null;
     let alive = true;
+    let ready = false;
     const pulseStart = performance.now();
 
     void (async () => {
-      await app.init({
-        backgroundAlpha: 0,
-        resizeTo: host,
-        antialias: false,
-        roundPixels: true,
-        resolution: Math.round(window.devicePixelRatio || 1),
-        autoDensity: true,
-        preference: 'webgl'
-      });
+      try {
+        await app.init({
+          backgroundAlpha: 0,
+          resizeTo: host,
+          antialias: false,
+          roundPixels: true,
+          resolution: Math.round(window.devicePixelRatio || 1),
+          autoDensity: true,
+          preference: 'webgl'
+        });
+      } catch {
+        // Async initialization errors bypass React error boundaries, so report
+        // them explicitly and let the host restore Office immediately.
+        props.onRenderFailure?.();
+        return;
+      }
       if (!alive) { app.destroy(true); return; }
+      ready = true;
       host.appendChild(app.canvas);
+      const pulseStartNow = () => (performance.now() - pulseStart) / 300;
+      let lastSignature = '';
+      let pulsingCreatures: Graphics[] = [];
       const render = () => {
         const ctx = ctxRef.current;
         if (!ctx) return;
-        ctx.pulse = (performance.now() - pulseStart) / 300;
+        ctx.pulse = pulseStartNow();
         const layer = new Container();
+        pulsingCreatures = [];
         ctx.agents.forEach((agent, index) => {
           const task = ctx.tasks.find((candidate) => candidate.assignee === agent.id);
-          drawSlot(layer, agent, task, ctx, index);
+          const pulsing = drawSlot(layer, agent, task, ctx, index);
+          if (pulsing) pulsingCreatures.push(pulsing);
         });
         if (ctx.agents.length === 0) {
           const empty = new Text({
@@ -164,14 +176,31 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
       render();
       ticker = () => {
         const ctx = ctxRef.current;
-        if (ctx?.reducedMotion) return;
-        render();
+        if (!ctx) return;
+        // Rebuild only when visible state changes; rebuilding mid-gesture would
+        // destroy the Graphic under the cursor and swallow the click. The
+        // blocked/awaiting pulse animates alpha on the existing Graphics instead.
+        const signature = JSON.stringify([
+          ctx.agents.map((a) => [a.id, a.name, a.state]),
+          ctx.tasks.map((t) => [t.id, t.title, t.assignee, t.status, t.awaitsHuman])
+        ]);
+        if (signature !== lastSignature) {
+          lastSignature = signature;
+          render();
+        }
+        if (!ctx.reducedMotion && pulsingCreatures.length > 0) {
+          const alpha = 0.85 + 0.15 * Math.sin(pulseStartNow());
+          for (const creature of pulsingCreatures) creature.alpha = alpha;
+        }
       };
       app.ticker.add(ticker);
     })();
 
     return () => {
       alive = false;
+      // Destroying before init() resolves crashes inside Pixi (React StrictMode
+      // unmounts once right after mount in dev); then the init path destroys.
+      if (!ready) return;
       if (ticker) app.ticker.remove(ticker);
       app.destroy(true);
     };
