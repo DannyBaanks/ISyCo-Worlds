@@ -15,3 +15,4 @@
 
 - Task 1: complete — `node --test test/world-config.test.cjs` PASS (2/2); `npm run typecheck` PASS. Shared ids/config defaults validate and unknown persisted selections fall back to Office.
 - Task 2: complete — `node --test test/world-profiles.test.cjs` PASS (5/5); `npm run typecheck` PASS. V1 profiles are agent-id keyed, validate world keys, derive without writes, and preserve malformed files on read.
+- Task 3: complete — `node --test test/world-projection.test.cjs` PASS (3/3); `npm run typecheck` PASS. Stable pure snapshots carry only normalized agent/task evidence; equal snapshots produce no transitions.
