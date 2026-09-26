@@ -43,16 +43,20 @@ interface MonsterScenario {
   id: 'starter-village';
   resources: readonly ScenarioResource[];
   map: { columns: number; rows: number; layers: readonly ScenarioLayer[] };
-  anchors: Readonly<Record<ScenarioAnchorId, ScenarioAnchor>>;
+  semanticAnchors: readonly ScenarioAnchorId[];
+  anchorPlacements: Readonly<Record<ScenarioAnchorId, ScenarioAnchorPlacement>>;
   ambient: { title: string; mood: string; palette: readonly number[] };
 }
 ```
 
-`map.layers` names rendering strata and their tiles/props. `anchors` is the
-only source of locations meaningful to workers or the guide. Renderer code
-may resolve an anchor to map coordinates, but may not spread literal anchor
+`map.layers` names rendering strata and their tiles/props.
+`semanticAnchors` is the stable identity list meaningful to workers or the
+guide; it contains no geometry. `anchorPlacements` is the current visual map
+implementation that resolves those identities to coordinates and z placement.
+Renderer code may consume a placement, but may not spread literal anchor
 coordinates through rendering components. Scenario ids and anchor ids are
-stable data identifiers, not display labels.
+stable data identifiers, not display labels. A later layout may replace every
+coordinate while preserving the semantic-anchor contract.
 
 Required stable anchors:
 
@@ -71,21 +75,24 @@ beyond choosing a deterministic static presentation for visible workers.
 
 The current Monster Trainer renderer has no map grid: it uses procedural
 16x16 creature plans, drawn at `CELL = 4`, on a canvas that resizes to its
-host. Therefore Starter Village will retain that demonstrated 4x pixel scale
-instead of inventing a new display scale.
+host. Starter Village therefore uses source-pixel drawing and only integer
+display scales; it does not claim pixel-perfect output at a fractional scale.
 
 - **Logical tile:** 16 x 16 source pixels.
-- **Map:** 30 x 20 logical tiles (480 x 320 source pixels). This fits a
-  compact village while leaving the map meaningfully larger than a narrow
-  command-panel viewport.
-- **Scale:** integer scale `4` at the scene's reference viewport, giving a
-  1920 x 1280 logical-pixel scene before container fitting. Render primitives
-  and placement values stay whole source pixels; Pixi uses `roundPixels` and
-  nearest-neighbour/pixelated rendering.
-- **Viewport policy:** the map is centered and uniformly scaled down only as
-  needed to fit its host while retaining its aspect ratio. Extra host space is
-  filled by the scene's deep-ground color. The scene never stretches
-  independently on each axis or crops a required anchor at startup.
+- **Map:** 24 x 16 logical tiles (384 x 256 source pixels). It is compact
+  enough to display at 2x in the established floor panel while retaining
+  separate laboratory, stable, grass, route, and boundary space.
+- **Scale:** select the largest fitting scale from the discrete set
+  `4x`, `3x`, `2x`, `1x`. Render primitives and placement values stay whole
+  source pixels; Pixi uses `roundPixels` and nearest-neighbour/pixelated
+  rendering.
+- **Viewport policy:** the map is centered at the selected integer scale and
+  unused host space receives the deep-ground color. It never stretches on an
+  axis or receives a fractional fit transform. When the host cannot display
+  even the 1x (384 x 256) map, the scene remains at 1x inside an overflow
+  viewport with native scrolling; it does not downscale below 1x or crop the
+  scene. Thus the renderer makes no pixel-perfect claim outside integral
+  scales.
 - **Camera policy:** static overview camera for this scenario. It has no
   panning, following, zoom animation, or stateful movement. A later scenario
   can choose a camera policy without changing WorldEngine.
@@ -131,16 +138,21 @@ specific existing town:
 
 The scene receives one original project-owned pixel atlas:
 
-`src/renderer/src/assets/worlds/starter-village/starter-village-atlas.svg`
+`src/renderer/src/assets/worlds/starter-village/starter-village-atlas.<ext>`
 
-It is authored in-repository as integer-aligned pixel rectangles and contains
-the minimal reusable terrain, road, vegetation, building, fence, and prop
-tiles used by the scenario. SVG is selected because the existing world has no
-monster raster pipeline and it preserves exact authored source pixels; Pixi
-will render it with nearest-neighbour/rounded-pixel settings. It is not a
+It contains the minimal reusable terrain, road, vegetation, building, fence,
+and prop tiles used by the scenario. It is original project art, not a
 third-party, generated, franchise, or traced asset. Its repository header and
 the project attribution record will identify it as original Munder Worlds
 artwork.
+
+The first implementation may use an integer-rect SVG candidate, but that is
+not an architectural requirement. It must first load the real atlas through
+Pixi with nearest-neighbour and `roundPixels` and be visually inspected. If
+Pixi's SVG rasterization produces seams, anti-aliasing, or other artifacts,
+the candidate is replaced with an equivalent original PNG atlas. The stable
+contract is one original project atlas and its manifest URL, not an SVG file
+format.
 
 The URL imported from this asset is a **required resource** in the existing
 `monster-trainer` world manifest. The same browser/Pixi resource resolver runs
