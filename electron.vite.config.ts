@@ -71,7 +71,10 @@ export default defineConfig({
     define,
     build: {
       rollupOptions: {
-        input: { index: resolve(__dirname, 'src/preload/index.ts') }
+        input: {
+          index: resolve(__dirname, 'src/preload/index.ts'),
+          worldHost: resolve(__dirname, 'src/preload/worldHost.ts')
+        }
       }
     }
   },
@@ -80,7 +83,10 @@ export default defineConfig({
     root: resolve(__dirname, 'src/renderer'),
     build: {
       rollupOptions: {
-        input: { index: resolve(__dirname, 'src/renderer/index.html') }
+        input: {
+          index: resolve(__dirname, 'src/renderer/index.html'),
+          worldHost: resolve(__dirname, 'src/renderer/world-host.html')
+        }
       }
     },
     plugins: [react()],

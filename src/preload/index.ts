@@ -2,6 +2,8 @@ import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'ele
 import type { AgentProvider } from '../shared/agentProvider';
 import type { WorldId } from '../shared/worlds';
 import type { VisualIdentityProfileV1 } from '../shared/worldProfiles';
+import type { WorldProfileLifecycleError, WorldProfileRuntimeStatus } from '../main/worldProfileLifecycle';
+import type { WorldPresentationIntent, WorldPresentationProjection, WorldPresentationStatus } from '../shared/worldPresentationProtocol';
 import type { HireManifest } from '../shared/hire';
 export type { HireManifest } from '../shared/hire';
 import type { IntegrationRecord, IntegrationTemplate } from '../shared/integrations';
@@ -328,7 +330,9 @@ export interface HarnessConfig {
   /** Active office map/cast theme (honored only when tvShowOffices is on). */
   officeTheme?: 'office' | 'friends' | 'brooklyn99' | 'siliconvalley' | 'got' | 'hogwarts';
   worldsEnabled?: boolean;
+  preferredWorldProfile?: WorldId;
   selectedWorld?: WorldId;
+  lastGlobalView?: 'office' | 'marketplace' | 'worlds';
   /** Per-CLI-provider local/self-hosted base URL (Ollama/LM Studio/vLLM, …) for the
    *  OpenCode/Crush/pi/qwen engines; applied at spawn. API KEYS are NOT stored here —
    *  they live write-only in the secret broker. */
@@ -675,6 +679,37 @@ const api = {
   /** World-neutral visual identities, indexed by real agent id. */
   worldProfiles: (): Promise<Record<string, VisualIdentityProfileV1>> =>
     ipcRenderer.invoke('worlds:getProfiles'),
+  /** Current operational profile; unlike preferredWorldProfile this is runtime status. */
+  getWorldProfileStatus: (): Promise<WorldProfileRuntimeStatus & { preferredWorldProfile: WorldId }> =>
+    ipcRenderer.invoke('world-profile:getStatus'),
+  /** Requests a profile change; an active runtime returns confirmation-required. */
+  requestWorldProfileActivation: (profileId: WorldId): Promise<
+    { ok: true; activeProfileId: string } | { ok: false; error: WorldProfileLifecycleError }
+  > => ipcRenderer.invoke('world-profile:requestActivation', profileId),
+  /** Continues an explicitly confirmed semantic harness restart. */
+  confirmWorldProfileActivation: (profileId: WorldId): Promise<
+    { ok: true; activeProfileId: string } | { ok: false; error: WorldProfileLifecycleError }
+  > => ipcRenderer.invoke('world-profile:confirmActivation', profileId),
+
+  // ─── Isolated visual presentation process ───────────────────────────────
+  startWorldPresentation: (profileId: WorldId, projection: WorldPresentationProjection): Promise<WorldPresentationStatus> =>
+    ipcRenderer.invoke('world-presentation:start', profileId, projection),
+  updateWorldPresentation: (projection: WorldPresentationProjection): Promise<boolean> =>
+    ipcRenderer.invoke('world-presentation:updateProjection', projection),
+  restartWorldPresentation: (): Promise<WorldPresentationStatus> => ipcRenderer.invoke('world-presentation:restart'),
+  disposeWorldPresentation: (): Promise<void> => ipcRenderer.invoke('world-presentation:dispose'),
+  setWorldPresentationBounds: (bounds: { x: number; y: number; width: number; height: number }): void =>
+    ipcRenderer.send('world-presentation:bounds', bounds),
+  onWorldPresentationStatus: (cb: (status: WorldPresentationStatus) => void): (() => void) => {
+    const listener = (_event: IpcRendererEvent, status: WorldPresentationStatus) => cb(status);
+    ipcRenderer.on('world-presentation:status', listener);
+    return () => ipcRenderer.removeListener('world-presentation:status', listener);
+  },
+  onWorldPresentationIntent: (cb: (intent: WorldPresentationIntent) => void): (() => void) => {
+    const listener = (_event: IpcRendererEvent, intent: WorldPresentationIntent) => cb(intent);
+    ipcRenderer.on('world-presentation:intent', listener);
+    return () => ipcRenderer.removeListener('world-presentation:intent', listener);
+  },
 
   // ─── Config ──────────────────────────────────────────────────────────────
   getConfig: (): Promise<HarnessConfig> =>

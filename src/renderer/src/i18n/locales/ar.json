@@ -256,7 +256,20 @@
         "selector": "العالم",
         "office": "المكتب",
         "monsterTrainer": "مدرّب الوحوش (تجريبي)",
-        "returnToOffice": "العودة إلى المكتب"
+        "returnToOffice": "العودة إلى المكتب",
+        "startupTitle": "اختر ملف عالم",
+        "activeProfile": "وقت التشغيل النشط",
+        "preferredProfile": "تفضيل بدء التشغيل التالي",
+        "noneActive": "لا يوجد ملف نشط",
+        "activeTag": "نشط",
+        "useWorld": "ابدأ {{world}}",
+        "restartInto": "أعد التشغيل إلى {{world}}",
+        "activating": "جارٍ البدء…",
+        "confirmTitle": "إعادة تشغيل وقت تشغيل Harness؟",
+        "confirmBody": "سيوقف ذلك الطرفيات والخدمات النشطة للملف الحالي ثم يبدأ {{world}}. ستظل بيانات الملف الحالي محفوظة للاستعادة.",
+        "confirmRestart": "إعادة التشغيل إلى العالم المحدد",
+        "activationFailed": "تعذر بدء الملف",
+        "statusUnavailable": "تعذر قراءة ملف العالم النشط. أعد فتح الإعدادات وحاول مرة أخرى."
       }
     },
     "agentsModels": {
@@ -1643,7 +1656,8 @@
       "office": "المكتب",
       "settings": "الإعدادات",
       "settingsShort": "الإعدادات",
-      "marketplace": "المتجر"
+      "marketplace": "المتجر",
+      "worlds": "العوالم"
     },
     "marketplace": {
       "title": "المتجر",

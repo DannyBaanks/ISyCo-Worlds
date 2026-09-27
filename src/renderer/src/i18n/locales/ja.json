@@ -256,7 +256,20 @@
         "selector": "ワールド",
         "office": "オフィス",
         "monsterTrainer": "モンスタートレーナー (実験的)",
-        "returnToOffice": "オフィスに戻る"
+        "returnToOffice": "オフィスに戻る",
+        "startupTitle": "ワールドプロフィールを選択",
+        "activeProfile": "現在のランタイム",
+        "preferredProfile": "次回起動時の設定",
+        "noneActive": "有効なプロフィールなし",
+        "activeTag": "実行中",
+        "useWorld": "{{world}} を起動",
+        "restartInto": "{{world}} に再起動",
+        "activating": "起動中…",
+        "confirmTitle": "Harness ランタイムを再起動しますか？",
+        "confirmBody": "現在のプロフィールの端末とサービスを停止して {{world}} を起動します。現在のプロフィールデータは復旧用に保存されます。",
+        "confirmRestart": "選択したワールドに再起動",
+        "activationFailed": "プロフィールを起動できません",
+        "statusUnavailable": "アクティブなワールドプロフィールを読み込めません。設定を開き直して再試行してください。"
       }
     },
     "agentsModels": {
@@ -1643,7 +1656,8 @@
       "office": "オフィス",
       "settings": "設定",
       "settingsShort": "設定",
-      "marketplace": "マーケットプレイス"
+      "marketplace": "マーケットプレイス",
+      "worlds": "ワールド"
     },
     "marketplace": {
       "title": "マーケットプレイス",

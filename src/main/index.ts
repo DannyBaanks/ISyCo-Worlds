@@ -1,4 +1,4 @@
-import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, shell, Notification } from 'electron';
+import { app, BrowserWindow, WebContentsView, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, shell, Notification } from 'electron';
 import { execFile, spawn } from 'node:child_process';
 import {
   rmSync, existsSync, openSync, readFileSync, readdirSync, statSync, cpSync, writeFileSync,
@@ -18,7 +18,7 @@ import {
   readConfig, writeConfig, setAgentTokenCap, resetConfig, onConfigWritten, ensureHarnessHome, ensureClaudePermissionsAccepted,
   modelForRole, OPS_STANDUP_MISSION, HEARTBEAT_MISSION, COMPACT_MAINTENANCE_MISSION, type HarnessConfig, type ScheduledMission
 } from './config';
-import { listDir, readFileText, readFileBinary, writeFileText, statAbs, expandTilde, isValidHarnessFolderName, validateHomeSwitch } from './fs';
+import { listDir, readFileText, readFileBinary, writeFileText, statAbs, expandTilde, isValidHarnessFolderName, validateHomeSwitch, ensureHarnessGitignore } from './fs';
 import { normalizeWeekly, weeklyDelayMs } from '../shared/weeklySchedule';
 import {
   getBranch, getStatus, getLog, getBranches, getAheadBehind, isRepo, getDiff, mainRepoRoot,
@@ -96,6 +96,13 @@ import { listLocalSkills, loadCatalog, installSkill, uninstallSkill, type LocalS
 import { loadHero } from './hero';
 import { loadModelCatalog } from './modelCatalog';
 import { readWorldProfiles } from './worldProfiles';
+import { migrateLegacyMunderState, resolveWorldRuntimeRoots } from './worldProfileRuntime';
+import type { WorldId } from '../shared/worlds';
+import { isWorldId } from '../shared/worlds';
+import { WORLD_CAPABILITIES, WORLD_PROFILES, resolveWorldProfile } from './worldCapabilityRegistry';
+import { WorldProfileLifecycle, type WorldProfileRuntimeStatus } from './worldProfileLifecycle';
+import { WorldPresentationSupervisor } from './worldPresentationSupervisor';
+import type { WorldPresentationProjection, WorldPresentationStatus } from '../shared/worldPresentationProtocol';
 import {
   CODEX_REMOTE_SOCKET_RELATIVE,
   codexRemoteAliasPath,
@@ -259,8 +266,19 @@ const ptyToAgent = new Map<string, string>();
  *  install disabled) so the freshly-installed CLI launches in the SAME pty/window —
  *  no user click. Cleared the moment it's consumed, so it can never loop installs. */
 const pendingInstallRelaunch = new Map<string, { opts: AgentSpawnOptions; owner: Electron.WebContents | null; bin: string; rung: string }>();
+let activeWorldProfileId: WorldId | null = 'office';
+let worldProfileLifecycle: WorldProfileLifecycle | null = null;
+let worldPresentationSupervisor: WorldPresentationSupervisor | null = null;
+let worldPresentationOwner: BrowserWindow | null = null;
+let initialProfileRuntimeReady = false;
+function activeProfileHome(): string | null {
+  const workspaceRoot = readConfig().harnessHome;
+  if (!workspaceRoot || !activeWorldProfileId) return null;
+  try { return resolveWorldRuntimeRoots(workspaceRoot, activeWorldProfileId).profileRoot; }
+  catch { return null; }
+}
 const hive = new HiveManager(
-  () => readConfig().harnessHome,
+  activeProfileHome,
   (channel, payload) => {
     const wc = liveWebContents();
     if (!wc) return false;
@@ -303,7 +321,7 @@ let breakerBeatTimer: ReturnType<typeof setInterval> | null = null;
 telemetry.onApiError((agentId) => breaker.recordError(agentId));
 // Shared roster on disk — created early so HookServer can re-read standing goals
 // on every UserPromptSubmit (Edit Agent saves land here via persistAgents).
-const roster = new RosterStore(() => readConfig().harnessHome);
+const roster = new RosterStore(activeProfileHome);
 function standingGoalFromRoster(agentId: string): string | null {
   const snap = roster.read();
   if (!snap || !Array.isArray(snap.agents)) return null;
@@ -332,7 +350,7 @@ const hookServer = new HookServer(
   (agentId, event, message) => workerWake.noteHook(agentId, event, message)
 );
 const memory = new MemoryManager(
-  () => readConfig().harnessHome,
+  activeProfileHome,
   () => { const c = readConfig(); return { enabled: c.semanticMemory !== false, model: c.embeddingModel ?? 'minilm' }; }
 );
 // Enterprise Knowledge Graph — file-backed store + agent CLI (default OFF).
@@ -389,7 +407,7 @@ function reflectSettings(): ReflectSettings {
 // Finishes the janitor's missing condense half: bounds each agent's memory.md
 // (Haiku tail-summary, backup→verify→atomic-swap) so it never grows unbounded.
 const reflector = new MemoryReflector(
-  () => readConfig().harnessHome,
+  activeProfileHome,
   () => readConfig().defaultCommand ?? 'claude',
   () => memory.env(),
   reflectSettings,
@@ -2462,6 +2480,81 @@ ipcMain.handle('hire:openFile', async () => {
  * window — cascades its position, and on close stops only its OWN terminals
  * while the app keeps running.
  */
+let worldPresentationView: WebContentsView | null = null;
+
+/** The child owns visual rendering only. It receives a typed projection through
+ *  IPC and has a dedicated least-privilege preload, never the Harness bridge. */
+function createWorldPresentationSupervisor(win: BrowserWindow): WorldPresentationSupervisor {
+  return new WorldPresentationSupervisor({
+    createHost: async (generation, emit, profileId) => {
+      const view = new WebContentsView({
+        webPreferences: {
+          preload: join(__dirname, '../preload/worldHost.js'),
+          sandbox: true,
+          contextIsolation: true,
+          nodeIntegration: false,
+          backgroundThrottling: false
+        }
+      });
+      win.contentView.addChildView(view);
+      view.setBounds({ x: 0, y: 0, width: 0, height: 0 });
+      worldPresentationView = view;
+      let renderProcessGone = false;
+      const onEvent = (event: Electron.IpcMainEvent, payload: unknown): void => {
+        if (event.sender === view.webContents) emit(payload);
+      };
+      ipcMain.on('world-presentation:event', onEvent);
+      const onGone = (_event: Electron.Event, details: Electron.RenderProcessGoneDetails): void => {
+        renderProcessGone = true;
+        emit({
+          type: 'failed', profileId, generation,
+          error: {
+            phase: 'BOOTSTRAPPING', profileId, category: 'host',
+            cause: { name: 'RenderProcessGone', message: `${details.reason}: exit ${details.exitCode}` }
+          }
+        });
+      };
+      view.webContents.on('render-process-gone', onGone);
+      const host = {
+        id: view.webContents.id,
+        isAlive: () => !renderProcessGone && !view.webContents.isDestroyed(),
+        send(command: import('../shared/worldPresentationProtocol').WorldPresentationCommand) {
+          if (!view.webContents.isDestroyed()) view.webContents.send('world-presentation:command', command);
+        },
+        async destroy() {
+          ipcMain.removeListener('world-presentation:event', onEvent);
+          view.webContents.removeListener('render-process-gone', onGone);
+          try { win.contentView.removeChildView(view); } catch { /* window already gone */ }
+          if (worldPresentationView === view) worldPresentationView = null;
+          if (!view.webContents.isDestroyed()) view.webContents.close({ waitForBeforeUnload: false });
+        }
+      };
+      let onLoadFailure: ((_event: Electron.Event, code: number, description: string) => void) | null = null;
+      const failed = new Promise<never>((_resolve, reject) => {
+        onLoadFailure = (_event, code, description) => reject(new Error(`World host load failed (${code}): ${description}`));
+        view.webContents.once('did-fail-load', onLoadFailure);
+      });
+      const loading = isDev && process.env.ELECTRON_RENDERER_URL
+        ? view.webContents.loadURL(new URL('/world-host.html', process.env.ELECTRON_RENDERER_URL).toString())
+        : view.webContents.loadFile(join(__dirname, '../renderer/world-host.html'));
+      try {
+        await Promise.race([loading, failed]);
+        if (onLoadFailure) view.webContents.removeListener('did-fail-load', onLoadFailure);
+        return host;
+      } catch (error) {
+        await host.destroy();
+        throw error;
+      }
+    },
+    onStatus: (status) => {
+      if (!win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send('world-presentation:status', status);
+    },
+    onIntent: (intent) => {
+      if (!win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send('world-presentation:intent', intent);
+    }
+  });
+}
+
 function createWindow(opts: { floor?: boolean } = {}): BrowserWindow {
   const isFloor = opts.floor === true;
 
@@ -2509,6 +2602,10 @@ function createWindow(opts: { floor?: boolean } = {}): BrowserWindow {
   // primary. The primary is also seeded synchronously so boot events route now.
   win.on('focus', () => { mainWindow = win; });
   if (!isFloor) mainWindow = win;
+  if (!isFloor) {
+    worldPresentationOwner = win;
+    worldPresentationSupervisor = createWorldPresentationSupervisor(win);
+  }
 
   // Permission gate for the renderer (our own trusted, local content). The only
   // permission we constrain is microphone capture: it's allowed ONLY while a mic
@@ -2617,6 +2714,12 @@ function createWindow(opts: { floor?: boolean } = {}): BrowserWindow {
   }
 
   win.on('closed', () => {
+    if (!isFloor) {
+      void worldPresentationSupervisor?.dispose();
+      worldPresentationSupervisor = null;
+      if (worldPresentationOwner === win) worldPresentationOwner = null;
+      worldPresentationView = null;
+    }
     allWindows.delete(win);
     // A closed floor must not leave its terminals running headless. (Natural
     // onExit teardown — archive + worktree cleanup — still runs per PTY.)
@@ -3417,10 +3520,52 @@ ipcMain.handle('avatar:getOverrides', () => readAvatarOverrides());
 // This stays separate from Office's cast-slot override file: worlds resolve
 // identities by the real agent id.
 ipcMain.handle('worlds:getProfiles', () => readWorldProfiles());
+ipcMain.handle('world-profile:getStatus', () => getActiveWorldProfile());
+ipcMain.handle('world-profile:requestActivation', (_evt, profileId: unknown) => {
+  if (typeof profileId !== 'string') {
+    return { ok: false, error: { phase: 'VALIDATING', profileId: String(profileId), category: 'invalid-profile', cause: { name: 'Error', message: 'Invalid profile id' } } };
+  }
+  return activateWorldProfile(profileId, false);
+});
+ipcMain.handle('world-profile:confirmActivation', (_evt, profileId: unknown) => {
+  if (typeof profileId !== 'string') {
+    return { ok: false, error: { phase: 'VALIDATING', profileId: String(profileId), category: 'invalid-profile', cause: { name: 'Error', message: 'Invalid profile id' } } };
+  }
+  return activateWorldProfile(profileId, true);
+});
+
+ipcMain.handle('world-presentation:start', async (event, profileId: unknown, projection: unknown) => {
+  if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents || !worldPresentationSupervisor) return null;
+  if (profileId !== activeWorldProfileId || !projection || typeof projection !== 'object') return worldPresentationSupervisor.getStatus();
+  return worldPresentationSupervisor.start(String(profileId), projection as WorldPresentationProjection);
+});
+ipcMain.handle('world-presentation:updateProjection', (event, projection: unknown) => {
+  if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents || !worldPresentationSupervisor || !projection || typeof projection !== 'object') return false;
+  return worldPresentationSupervisor.updateProjection(projection as WorldPresentationProjection);
+});
+ipcMain.handle('world-presentation:restart', (event) => {
+  if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents || !worldPresentationSupervisor) return null;
+  return worldPresentationSupervisor.restartVisual();
+});
+ipcMain.handle('world-presentation:dispose', async (event) => {
+  if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents || !worldPresentationSupervisor) return;
+  await worldPresentationSupervisor.dispose();
+});
+ipcMain.on('world-presentation:bounds', (event, value: unknown) => {
+  if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents || !worldPresentationView || !value || typeof value !== 'object') return;
+  const bounds = value as { x?: unknown; y?: unknown; width?: unknown; height?: unknown };
+  if (![bounds.x, bounds.y, bounds.width, bounds.height].every((n) => typeof n === 'number' && Number.isFinite(n))) return;
+  worldPresentationView.setBounds({
+    x: Math.max(0, Math.round(bounds.x as number)),
+    y: Math.max(0, Math.round(bounds.y as number)),
+    width: Math.max(0, Math.min(10000, Math.round(bounds.width as number))),
+    height: Math.max(0, Math.min(10000, Math.round(bounds.height as number)))
+  });
+});
 
 // ─── IPC: config ────────────────────────────────────────────────────────────
 ipcMain.handle('config:get', (): HarnessConfig => readConfig());
-ipcMain.handle('config:update', (_evt, patch: Partial<HarnessConfig>) => {
+ipcMain.handle('config:update', async (_evt, patch: Partial<HarnessConfig>) => {
   // FIRST RUN: every hive-bound service is started by bootstrapHiveServices(),
   // which runs once at app-ready and early-returns on `!hive.enabled()` — i.e.
   // whenever harnessHome is still null, which is exactly the state a fresh
@@ -3454,7 +3599,7 @@ ipcMain.handle('config:update', (_evt, patch: Partial<HarnessConfig>) => {
   if (typeof patch?.orchestratorMaySpawn === 'boolean') hive.setOrchestratorMaySpawn(patch.orchestratorMaySpawn);
   if (!hiveWasEnabled && hive.enabled()) {
     console.log('[hive] harnessHome configured — bootstrapping hive services');
-    try { bootstrapHiveServices(); } catch (e) { console.error('[hive] bootstrap after onboarding:', e); }
+    try { await bootstrapHiveServices(); } catch (e) { console.error('[hive] bootstrap after onboarding:', e); }
   }
   return next;
 });
@@ -3515,7 +3660,7 @@ ipcMain.handle('config:changeHome', async (_evt, payload: unknown) => {
       // renderer's half of the same state, and leaving it behind would move the
       // agents' sessions and memory to the new home while their names, notes and
       // worktree paths stayed at the old one.
-      for (const sub of ['hive', 'palace', 'roster.json', 'roster-backups']) {
+      for (const sub of ['hive', 'palace', 'roster.json', 'roster-backups', '.munder']) {
         const src = join(oldHome, sub);
         if (!existsSync(src)) continue;
         // cpSync copies the whole tree incl. .git and is cross-device safe (unlike
@@ -3526,7 +3671,7 @@ ipcMain.handle('config:changeHome', async (_evt, payload: unknown) => {
     } catch (e) {
       // Copy failed: recover IN PLACE against the unchanged old home (config never
       // repointed) so the user loses nothing, and surface the error — no relaunch.
-      bootstrapHiveServices();
+      await bootstrapHiveServices();
       const cfg = readConfig();
       if (cfg.slackEnabled && cfg.slackSigningSecret) void startSlackServer();
       reconcileWebhookServer();
@@ -5369,8 +5514,24 @@ ipcMain.handle('workers:stop', (_evt, workerId: string): { ok: boolean; error?: 
 /** Start every hive-bound background service against the current harnessHome.
  *  Called on boot, and again to recover in place if a folder-change copy fails
  *  (config:changeHome tears these down before copying). No-op without a home. */
-function bootstrapHiveServices(): void {
+async function bootstrapHiveServices(): Promise<void> {
+  const config = readConfig();
   if (!hive.enabled()) return;
+  const workspaceRoot = config.harnessHome;
+  if (workspaceRoot) {
+    // Keep app-owned runtime state out of project/harness git status without
+    // replacing or rewriting any existing user ignore rules.
+    ensureHarnessGitignore(workspaceRoot);
+    const officeRoot = resolveWorldRuntimeRoots(workspaceRoot, 'office').profileRoot;
+    try {
+      await migrateLegacyMunderState(workspaceRoot, officeRoot);
+    } catch (error) {
+      // Do not start services against the legacy shared root after an incomplete
+      // copy. The harness remains stopped and the GUI can report/retry recovery.
+      console.error('[world-profile] legacy Munder migration failed; runtime remains stopped:', error);
+      throw error;
+    }
+  }
   hive.ensureHive();
   // The generated docs (PROTOCOL.md, COMMANDS.md) are refreshed HERE and only
   // here: app start is the one moment a protocol change can reach an existing
@@ -5435,6 +5596,97 @@ function bootstrapHiveServices(): void {
   reflector.start(); // bound oversized memory.md files on a timer (no-op until threshold)
 
   armAlwaysOnBeats();
+}
+
+function createWorldProfileLifecycle(initialProfileId: WorldId | null): WorldProfileLifecycle {
+  return new WorldProfileLifecycle({
+    initialProfileId,
+    resolve: async (profileId) => {
+      const resolved = resolveWorldProfile(profileId, WORLD_PROFILES, WORLD_CAPABILITIES);
+      return { id: resolved.profile.id, capabilities: [...resolved.capabilities] };
+    },
+    prepare: async (profile) => {
+      const workspaceRoot = readConfig().harnessHome;
+      if (!workspaceRoot) return;
+      const roots = resolveWorldRuntimeRoots(workspaceRoot, profile.id);
+      ensureHarnessGitignore(workspaceRoot);
+      mkdirSync(roots.profileRoot, { recursive: true });
+      // Legacy Munder state belongs to Office only. Keep the preflight before
+      // stopping the current profile, and never move or remove the source.
+      if (profile.id === 'office') await migrateLegacyMunderState(workspaceRoot, roots.profileRoot);
+    },
+    stop: async () => {
+      clearMissionTimers();
+      clearContextTimers();
+      stopWebhookDoneObserver();
+      stopEphemeralWorkerWatcher();
+      if (fleetTimer) { clearInterval(fleetTimer); fleetTimer = null; }
+      if (breakerBeatTimer) { clearInterval(breakerBeatTimer); breakerBeatTimer = null; }
+      if (workerWakeTimer) { clearInterval(workerWakeTimer); workerWakeTimer = null; }
+      integrationBroker.stop();
+      stopControlChannel();
+      hive.stopRouter();
+      hookServer.stop();
+      telemetry.stop();
+      hive.setOtelEndpoint(null);
+      stopSlackServer();
+      stopWebhookServer();
+      memory.stop();
+      reflector.stop();
+      hive.stopAllProxyBridges();
+      // A semantic profile restart is explicit and confirmation-gated. Existing
+      // session records remain in that profile's Hive for later recovery; only
+      // the live PTY processes and process-local ownership indexes are released.
+      for (const [ptyId, agentId] of ptyToAgent) {
+        try { workerWake.forget(agentId, ptyId); } catch { /* best-effort */ }
+        try { breaker.forget(agentId); } catch { /* best-effort */ }
+        try { telemetry.forgetAgent(agentId); } catch { /* best-effort */ }
+      }
+      ptyManager.killAll();
+      ptyToAgent.clear();
+      pendingInstallRelaunch.clear();
+      worktreePaths.clear();
+      worktreeOrigins.clear();
+      liveWorkers.clear();
+    },
+    bind: (profileId) => { activeWorldProfileId = profileId && isWorldId(profileId) ? profileId : null; },
+    start: async () => {
+      await bootstrapHiveServices();
+      const config = readConfig();
+      if (config.slackEnabled && config.slackSigningSecret) void startSlackServer();
+      reconcileWebhookServer();
+    },
+    createSessionId: () => `${process.pid}:${Date.now()}`
+  });
+}
+
+function getActiveWorldProfile(): WorldProfileRuntimeStatus & { preferredWorldProfile: WorldId } {
+  const status = worldProfileLifecycle?.getStatus() ?? {
+    state: 'STOPPED' as const, activeProfileId: null, pendingProfileId: null, sessionId: null
+  };
+  return { ...status, preferredWorldProfile: readConfig().preferredWorldProfile ?? 'office' };
+}
+
+async function activateWorldProfile(
+  profileId: string,
+  confirmed: boolean
+): Promise<
+  { ok: true; activeProfileId: string } |
+  { ok: false; error: ReturnType<WorldProfileLifecycle['getStatus']>['error'] }
+> {
+  if (!isWorldId(profileId) || !WORLD_PROFILES.some((profile) => profile.id === profileId)) {
+    return {
+      ok: false,
+      error: {
+        phase: 'VALIDATING', profileId: String(profileId), category: 'unknown-profile',
+        cause: { name: 'Error', message: 'Unknown world profile' }
+      }
+    };
+  }
+  if (!worldProfileLifecycle) worldProfileLifecycle = createWorldProfileLifecycle(null);
+  const result = await worldProfileLifecycle.activate(profileId, { confirmed });
+  if (result.ok) writeConfig({ preferredWorldProfile: profileId });
+  return result;
 }
 
 /** Cadence of the worker inbox-wake watchdog (#151). Well under the renderer's
@@ -5605,7 +5857,7 @@ function onSystemResume(reason: string): void {
   }, 15_000);
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // Realtime Michael mic-gate hygiene (rt-8 / Pam rt-10 nit): the voice session
   // opens the mic permission gate by persisting realtimeVoiceEnabled=true and
   // closes it on disconnect — but a hard crash/reload mid-session skips that
@@ -5647,8 +5899,18 @@ app.whenReady().then(() => {
   // never restarts on its own. Falls back to a notify-only releases/latest
   // check where native updating isn't possible (win-portable, dev-ish builds).
   initAutoUpdater(() => liveWebContents());
-  // Bootstrap the hive (if harnessHome is configured) and start the message router.
-  bootstrapHiveServices();
+  // Bootstrap the preferred semantic profile without relaunching the Electron
+  // GUI. A failed bootstrap leaves the profile stopped and is queryable over IPC.
+  const preferredProfile = readConfig().preferredWorldProfile ?? 'office';
+  activeWorldProfileId = preferredProfile;
+  try {
+    await bootstrapHiveServices();
+    initialProfileRuntimeReady = true;
+  } catch (error) {
+    initialProfileRuntimeReady = false;
+    console.error('[world-profile] startup blocked until profile data can be recovered:', error);
+  }
+  worldProfileLifecycle = createWorldProfileLifecycle(initialProfileRuntimeReady ? preferredProfile : null);
   // Survive sleep/lock. macOS freezes libuv timers during true system sleep, so a
   // locked/idle/slept Mac stops firing schedules and can wedge PTYs. On wake we
   // re-arm the scheduler (catching up missed missions ONCE) + beats + keep-awake,

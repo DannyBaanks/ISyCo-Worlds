@@ -13,6 +13,7 @@ export interface WorldProjectionState {
   snapshot: CanonicalWorldSnapshot;
   transitions: readonly VisualTransition[];
   identityFor: ReturnType<typeof createIdentityResolver>;
+  visualIdentities: Record<string, VisualIdentityProfileV1>;
 }
 
 /**
@@ -77,5 +78,5 @@ export function useWorldProjection(): WorldProjectionState {
     previousSnapshot.current = snapshot;
   }, [snapshot]);
 
-  return { snapshot, transitions, identityFor };
+  return { snapshot, transitions, identityFor, visualIdentities: profiles };
 }

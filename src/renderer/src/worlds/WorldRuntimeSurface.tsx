@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Assets } from 'pixi.js';
 import { PixelButton } from '@/components/PixelButton';
 import type { WorldLifecycleError, WorldMount, WorldResourceResolver } from './WorldEngine';
+import type { WorldPresentationIntent, WorldPresentationProjection } from '@shared/worldPresentationProtocol';
 import { worldById } from './worldRegistry';
 
 class SurfaceErrorBoundary extends Component<{
@@ -38,44 +39,50 @@ export function createBrowserResourceResolver(): WorldResourceResolver {
   };
 }
 
-/** A fixed-position layer keeps a staged Pixi canvas fully sized but invisible. */
+/** The host gives this component sole renderer ownership; no invisible staging layer exists. */
 export function WorldRuntimeSurface({
   mount,
-  active,
   onReady,
-  onRenderFailure
+  onRenderFailure,
+  onDisposed,
+  presentationProjection,
+  onIntent
 }: {
   mount: WorldMount;
-  active: boolean;
   onReady: (token: number) => void;
   onRenderFailure: (token: number, cause: unknown) => void;
+  onDisposed: (token: number) => void;
+  presentationProjection?: WorldPresentationProjection;
+  onIntent?: (intent: WorldPresentationIntent) => void;
 }) {
   const world = worldById(mount.worldId);
   return (
     <div
       data-world-layer={mount.token}
       data-world-id={mount.worldId}
-      data-world-active={active ? 'true' : 'false'}
+      data-world-active="true"
       style={{
         position: 'absolute', inset: 0,
-        opacity: active ? 1 : 0,
-        pointerEvents: active ? 'auto' : 'none',
-        zIndex: active ? 1 : 0
+        zIndex: 1
       }}
     >
       <SurfaceErrorBoundary onFailure={(cause) => onRenderFailure(mount.token, cause)}>
         {world.render({
+          projection: presentationProjection,
+          onIntent,
           onReady: () => onReady(mount.token),
-          onRenderFailure: (cause) => onRenderFailure(mount.token, cause)
+          onRenderFailure: (cause) => onRenderFailure(mount.token, cause),
+          onDisposed: () => onDisposed(mount.token)
         })}
       </SurfaceErrorBoundary>
     </div>
   );
 }
 
-export function WorldRecoverySurface({ error, onRetry }: {
+export function WorldRecoverySurface({ error, onRetry, retryLabel = 'Retry Office' }: {
   error?: WorldLifecycleError;
   onRetry: () => void;
+  retryLabel?: string;
 }) {
   const detail = error
     ? `${error.phase} · ${error.worldId} · ${error.cause.message}`
@@ -91,7 +98,7 @@ export function WorldRecoverySurface({ error, onRetry }: {
       <div style={{ maxWidth: 460, textAlign: 'center', display: 'grid', gap: 12 }}>
         <strong style={{ fontFamily: 'var(--cth-font-display)', fontSize: 13 }}>WORLD RECOVERY</strong>
         <span style={{ fontFamily: 'monospace', fontSize: 12, whiteSpace: 'pre-wrap' }}>{detail}</span>
-        <div><PixelButton variant="secondary" size="sm" onClick={onRetry}>Retry Office</PixelButton></div>
+        <div><PixelButton variant="secondary" size="sm" onClick={onRetry}>{retryLabel}</PixelButton></div>
       </div>
     </div>
   );
