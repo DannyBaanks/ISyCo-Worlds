@@ -8,6 +8,7 @@ const loadTs = require('./load-ts.cjs');
 
 const root = process.cwd();
 const Scenario = loadTs('src/renderer/src/worlds/monster/StarterVillageScenario.ts');
+const AtlasFrames = loadTs('src/renderer/src/worlds/monster/StarterVillageAtlasFrames.ts');
 
 test('Starter Village keeps semantic anchor identities independent from in-bounds placements', () => {
   assert.equal(Scenario.STARTER_VILLAGE_SCENARIO.id, 'starter-village');
@@ -64,4 +65,18 @@ test('Starter Village keeps a validated original PNG atlas alongside legacy art'
   assert.match(attribution, /starter-village-atlas\.png/);
   assert.match(attribution, /original.*pixel.art/i);
   assert.match(attribution, /starter-village-atlas\.svg/);
+  assert.equal(Scenario.STARTER_VILLAGE_ATLAS_URL, atlasPath, 'the scenario manifest must resolve the PNG atlas');
+  assert.deepEqual(Scenario.STARTER_VILLAGE_SCENARIO.resources.map((resource) => resource.id), ['starter-village-atlas']);
+  assert.match(Scenario.STARTER_VILLAGE_SCENARIO.resources[0].url, /starter-village-atlas\.png$/);
+  assert.deepEqual(Object.keys(AtlasFrames.STARTER_VILLAGE_ATLAS_FRAMES), [
+    'grass', 'training-grass', 'dirt', 'road', 'water', 'tree', 'shrub', 'flowers',
+    'guide-house', 'stable', 'fence', 'rock', 'lantern', 'crate', 'sign'
+  ]);
+  for (const [id, frame] of Object.entries(AtlasFrames.STARTER_VILLAGE_ATLAS_FRAMES)) {
+    assert.ok(frame.x >= 0 && frame.y >= 0, `${id} frame origin must be non-negative`);
+    assert.ok(frame.width > 0 && frame.height > 0, `${id} frame must have area`);
+    assert.ok(frame.x + frame.width <= png.readUInt32BE(16), `${id} frame must fit atlas width`);
+    assert.ok(frame.y + frame.height <= png.readUInt32BE(20), `${id} frame must fit atlas height`);
+    assert.deepEqual([frame.renderWidth, frame.renderHeight], id === 'guide-house' || id === 'stable' ? [64, 48] : [16, 16]);
+  }
 });

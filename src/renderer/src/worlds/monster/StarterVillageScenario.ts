@@ -1,4 +1,4 @@
-import starterVillageAtlasUrl from '../../assets/worlds/starter-village/starter-village-atlas.svg?url';
+import starterVillageAtlasUrl from '../../assets/worlds/starter-village/starter-village-atlas.png?url';
 
 export const STARTER_VILLAGE_TILE_SIZE = 16;
 export const STARTER_VILLAGE_COLUMNS = 24;
