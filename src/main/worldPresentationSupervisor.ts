@@ -31,6 +31,7 @@ export class WorldPresentationSupervisor {
   private profileId: WorldId | null = null;
   private projection: WorldPresentationProjection | null = null;
   private generation = 0;
+  private lifecycleOperation = 0;
   private destroying = new WeakSet<object>();
   private status: WorldPresentationStatus = { phase: 'IDLE', profileId: null, generation: 0 };
 
@@ -42,7 +43,9 @@ export class WorldPresentationSupervisor {
     if (!isWorldId(profileId)) return this.fail(profileId as WorldId, 'VALIDATING', 'protocol', new Error('Invalid world profile id'));
     const command = { type: 'bootstrap', profileId, generation: this.generation + 1, projection } as const;
     if (!isWorldPresentationCommand(command)) return this.fail(profileId, 'VALIDATING', 'protocol', new Error('Invalid world projection'));
+    const operation = ++this.lifecycleOperation;
     if (this.host) await this.destroyCurrent();
+    if (operation !== this.lifecycleOperation) return this.getStatus();
     this.profileId = profileId;
     this.projection = structuredClone(projection);
     return this.createAndBootstrap();
@@ -60,18 +63,28 @@ export class WorldPresentationSupervisor {
 
   async restartVisual(): Promise<WorldPresentationStatus> {
     if (!this.profileId || !this.projection) return this.getStatus();
+    const operation = ++this.lifecycleOperation;
+    const profileId = this.profileId;
     await this.destroyCurrent();
+    if (operation !== this.lifecycleOperation || this.profileId !== profileId) return this.getStatus();
     return this.createAndBootstrap();
   }
 
   async dispose(): Promise<void> {
+    this.lifecycleOperation += 1;
+    const hostGeneration = this.generation;
     if (this.host) {
-      try { this.host.send({ type: 'dispose', generation: this.generation }); } catch { /* host may already be gone */ }
-      await this.destroyCurrent();
+      try { this.host.send({ type: 'dispose', generation: hostGeneration }); } catch { /* host may already be gone */ }
     }
+    // Invalidate pending createHost() completions and concurrent lifecycle
+    // work synchronously, before awaiting a potentially slow WebContents close.
+    this.generation += 1;
+    const disposeGeneration = this.generation;
+    const destruction = this.destroyCurrent();
     this.profileId = null;
     this.projection = null;
-    this.setStatus({ phase: 'IDLE', profileId: null, generation: this.generation });
+    this.setStatus({ phase: 'IDLE', profileId: null, generation: disposeGeneration });
+    await destruction;
   }
 
   /** Entry point for host IPC. The caller must first prove sender webContents ownership. */
@@ -119,6 +132,7 @@ export class WorldPresentationSupervisor {
       host.send({ type: 'bootstrap', profileId, generation, projection });
       return this.getStatus();
     } catch (error) {
+      if (generation !== this.generation || this.profileId !== profileId) return this.getStatus();
       return this.fail(profileId, 'BOOTSTRAPPING', 'host', error);
     }
   }

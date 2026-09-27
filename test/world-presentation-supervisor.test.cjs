@@ -131,3 +131,110 @@ test('projection updates during async host creation are retained for the bootstr
   assert.equal(host.commands[0].type, 'bootstrap');
   assert.deepEqual(host.commands[0].projection, latestProjection);
 });
+
+test('a slow dispose cannot clear a newer visual start', async () => {
+  let finishDestroy;
+  const destruction = new Promise((resolve) => { finishDestroy = resolve; });
+  const hosts = [];
+  const supervisor = new WorldPresentationSupervisor({
+    createHost: async (generation, emit) => {
+      const host = {
+        id: `host-${generation}`, commands: [], emit,
+        send(command) { this.commands.push(command); },
+        async destroy() { if (generation === 1) await destruction; }
+      };
+      hosts.push(host);
+      return host;
+    },
+    onStatus: () => {},
+    onIntent: () => {}
+  });
+  await supervisor.start('office', projection);
+  const disposing = supervisor.dispose();
+  await supervisor.start('monster-trainer', projection);
+  finishDestroy();
+  await disposing;
+  assert.equal(supervisor.getStatus().phase, 'BOOTSTRAPPING');
+  assert.equal(supervisor.getStatus().profileId, 'monster-trainer');
+  assert.equal(hosts.length, 2);
+  assert.equal(hosts[1].commands[0].profileId, 'monster-trainer');
+  assert.equal(hosts[1].emit({ type: 'ready', profileId: 'monster-trainer', generation: 3 }), true);
+  assert.equal(supervisor.getStatus().phase, 'READY');
+});
+
+test('a newer dispose cancels a start that is waiting for the prior host to close', async () => {
+  let finishDestroy;
+  const destruction = new Promise((resolve) => { finishDestroy = resolve; });
+  const hosts = [];
+  const supervisor = new WorldPresentationSupervisor({
+    createHost: async (generation) => {
+      const host = {
+        id: `host-${generation}`, commands: [],
+        send(command) { this.commands.push(command); },
+        async destroy() { if (generation === 1) await destruction; }
+      };
+      hosts.push(host);
+      return host;
+    },
+    onStatus: () => {},
+    onIntent: () => {}
+  });
+  await supervisor.start('office', projection);
+  const starting = supervisor.start('monster-trainer', projection);
+  await supervisor.dispose();
+  finishDestroy();
+  await starting;
+  assert.equal(supervisor.getStatus().phase, 'IDLE');
+  assert.equal(supervisor.getStatus().profileId, null);
+  assert.equal(hosts.length, 1, 'the stale start must not create another host');
+});
+
+test('a newer start cancels a visual restart waiting for the prior host to close', async () => {
+  let finishDestroy;
+  const destruction = new Promise((resolve) => { finishDestroy = resolve; });
+  const hosts = [];
+  const supervisor = new WorldPresentationSupervisor({
+    createHost: async (generation) => {
+      const host = {
+        id: `host-${generation}`, commands: [],
+        send(command) { this.commands.push(command); },
+        async destroy() { if (generation === 1) await destruction; }
+      };
+      hosts.push(host);
+      return host;
+    },
+    onStatus: () => {},
+    onIntent: () => {}
+  });
+  await supervisor.start('office', projection);
+  const restarting = supervisor.restartVisual();
+  const starting = supervisor.start('monster-trainer', projection);
+  finishDestroy();
+  await Promise.all([restarting, starting]);
+  assert.equal(supervisor.getStatus().profileId, 'monster-trainer');
+  assert.equal(hosts.length, 2, 'only the newer start creates a renderer');
+  assert.equal(hosts[1].commands[0].profileId, 'monster-trainer');
+});
+
+test('a stale async host creation failure cannot overwrite a newer READY world', async () => {
+  const pending = [];
+  const supervisor = new WorldPresentationSupervisor({
+    createHost: (generation, emit) => new Promise((resolve, reject) => pending.push({ generation, emit, resolve, reject })),
+    onStatus: () => {},
+    onIntent: () => {}
+  });
+  const oldStart = supervisor.start('office', projection);
+  const currentStart = supervisor.start('monster-trainer', projection);
+  const currentHost = {
+    id: 'current-host', commands: [],
+    send(command) { this.commands.push(command); }, async destroy() {}
+  };
+  pending[1].resolve(currentHost);
+  await currentStart;
+  assert.equal(pending[1].emit({ type: 'ready', profileId: 'monster-trainer', generation: 2 }), true);
+  pending[0].reject(new Error('obsolete Office host failed late'));
+  await oldStart;
+  assert.equal(supervisor.getStatus().phase, 'READY');
+  assert.equal(supervisor.getStatus().profileId, 'monster-trainer');
+  assert.equal(supervisor.getStatus().generation, 2);
+});
