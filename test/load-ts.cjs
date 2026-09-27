@@ -28,7 +28,7 @@ function loadFile(filename) {
     cache.set(filename, json);
     return json.exports;
   }
-  if (filename.endsWith('.svg')) {
+  if (filename.endsWith('.svg') || filename.endsWith('.png')) {
     const asset = { exports: filename };
     cache.set(filename, asset);
     return asset.exports;
