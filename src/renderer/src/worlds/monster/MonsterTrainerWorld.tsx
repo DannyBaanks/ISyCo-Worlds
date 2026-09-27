@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Application, Container } from 'pixi.js';
+import { Application, Container, Ticker } from 'pixi.js';
 import 'pixi.js/unsafe-eval';
 import type { IdentityForAgent } from '../identityResolver';
 import type { CanonicalWorldSnapshot, VisualTransition, WorldAgent, WorldTask } from '../worldProjection';
@@ -9,9 +9,11 @@ import { applyCompositionCommand, undoComposition, validateComposition, type Com
 import type { WorldPresentationCommand, WorldPresentationComposition, WorldPresentationIntent } from '@shared/worldPresentationProtocol';
 import { FreeBuildToolbar } from '../composition/FreeBuildToolbar';
 import { acquireWorldRendererLease, disposeWorldRendererOnce } from '../pixiOwnership';
+import { MonsterWorkerMotion } from './monsterMovement';
+import type { EvolutionStage } from './monsterArt';
 
-export interface MonsterTrainerWorldProps { snapshot: CanonicalWorldSnapshot; transitions: readonly VisualTransition[]; identityFor: IdentityForAgent; onAgentSelect: (agentId: string) => void; onTaskOpen: (taskId: string) => void; reducedMotion: boolean; composition?: WorldPresentationComposition; compositionSaveResult?: Extract<WorldPresentationCommand, { type: 'update-composition' }>; onIntent?: (intent: WorldPresentationIntent) => void; onReady?: () => void; onRenderFailure?: (cause: unknown) => void; onDisposed?: () => void; }
-interface Ctx { agents: readonly WorldAgent[]; tasks: readonly WorldTask[]; identityFor: IdentityForAgent; onAgentSelect: (agentId: string) => void; onTaskOpen: (taskId: string) => void; layout: CompositionEditorState['present']; selectedPlacementId: string | null; buildMode: boolean; onPlacementSelect: (placementId: string) => void; }
+export interface MonsterTrainerWorldProps { snapshot: CanonicalWorldSnapshot; transitions: readonly VisualTransition[]; identityFor: IdentityForAgent; growthStageForAgent?: (agentId: string) => EvolutionStage; onAgentSelect: (agentId: string) => void; onTaskOpen: (taskId: string) => void; reducedMotion: boolean; composition?: WorldPresentationComposition; compositionSaveResult?: Extract<WorldPresentationCommand, { type: 'update-composition' }>; onIntent?: (intent: WorldPresentationIntent) => void; onReady?: () => void; onRenderFailure?: (cause: unknown) => void; onDisposed?: () => void; }
+interface Ctx { agents: readonly WorldAgent[]; tasks: readonly WorldTask[]; identityFor: IdentityForAgent; growthStageForAgent?: (agentId: string) => EvolutionStage; onAgentSelect: (agentId: string) => void; onTaskOpen: (taskId: string) => void; layout: CompositionEditorState['present']; selectedPlacementId: string | null; buildMode: boolean; onPlacementSelect: (placementId: string) => void; }
 
 export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
   const viewportRef = useRef<HTMLDivElement | null>(null); const hostRef = useRef<HTMLDivElement | null>(null); const ctxRef = useRef<Ctx | null>(null); const [scale, setScale] = useState<1 | 2 | 3 | 4>(1);
@@ -26,10 +28,10 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
     id: item.id, label: item.label, kind: item.kind,
     removable: STARTER_VILLAGE_COMPOSITION_DEFINITION.objects[item.id]?.removable ?? false
   })), []);
-  const activeAgents = props.snapshot.agents.filter((agent) => !agent.archived).slice(0, 2); const activeIds = activeAgents.map((agent) => agent.id).join('|');
+  const activeAgents = props.snapshot.agents.filter((agent) => !agent.archived); const activeIds = activeAgents.map((agent) => agent.id).join('|');
   useEffect(() => { const viewport = viewportRef.current; if (!viewport || typeof ResizeObserver === 'undefined') return; const observer = new ResizeObserver(([entry]) => { const next = integerScaleForViewport(entry.contentRect.width, entry.contentRect.height); setScale((current) => current === next ? current : next); }); observer.observe(viewport); return () => observer.disconnect(); }, []);
   useEffect(() => {
-    const host = hostRef.current; if (!host) return; const app = new Application(); let ticker: (() => void) | null = null; let alive = true; let initSettled = false; let disposedReported = false; let failed = false; let releaseLease: (() => boolean) | undefined;
+    const host = hostRef.current; if (!host) return; const app = new Application(); let ticker: ((ticker: Ticker) => void) | null = null; let alive = true; let initSettled = false; let disposedReported = false; let failed = false; let releaseLease: (() => boolean) | undefined;
     const release = () => disposeWorldRendererOnce(app, () => {
       try { if (ticker) app.ticker.remove(ticker); } catch { /* partial Pixi init */ }
       try { app.ticker?.stop(); } catch { /* partial Pixi init */ }
@@ -48,15 +50,46 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
       if (!alive) return;
       await app.init({ background: 0x132532, width: STARTER_VILLAGE_WIDTH * scale, height: STARTER_VILLAGE_HEIGHT * scale, antialias: false, roundPixels: true, resolution: 1, autoDensity: true, preference: 'webgl' });
       if (!alive) return; host.appendChild(app.canvas);
-      const render = () => { const ctx = ctxRef.current; if (!ctx) return; const scene: Container = buildStarterVillageScene({ ...ctx, composition: ctx.layout }); scene.scale.set(scale); app.stage.removeChildren().forEach((child) => child.destroy({ children: true })); app.stage.addChild(scene); };
-      render(); app.renderer.render(app.stage); props.onReady?.(); let signature = '';
-      ticker = () => { try { const ctx = ctxRef.current; if (!ctx || failed) return; const next = JSON.stringify([ctx.agents.map((agent) => [agent.id, agent.state]), ctx.tasks.map((task) => [task.id, task.assignee, task.awaitsHuman]), ctx.layout, ctx.selectedPlacementId, ctx.buildMode]); if (next !== signature) { signature = next; render(); } } catch (cause) { reportFailure(cause); } };
+      const motion = new MonsterWorkerMotion();
+      let scene: ReturnType<typeof buildStarterVillageScene> | null = null;
+      const render = (ctx: Ctx) => {
+        const nextScene = buildStarterVillageScene({ ...ctx, composition: ctx.layout, workerMotions: motion.snapshot() });
+        nextScene.scale.set(scale);
+        app.stage.removeChildren().forEach((child) => child.destroy({ children: true }));
+        app.stage.addChild(nextScene);
+        scene = nextScene;
+      };
+      const initialCtx = ctxRef.current;
+      if (!initialCtx) throw new Error('Monster Trainer projection was unavailable during bootstrap');
+      motion.updateProjection(initialCtx.agents, initialCtx.tasks, initialCtx.layout);
+      render(initialCtx); app.renderer.render(app.stage); props.onReady?.();
+      let signature = JSON.stringify([
+        initialCtx.agents.map((agent) => [agent.id, agent.state]),
+        initialCtx.tasks.map((task) => [task.id, task.assignee, task.awaitsHuman]),
+        initialCtx.layout, initialCtx.selectedPlacementId, initialCtx.buildMode,
+        initialCtx.agents.map((agent) => initialCtx.growthStageForAgent?.(agent.id) ?? 'baby')
+      ]);
+      ticker = (tick) => { try {
+        const ctx = ctxRef.current; if (!ctx || failed) return;
+        const next = JSON.stringify([
+          ctx.agents.map((agent) => [agent.id, agent.state]),
+          ctx.tasks.map((task) => [task.id, task.assignee, task.awaitsHuman]),
+          ctx.layout, ctx.selectedPlacementId, ctx.buildMode,
+          ctx.agents.map((agent) => ctx.growthStageForAgent?.(agent.id) ?? 'baby')
+        ]);
+        if (next !== signature) {
+          signature = next;
+          motion.updateProjection(ctx.agents, ctx.tasks, ctx.layout);
+          render(ctx);
+        }
+        scene?.updateWorkers(motion.tick(tick.deltaMS));
+      } catch (cause) { reportFailure(cause); } };
       app.ticker.add(ticker);
     } catch (cause) { release(); if (!alive) return; reportFailure(cause); }
     finally { initSettled = true; if (!alive) finalizeDisposal(); } })();
     return () => { alive = false; if (initSettled) finalizeDisposal(); };
   }, [activeIds, scale]);
-  useEffect(() => { ctxRef.current = { agents: activeAgents, tasks: props.snapshot.tasks, identityFor: props.identityFor, onAgentSelect: props.onAgentSelect, onTaskOpen: props.onTaskOpen, layout: editor.present, selectedPlacementId, buildMode: mode === 'build', onPlacementSelect: setSelectedPlacementId }; });
+  useEffect(() => { ctxRef.current = { agents: activeAgents, tasks: props.snapshot.tasks, identityFor: props.identityFor, growthStageForAgent: props.growthStageForAgent, onAgentSelect: props.onAgentSelect, onTaskOpen: props.onTaskOpen, layout: editor.present, selectedPlacementId, buildMode: mode === 'build', onPlacementSelect: setSelectedPlacementId }; });
   useEffect(() => {
     const result = props.compositionSaveResult;
     if (!result || result.requestId !== pendingSave) return;
