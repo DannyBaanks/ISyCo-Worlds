@@ -100,12 +100,12 @@
 - `WorldProfileLifecycleError`: `phase`, `profileId`, optional `capabilityId`, `category`, and `cause`.
 - `getActiveWorldProfile(): WorldProfileRuntimeStatus` reports active profile/session identity separately from the persisted startup preference.
 
-- [ ] **Step 1: Add failing lifecycle tests** for success, structured required-capability failure, confirmation-required profile change, no two profiles active at once, cleanup after partial service startup, preservation of the prior runtime when pre-activation fails, and no silent Office fallback.
-- [ ] **Step 2: Run the focused lifecycle tests** and verify failure against the current `app.relaunch()`-only `config:changeHome` path.
-- [ ] **Step 3: Implement a main-process stop/rebind/start coordinator.** Stop old profile services/workers before activating the new profile; retain the Electron GUI. If validation/preparation fails before teardown, preserve the previous active runtime.
-- [ ] **Step 4: Separate persisted `preferredWorldProfile` from read-only `activeWorldProfile` status.** Do not use the preference as proof that activation succeeded.
-- [ ] **Step 5: Add narrow preload IPC methods** for selecting, confirming, activating, and querying the profile; validate every id in main.
-- [ ] **Step 6: Run lifecycle/config tests plus `npm run typecheck` and `npm run test:focused`.** Confirm profile switching does not call `app.relaunch()` and failed activation does not publish the new active id.
+- [x] **Step 1: Add failing lifecycle tests** for success, structured required-capability failure, confirmation-required profile change, no two profiles active at once, cleanup after partial service startup, preservation of the prior runtime when pre-activation fails, and no silent Office fallback.
+- [x] **Step 2: Run the focused lifecycle tests** and verify failure against the current `app.relaunch()`-only `config:changeHome` path.
+- [x] **Step 3: Implement a main-process stop/rebind/start coordinator.** Stop old profile services/workers before activating the new profile; retain the Electron GUI. If validation/preparation fails before teardown, preserve the previous active runtime.
+- [x] **Step 4: Separate persisted `preferredWorldProfile` from read-only `activeWorldProfile` status.** Do not use the preference as proof that activation succeeded.
+- [x] **Step 5: Add narrow preload IPC methods** for selecting, confirming, activating, and querying the profile; validate every id in main.
+- [x] **Step 6: Run lifecycle/config tests plus `npm run typecheck` and `npm run test:focused`.** Confirm profile switching does not call `app.relaunch()` and failed activation does not publish the new active id.
 - [ ] **Step 7: Commit** as `feat(worlds): restart harness runtime by profile`.
 
 ### Task 4: Startup world selector integration

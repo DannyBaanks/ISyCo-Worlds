@@ -98,6 +98,9 @@ import { loadModelCatalog } from './modelCatalog';
 import { readWorldProfiles } from './worldProfiles';
 import { migrateLegacyMunderState, resolveWorldRuntimeRoots } from './worldProfileRuntime';
 import type { WorldId } from '../shared/worlds';
+import { isWorldId } from '../shared/worlds';
+import { WORLD_CAPABILITIES, WORLD_PROFILES, resolveWorldProfile } from './worldCapabilityRegistry';
+import { WorldProfileLifecycle, type WorldProfileRuntimeStatus } from './worldProfileLifecycle';
 import {
   CODEX_REMOTE_SOCKET_RELATIVE,
   codexRemoteAliasPath,
@@ -261,10 +264,12 @@ const ptyToAgent = new Map<string, string>();
  *  install disabled) so the freshly-installed CLI launches in the SAME pty/window —
  *  no user click. Cleared the moment it's consumed, so it can never loop installs. */
 const pendingInstallRelaunch = new Map<string, { opts: AgentSpawnOptions; owner: Electron.WebContents | null; bin: string; rung: string }>();
-let activeWorldProfileId: WorldId = 'office';
+let activeWorldProfileId: WorldId | null = 'office';
+let worldProfileLifecycle: WorldProfileLifecycle | null = null;
+let initialProfileRuntimeReady = false;
 function activeProfileHome(): string | null {
   const workspaceRoot = readConfig().harnessHome;
-  if (!workspaceRoot) return null;
+  if (!workspaceRoot || !activeWorldProfileId) return null;
   try { return resolveWorldRuntimeRoots(workspaceRoot, activeWorldProfileId).profileRoot; }
   catch { return null; }
 }
@@ -3426,6 +3431,19 @@ ipcMain.handle('avatar:getOverrides', () => readAvatarOverrides());
 // This stays separate from Office's cast-slot override file: worlds resolve
 // identities by the real agent id.
 ipcMain.handle('worlds:getProfiles', () => readWorldProfiles());
+ipcMain.handle('world-profile:getStatus', () => getActiveWorldProfile());
+ipcMain.handle('world-profile:requestActivation', (_evt, profileId: unknown) => {
+  if (typeof profileId !== 'string') {
+    return { ok: false, error: { phase: 'VALIDATING', profileId: String(profileId), category: 'invalid-profile', cause: { name: 'Error', message: 'Invalid profile id' } } };
+  }
+  return activateWorldProfile(profileId, false);
+});
+ipcMain.handle('world-profile:confirmActivation', (_evt, profileId: unknown) => {
+  if (typeof profileId !== 'string') {
+    return { ok: false, error: { phase: 'VALIDATING', profileId: String(profileId), category: 'invalid-profile', cause: { name: 'Error', message: 'Invalid profile id' } } };
+  }
+  return activateWorldProfile(profileId, true);
+});
 
 // ─── IPC: config ────────────────────────────────────────────────────────────
 ipcMain.handle('config:get', (): HarnessConfig => readConfig());
@@ -3524,7 +3542,7 @@ ipcMain.handle('config:changeHome', async (_evt, payload: unknown) => {
       // renderer's half of the same state, and leaving it behind would move the
       // agents' sessions and memory to the new home while their names, notes and
       // worktree paths stayed at the old one.
-      for (const sub of ['hive', 'palace', 'roster.json', 'roster-backups']) {
+      for (const sub of ['hive', 'palace', 'roster.json', 'roster-backups', '.munder']) {
         const src = join(oldHome, sub);
         if (!existsSync(src)) continue;
         // cpSync copies the whole tree incl. .git and is cross-device safe (unlike
@@ -5380,7 +5398,6 @@ ipcMain.handle('workers:stop', (_evt, workerId: string): { ok: boolean; error?: 
  *  (config:changeHome tears these down before copying). No-op without a home. */
 async function bootstrapHiveServices(): Promise<void> {
   const config = readConfig();
-  activeWorldProfileId = config.preferredWorldProfile ?? 'office';
   if (!hive.enabled()) return;
   const workspaceRoot = config.harnessHome;
   if (workspaceRoot) {
@@ -5461,6 +5478,97 @@ async function bootstrapHiveServices(): Promise<void> {
   reflector.start(); // bound oversized memory.md files on a timer (no-op until threshold)
 
   armAlwaysOnBeats();
+}
+
+function createWorldProfileLifecycle(initialProfileId: WorldId | null): WorldProfileLifecycle {
+  return new WorldProfileLifecycle({
+    initialProfileId,
+    resolve: async (profileId) => {
+      const resolved = resolveWorldProfile(profileId, WORLD_PROFILES, WORLD_CAPABILITIES);
+      return { id: resolved.profile.id, capabilities: [...resolved.capabilities] };
+    },
+    prepare: async (profile) => {
+      const workspaceRoot = readConfig().harnessHome;
+      if (!workspaceRoot) return;
+      const roots = resolveWorldRuntimeRoots(workspaceRoot, profile.id);
+      ensureHarnessGitignore(workspaceRoot);
+      mkdirSync(roots.profileRoot, { recursive: true });
+      // Legacy Munder state belongs to Office only. Keep the preflight before
+      // stopping the current profile, and never move or remove the source.
+      if (profile.id === 'office') await migrateLegacyMunderState(workspaceRoot, roots.profileRoot);
+    },
+    stop: async () => {
+      clearMissionTimers();
+      clearContextTimers();
+      stopWebhookDoneObserver();
+      stopEphemeralWorkerWatcher();
+      if (fleetTimer) { clearInterval(fleetTimer); fleetTimer = null; }
+      if (breakerBeatTimer) { clearInterval(breakerBeatTimer); breakerBeatTimer = null; }
+      if (workerWakeTimer) { clearInterval(workerWakeTimer); workerWakeTimer = null; }
+      integrationBroker.stop();
+      stopControlChannel();
+      hive.stopRouter();
+      hookServer.stop();
+      telemetry.stop();
+      hive.setOtelEndpoint(null);
+      stopSlackServer();
+      stopWebhookServer();
+      memory.stop();
+      reflector.stop();
+      hive.stopAllProxyBridges();
+      // A semantic profile restart is explicit and confirmation-gated. Existing
+      // session records remain in that profile's Hive for later recovery; only
+      // the live PTY processes and process-local ownership indexes are released.
+      for (const [ptyId, agentId] of ptyToAgent) {
+        try { workerWake.forget(agentId, ptyId); } catch { /* best-effort */ }
+        try { breaker.forget(agentId); } catch { /* best-effort */ }
+        try { telemetry.forgetAgent(agentId); } catch { /* best-effort */ }
+      }
+      ptyManager.killAll();
+      ptyToAgent.clear();
+      pendingInstallRelaunch.clear();
+      worktreePaths.clear();
+      worktreeOrigins.clear();
+      liveWorkers.clear();
+    },
+    bind: (profileId) => { activeWorldProfileId = profileId && isWorldId(profileId) ? profileId : null; },
+    start: async () => {
+      await bootstrapHiveServices();
+      const config = readConfig();
+      if (config.slackEnabled && config.slackSigningSecret) void startSlackServer();
+      reconcileWebhookServer();
+    },
+    createSessionId: () => `${process.pid}:${Date.now()}`
+  });
+}
+
+function getActiveWorldProfile(): WorldProfileRuntimeStatus & { preferredWorldProfile: WorldId } {
+  const status = worldProfileLifecycle?.getStatus() ?? {
+    state: 'STOPPED' as const, activeProfileId: null, pendingProfileId: null, sessionId: null
+  };
+  return { ...status, preferredWorldProfile: readConfig().preferredWorldProfile ?? 'office' };
+}
+
+async function activateWorldProfile(
+  profileId: string,
+  confirmed: boolean
+): Promise<
+  { ok: true; activeProfileId: string } |
+  { ok: false; error: ReturnType<WorldProfileLifecycle['getStatus']>['error'] }
+> {
+  if (!isWorldId(profileId) || !WORLD_PROFILES.some((profile) => profile.id === profileId)) {
+    return {
+      ok: false,
+      error: {
+        phase: 'VALIDATING', profileId: String(profileId), category: 'unknown-profile',
+        cause: { name: 'Error', message: 'Unknown world profile' }
+      }
+    };
+  }
+  if (!worldProfileLifecycle) worldProfileLifecycle = createWorldProfileLifecycle(null);
+  const result = await worldProfileLifecycle.activate(profileId, { confirmed });
+  if (result.ok) writeConfig({ preferredWorldProfile: profileId });
+  return result;
 }
 
 /** Cadence of the worker inbox-wake watchdog (#151). Well under the renderer's
@@ -5673,9 +5781,18 @@ app.whenReady().then(async () => {
   // never restarts on its own. Falls back to a notify-only releases/latest
   // check where native updating isn't possible (win-portable, dev-ish builds).
   initAutoUpdater(() => liveWebContents());
-  // Bootstrap the hive (if harnessHome is configured) and start the message router.
-  try { await bootstrapHiveServices(); }
-  catch (error) { console.error('[world-profile] startup blocked until profile data can be recovered:', error); }
+  // Bootstrap the preferred semantic profile without relaunching the Electron
+  // GUI. A failed bootstrap leaves the profile stopped and is queryable over IPC.
+  const preferredProfile = readConfig().preferredWorldProfile ?? 'office';
+  activeWorldProfileId = preferredProfile;
+  try {
+    await bootstrapHiveServices();
+    initialProfileRuntimeReady = true;
+  } catch (error) {
+    initialProfileRuntimeReady = false;
+    console.error('[world-profile] startup blocked until profile data can be recovered:', error);
+  }
+  worldProfileLifecycle = createWorldProfileLifecycle(initialProfileRuntimeReady ? preferredProfile : null);
   // Survive sleep/lock. macOS freezes libuv timers during true system sleep, so a
   // locked/idle/slept Mac stops firing schedules and can wedge PTYs. On wake we
   // re-arm the scheduler (catching up missed missions ONCE) + beats + keep-awake,

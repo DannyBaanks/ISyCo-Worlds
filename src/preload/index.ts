@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'ele
 import type { AgentProvider } from '../shared/agentProvider';
 import type { WorldId } from '../shared/worlds';
 import type { VisualIdentityProfileV1 } from '../shared/worldProfiles';
+import type { WorldProfileLifecycleError, WorldProfileRuntimeStatus } from '../main/worldProfileLifecycle';
 import type { HireManifest } from '../shared/hire';
 export type { HireManifest } from '../shared/hire';
 import type { IntegrationRecord, IntegrationTemplate } from '../shared/integrations';
@@ -677,6 +678,17 @@ const api = {
   /** World-neutral visual identities, indexed by real agent id. */
   worldProfiles: (): Promise<Record<string, VisualIdentityProfileV1>> =>
     ipcRenderer.invoke('worlds:getProfiles'),
+  /** Current operational profile; unlike preferredWorldProfile this is runtime status. */
+  getWorldProfileStatus: (): Promise<WorldProfileRuntimeStatus & { preferredWorldProfile: WorldId }> =>
+    ipcRenderer.invoke('world-profile:getStatus'),
+  /** Requests a profile change; an active runtime returns confirmation-required. */
+  requestWorldProfileActivation: (profileId: WorldId): Promise<
+    { ok: true; activeProfileId: string } | { ok: false; error: WorldProfileLifecycleError }
+  > => ipcRenderer.invoke('world-profile:requestActivation', profileId),
+  /** Continues an explicitly confirmed semantic harness restart. */
+  confirmWorldProfileActivation: (profileId: WorldId): Promise<
+    { ok: true; activeProfileId: string } | { ok: false; error: WorldProfileLifecycleError }
+  > => ipcRenderer.invoke('world-profile:confirmActivation', profileId),
 
   // ─── Config ──────────────────────────────────────────────────────────────
   getConfig: (): Promise<HarnessConfig> =>
