@@ -1,4 +1,5 @@
 import starterVillageAtlasUrl from '../../assets/worlds/starter-village/starter-village-atlas.svg?url';
+import { MONSTER_CATALOG_ATLAS_URL } from './monsterArt';
 
 export const STARTER_VILLAGE_TILE_SIZE = 16;
 export const STARTER_VILLAGE_COLUMNS = 24;
@@ -13,6 +14,7 @@ export const STARTER_VILLAGE_ANCHOR_IDS = [
 ] as const;
 
 export type ScenarioAnchorId = typeof STARTER_VILLAGE_ANCHOR_IDS[number];
+export type StarterVillageResourceId = 'starter-village-atlas' | 'monster-catalog-atlas';
 export type StarterVillageTileId =
   | 'grass' | 'training-grass' | 'dirt' | 'road' | 'water' | 'tree' | 'shrub' | 'flowers'
   | 'guide-house' | 'stable' | 'fence' | 'rock' | 'lantern' | 'crate' | 'sign';
@@ -37,7 +39,7 @@ export interface ScenarioAnchorPlacement {
 
 export interface StarterVillageScenario {
   id: 'starter-village';
-  resources: readonly { id: 'starter-village-atlas'; url: string }[];
+  resources: readonly { id: StarterVillageResourceId; url: string }[];
   map: {
     columns: typeof STARTER_VILLAGE_COLUMNS;
     rows: typeof STARTER_VILLAGE_ROWS;
@@ -68,7 +70,10 @@ const waterEdge = rectangle('water', 0, 10, 2, 6);
 
 export const STARTER_VILLAGE_SCENARIO: StarterVillageScenario = {
   id: 'starter-village',
-  resources: [{ id: 'starter-village-atlas', url: STARTER_VILLAGE_ATLAS_URL }],
+  resources: [
+    { id: 'starter-village-atlas', url: STARTER_VILLAGE_ATLAS_URL },
+    { id: 'monster-catalog-atlas', url: MONSTER_CATALOG_ATLAS_URL }
+  ],
   map: {
     columns: STARTER_VILLAGE_COLUMNS,
     rows: STARTER_VILLAGE_ROWS,

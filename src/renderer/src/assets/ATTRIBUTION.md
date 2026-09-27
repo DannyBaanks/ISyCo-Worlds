@@ -37,6 +37,10 @@ for this project in 2026. It contains original terrain, route, laboratory, stabl
 prop tiles for Monster Trainer's Starter Village. It is not derived from, traced from, or licensed
 from Pokémon, Nintendo, Game Freak, LimeZu, or any other third party.
 
+`worlds/starter-village/monster-catalog-atlas.svg` is likewise hand-authored original 16×16
+creature art for Monster Trainer. Its ten catalog sprites are not derived from, traced from, or
+licensed from Pokémon, Nintendo, Game Freak, LimeZu, or any other third party.
+
 ## Tiled map
 
 `maps/office.tmj` and `maps/brooklyn99.tmj` are Tiled JSON maps built on the LimeZu tilesets

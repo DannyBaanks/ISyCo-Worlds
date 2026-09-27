@@ -31,6 +31,15 @@ test('differing seeds still choose valid variants and palettes', () => {
   }
 });
 
+test('the original catalog has ten distinct species and selects one deterministically', () => {
+  assert.ok(Array.isArray(art.MONSTER_CATALOG), 'the catalog is exported as data');
+  assert.equal(art.MONSTER_CATALOG.length, 10, 'Starter Village has the first ten species');
+  const ids = art.MONSTER_CATALOG.map((species) => species.id);
+  assert.equal(new Set(ids).size, 10, 'species ids are unique');
+  assert.ok(art.MONSTER_CATALOG.every((species) => species.frame.w === 16 && species.frame.h === 16), 'every species occupies one source-pixel frame');
+  assert.deepEqual(art.monsterSpeciesFor(profile('agent-catalog')), art.monsterSpeciesFor(profile('agent-catalog')), 'an agent keeps its species across renders');
+});
+
 test('every primitive coordinate and size is a whole pixel', () => {
   for (const id of ['agent-a', 'agent-b', 'agent-c']) {
     const plan = art.creaturePlan(profile(id));

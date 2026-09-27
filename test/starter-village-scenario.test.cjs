@@ -18,6 +18,11 @@ test('Starter Village keeps semantic anchor identities independent from in-bound
   assert.equal(Scenario.STARTER_VILLAGE_SCENARIO.map.columns, 24);
   assert.equal(Scenario.STARTER_VILLAGE_SCENARIO.map.rows, 16);
   assert.deepEqual(
+    Scenario.STARTER_VILLAGE_SCENARIO.resources.map((resource) => resource.id),
+    ['starter-village-atlas', 'monster-catalog-atlas'],
+    'both scene terrain and catalog sprites are required world resources'
+  );
+  assert.deepEqual(
     Scenario.STARTER_VILLAGE_SCENARIO.map.layers.map((layer) => layer.id),
     ['backdrop', 'terrain', 'roads', 'structures', 'foreground']
   );
@@ -50,4 +55,15 @@ test('Starter Village atlas is original project artwork with reusable source-pix
   assert.match(atlas, /data-tile="guide-house"/);
   assert.match(atlas, /data-tile="stable"/);
   assert.match(fs.readFileSync(attributionPath, 'utf8'), /starter-village-atlas\.svg/);
+});
+
+test('the first creature catalog ships ten original 16px sprite frames', () => {
+  const catalogPath = path.join(root, 'src/renderer/src/assets/worlds/starter-village/monster-catalog-atlas.svg');
+  assert.equal(fs.existsSync(catalogPath), true, 'the catalog atlas ships with Starter Village');
+  const atlas = fs.readFileSync(catalogPath, 'utf8');
+  assert.match(atlas, /Munder Worlds original artwork/);
+  assert.match(atlas, /viewBox="0 0 80 32"/);
+  assert.equal((atlas.match(/data-species=/g) ?? []).length, 10, 'one frame per catalog species');
+  assert.doesNotMatch(atlas, /translate\(\d+\)"/, 'sprite transforms always declare both x and y');
+  assert.match(fs.readFileSync(path.join(root, 'src/renderer/src/assets/ATTRIBUTION.md'), 'utf8'), /monster-catalog-atlas\.svg/);
 });
