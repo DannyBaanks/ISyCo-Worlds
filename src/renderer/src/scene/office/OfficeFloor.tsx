@@ -15,6 +15,7 @@ import type { Recipe } from './portraitArt';
 import { pickSoloLine, pickExchange, type BreakSpot } from './cafeteriaLines';
 import { archiveTable, askBoard, corkBoard, deskNote, INK, type PixelRect } from './boardArt';
 import { colors } from '@/design/tokens';
+import { acquireWorldRendererLease, disposeWorldRendererOnce } from '@/worlds/pixiOwnership';
 import { loadTheme, resolveThemeMap, themeTilesetUrls } from './themeLoader';
 import {
   installContextLossRecovery, planInitFailure, DEFAULT_MAX_INIT_RETRIES
@@ -171,9 +172,10 @@ function firstWords(prompt: string | undefined, maxWords = 6, maxChars = 42): st
 export interface OfficeFloorProps {
   onReady?: () => void;
   onRenderFailure?: (cause: unknown) => void;
+  onDisposed?: () => void;
 }
 
-export function OfficeFloor({ onReady, onRenderFailure }: OfficeFloorProps) {
+export function OfficeFloor({ onReady, onRenderFailure, onDisposed }: OfficeFloorProps) {
   const { t, i18n } = useTranslation();
   const hostRef = useRef<HTMLDivElement | null>(null);
   const appRef = useRef<Application | null>(null);
@@ -245,6 +247,16 @@ export function OfficeFloor({ onReady, onRenderFailure }: OfficeFloorProps) {
     const mountId = ++mountIdRef.current;
     const app = new Application();
     appRef.current = app;
+    let initSettled = false;
+    let disposedReported = false;
+    let releaseLease: (() => boolean) | undefined;
+    const finalizeDisposal = () => {
+      if (disposedReported) return;
+      disposedReported = true;
+      safeDestroy(app);
+      releaseLease?.();
+      onDisposed?.();
+    };
     let readyReported = false;
     let failureReported = false;
     const reportReady = () => {
@@ -269,6 +281,8 @@ export function OfficeFloor({ onReady, onRenderFailure }: OfficeFloorProps) {
     const init = async () => {
       // Load the active theme bundle (falls back to 'office' on a bad/absent bundle).
       const theme = await loadTheme(officeTheme);
+      releaseLease = await acquireWorldRendererLease();
+      if (mountIdRef.current !== mountId) return;
       await app.init({
         background: hexNum(theme.palette.background),
         antialias: false,
@@ -284,7 +298,7 @@ export function OfficeFloor({ onReady, onRenderFailure }: OfficeFloorProps) {
         width: host.clientWidth || 800,
         height: host.clientHeight || 600,
       });
-      if (mountIdRef.current !== mountId) { safeDestroy(app); return; }
+      if (mountIdRef.current !== mountId) return;
       while (host.firstChild) host.removeChild(host.firstChild);
       host.appendChild(app.canvas);
 
@@ -306,7 +320,7 @@ export function OfficeFloor({ onReady, onRenderFailure }: OfficeFloorProps) {
       const tilesetTextures = await Promise.all(
         themeTilesetUrls(theme).map(loadTexture),
       );
-      if (mountIdRef.current !== mountId) { safeDestroy(app); return; }
+      if (mountIdRef.current !== mountId) return;
 
       const world = new Container();
       app.stage.addChild(world);
@@ -1728,7 +1742,7 @@ export function OfficeFloor({ onReady, onRenderFailure }: OfficeFloorProps) {
       initRetriesRef.current = 0;
     };
 
-    init().catch((err) => {
+    void init().catch((err) => {
       if (mountIdRef.current !== mountId) return;
       const plan = planInitFailure(err, initRetriesRef.current);
 
@@ -1762,6 +1776,9 @@ export function OfficeFloor({ onReady, onRenderFailure }: OfficeFloorProps) {
       reportFailure(err);
       host.appendChild(floorNote(
         'OfficeFloor failed to start:\n' + (err?.stack || err?.message || String(err))));
+    }).finally(() => {
+      initSettled = true;
+      if (mountIdRef.current !== mountId) finalizeDisposal();
     });
 
     return () => {
@@ -1773,10 +1790,10 @@ export function OfficeFloor({ onReady, onRenderFailure }: OfficeFloorProps) {
         try { (a as any).__unsub?.(); } catch { /* noop */ }
         try { (a as any).__offMessage?.(); } catch { /* noop */ }
         try { clearInterval((a as any).__taskBoardPoll); } catch { /* noop */ }
-        safeDestroy(a);
       }
       appRef.current = null;
       while (host.firstChild) host.removeChild(host.firstChild);
+      if (initSettled) finalizeDisposal();
     };
   }, [officeTheme, glGeneration, i18n.language]);
 
@@ -1807,6 +1824,8 @@ function floorNote(text: string): HTMLDivElement {
 function hexNum(n: number): number { return n; }
 function hex(n: number): string { return '#' + n.toString(16).padStart(6, '0'); }
 function safeDestroy(app: Application) {
-  try { app.ticker?.stop(); } catch { /* noop */ }
-  try { app.destroy(true, { children: true }); } catch { /* noop */ }
+  disposeWorldRendererOnce(app, () => {
+    try { app.ticker?.stop(); } catch { /* noop */ }
+    try { app.destroy(true, { children: true }); } catch { /* noop */ }
+  });
 }

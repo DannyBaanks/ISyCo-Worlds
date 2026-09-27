@@ -94,7 +94,7 @@ test('the refresh is wired to app bootstrap, not to the runtime path', () => {
   const main = fs.readFileSync(
     path.resolve(__dirname, '..', 'src/main/index.ts'), 'utf8'
   );
-  const bootstrap = main.slice(main.indexOf('function bootstrapHiveServices'));
-  assert.match(bootstrap.slice(0, 600), /hive\.refreshGeneratedDocs\(\)/,
+  const bootstrap = main.slice(main.indexOf('async function bootstrapHiveServices'));
+  assert.match(bootstrap.slice(0, 1800), /hive\.refreshGeneratedDocs\(\)/,
     'app start must still propagate a protocol change to an existing hive');
 });

@@ -46,11 +46,18 @@ test('Marketplace paints over the office, it never unmounts it', () => {
   // The floor, the sidebar (terminals) and the agent strip render unconditionally;
   // only the Marketplace overlay depends on the view.
   assert.match(app, /\{globalView === 'marketplace' && <MarketplaceView \/>\}/);
-  // The floor slot now hosts worlds; WorldHost renders OfficeFloor by default.
-  assert.match(app, /\n\s+<WorldHost config=\{config\} \/>\n/);
+  // The Office renderer remains mounted; semantic profile changes are not routes.
+  assert.match(app, /<WorldHost config=\{officeWorldConfig\} profileId=\{/);
   assert.doesNotMatch(app, /globalView === 'office' &&/);
   assert.doesNotMatch(app, /globalView !== 'marketplace' &&/);
   assert.match(app, /<AgentStrip config=\{config\} \/>/);
+});
+
+test('Worlds is not a sibling global destination; Marketplace remains available', () => {
+  assert.match(src('src/renderer/src/components/globalNavModel.ts'), /GlobalView = 'office' \| 'marketplace'/);
+  assert.doesNotMatch(nav, /onView\('worlds'\)/);
+  assert.match(nav, /onView\('marketplace'\)/);
+  assert.match(src('src/renderer/src/components/WorldsSettings.tsx'), /WorldsView/);
 });
 
 test('Marketplace does not pretend: no catalog, nothing installs, the prepare button is disabled', () => {
@@ -109,8 +116,9 @@ test('every locale carries the shell strings', () => {
   const dir = path.join(__dirname, '..', 'src/renderer/src/i18n/locales');
   const keys = (o, p = '') => Object.entries(o).flatMap(([k, v]) => (v && typeof v === 'object' ? keys(v, `${p}${k}.`) : [`${p}${k}`]));
   const en = keys(JSON.parse(fs.readFileSync(path.join(dir, 'en.json'), 'utf8')).shell);
-  for (const code of ['es', 'zh-CN', 'ar']) {
+  for (const code of ['es', 'zh-CN', 'ar', 'ja']) {
     assert.deepEqual(keys(JSON.parse(fs.readFileSync(path.join(dir, `${code}.json`), 'utf8')).shell), en, code);
   }
+  assert.ok(en.includes('nav.worlds'));
   for (const c of N.MARKETPLACE_CATEGORIES) assert.ok(en.includes(`marketplace.category.${c}`), c);
 });

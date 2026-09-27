@@ -30,7 +30,8 @@ test('MonsterTrainerWorld owns exactly one Pixi lifecycle and destroys it', () =
   assert.match(world, /onReady\?\.\(\)/, 'first successful render marks the staged world ready');
   assert.match(world, /app\.renderer\.render\(app\.stage\)[\s\S]*onReady\?\.\(\)/, 'READY follows a complete first Pixi frame');
   assert.match(world, /catch \(cause\) \{[\s\S]*if \(!alive\) return;[\s\S]*reportFailure\(cause\)/, 'a discarded async init cannot fail a newer staged mount');
-  assert.match(world, /catch \(cause\) \{[\s\S]*app\.destroy\(true\)[\s\S]*if \(!alive\) return;/, 'a rejected init releases its partially allocated Pixi application');
+  assert.match(world, /catch \(cause\) \{[\s\S]*release\(\)[\s\S]*if \(!alive\) return;/, 'a rejected init releases its partially allocated Pixi application');
+  assert.match(world, /onDisposed\?\.\(\)/, 'the old renderer acknowledges only after release');
 });
 
 test('MonsterTrainerWorld receives only props and callbacks, never operational state', () => {
@@ -60,4 +61,13 @@ test('WorldHost renders the registered Monster surface inside its error boundary
   assert.match(world, /onRenderFailure\?\.\(cause\)/, 'failed Pixi initialization reports its cause to the host');
   assert.match(world, /function reportFailure\(cause: unknown\)/, 'one guarded recovery path covers async rendering too');
   assert.match(world, /catch \(cause\)\s*\{\s*reportFailure\(cause\);\s*\}/, 'ticker\/render exceptions trigger the Office fallback');
+});
+
+test('the host owns one visible renderer and never reloads the page to switch worlds', () => {
+  const host = source('src/renderer/src/worlds/WorldHost.tsx');
+  const runtime = source('src/renderer/src/worlds/WorldRuntimeSurface.tsx');
+  assert.doesNotMatch(host, /window\.location\.reload/);
+  assert.match(host, /const mounts = visibleMounts/);
+  assert.match(runtime, /data-world-active="true"/);
+  assert.doesNotMatch(runtime, /opacity: active|pointerEvents: active/);
 });

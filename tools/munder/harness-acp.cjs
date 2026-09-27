@@ -107,6 +107,14 @@ function run({ cfg, prompt, cwd, resume, timeoutMs, approvals, signal, env, onNa
       }
     });
     child.stderr.on('data', (d) => { stderr = (stderr + d).slice(-4000); });
+    // Writable errors such as EPIPE arrive asynchronously; the try/catch in
+    // send() only catches synchronous failures. A late protocol reply can race
+    // the agent process closing stdin, especially when it exits in the same
+    // tick as its final response.
+    child.stdin.on('error', (e) => {
+      if (settled) return;
+      done({ status: 'failed', error: { code: e.code === 'EPIPE' ? 'agent_stdin_closed' : 'agent_stdin_error', message: e.message } });
+    });
     child.on('error', (e) => done({ status: 'failed', error: { code: e.code === 'ENOENT' ? 'harness_not_installed' : 'spawn_failed', message: e.message } }));
     child.on('exit', (code, sig) => {
       for (const p of pending.values()) p.rej(Object.assign(new Error(`el agente ACP salió (${sig || code})`), { code: 'agent_exited' }));

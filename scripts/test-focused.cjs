@@ -16,6 +16,21 @@ const files = fs.readdirSync(path.join(root, 'test'))
   .map((f) => path.join('test', f));
 const args = process.argv.slice(2);
 const flags = args.filter((a) => a.startsWith('-'));
-const only = args.filter((a) => !a.startsWith('-'));
-const r = spawnSync(process.execPath, ['--test', ...flags, ...(only.length ? only : files)], { cwd: root, stdio: 'inherit' });
-process.exit(r.status ?? 1);
+const selected = args.filter((a) => !a.startsWith('-'));
+const suite = selected.length ? selected : files;
+const electronWitness = suite.filter((file) => path.basename(file) === 'world-presentation-pid.test.cjs');
+const unitTests = suite.filter((file) => path.basename(file) !== 'world-presentation-pid.test.cjs');
+
+function run(filesToRun) {
+  if (!filesToRun.length) return 0;
+  const result = spawnSync(process.execPath, ['--test', ...flags, ...filesToRun], { cwd: root, stdio: 'inherit' });
+  return result.status ?? 1;
+}
+
+// This Electron/Xvfb witness starts Chromium GPU and renderer processes. Keep
+// it out of Node's parallel file workers: resource contention can kill the
+// GPU process before Electron delivers render-process-gone. Run it after the
+// regular suite has fully exited, still as part of the same focused command.
+const unitStatus = run(unitTests);
+if (unitStatus !== 0) process.exit(unitStatus);
+process.exit(run(electronWitness));

@@ -423,7 +423,8 @@ export const HARNESS_GITIGNORE_ENTRIES: readonly string[] = [
   'hive/',
   'palace/',
   'roster.json',
-  'roster-backups/'
+  'roster-backups/',
+  '.munder/'
 ];
 
 const HARNESS_GITIGNORE_MARK = '# munder-difflin harness runtime (auto-generated — safe to edit)';

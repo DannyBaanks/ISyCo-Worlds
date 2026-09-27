@@ -127,7 +127,7 @@ test('ensureHarnessGitignore writes runtime ignores into a fresh home', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hh-'));
   assert.strictEqual(fsmod.ensureHarnessGitignore(dir), true);
   const content = fs.readFileSync(path.join(dir, '.gitignore'), 'utf8');
-  for (const e of ['hive/', 'palace/', 'roster.json', 'roster-backups/']) {
+  for (const e of ['hive/', 'palace/', 'roster.json', 'roster-backups/', '.munder/']) {
     assert.ok(content.split('\n').some((l) => l.trim() === e), `${e} ignored`);
   }
 });
@@ -145,9 +145,9 @@ test('ensureHarnessGitignore appends without clobbering and is idempotent', () =
   assert.strictEqual(twice, once, 'second run changes nothing');
 });
 
-test('ensureHarnessGitignore treats user `hive` as covering `hive/`', () => {
+test('ensureHarnessGitignore treats user `hive` as covering `hive/` and preserves user rules', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hh-'));
-  fs.writeFileSync(path.join(dir, '.gitignore'), 'hive\npalace/\nroster.json\nroster-backups/\n');
+  fs.writeFileSync(path.join(dir, '.gitignore'), 'hive\npalace/\nroster.json\nroster-backups/\n.munder\n');
   assert.strictEqual(fsmod.ensureHarnessGitignore(dir), true);
   const content = fs.readFileSync(path.join(dir, '.gitignore'), 'utf8');
   assert.ok(!content.includes('auto-generated'), 'nothing added when covered');

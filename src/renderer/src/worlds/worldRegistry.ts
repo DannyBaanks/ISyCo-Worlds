@@ -5,12 +5,16 @@ import { OFFICE_THEME } from '@/scene/office/themeRegistry';
 import { MonsterTrainerSurface } from './monster/MonsterTrainerSurface';
 import { STARTER_VILLAGE_SCENARIO } from './monster/StarterVillageScenario';
 import type { WorldManifest } from './WorldEngine';
+import type { WorldPresentationIntent, WorldPresentationProjection } from '@shared/worldPresentationProtocol';
 
 export const FALLBACK_WORLD_ID: WorldId = 'office';
 
 export interface WorldSurfaceLifecycle {
   onReady: () => void;
   onRenderFailure: (cause: unknown) => void;
+  onDisposed: () => void;
+  projection?: WorldPresentationProjection;
+  onIntent?: (intent: WorldPresentationIntent) => void;
 }
 
 export interface WorldDefinition extends WorldManifest {

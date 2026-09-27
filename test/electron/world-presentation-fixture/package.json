@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "name": "munder-world-presentation-pid-witness",
+  "description": "Electron fixture proving the presentation WebContents can restart in its own renderer process."
+}
