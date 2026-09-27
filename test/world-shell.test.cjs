@@ -8,23 +8,38 @@ const path = require('node:path');
 const root = process.cwd();
 const source = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('App replaces only its floor slot and preserves the existing operational surfaces', () => {
+test('App makes Office and Worlds mutually exclusive canvas surfaces while preserving operations', () => {
   const app = source('src/renderer/src/App.tsx');
-  assert.match(app, /<WorldHost\s+config=\{config\}\s*\/>/);
+  assert.match(app, /globalView === 'worlds' && <WorldsView/);
+  assert.match(app, /globalView !== 'worlds' && <WorldHost/);
   assert.match(app, /<MemoryPanel\s*\/>/);
   assert.match(app, /<AgentStrip\s+config=\{config\}\s*\/>/);
   assert.doesNotMatch(app, /<OfficeFloor\s*\/>/);
 });
 
-test('world controls change visual preferences only', () => {
-  const selector = source('src/renderer/src/components/WorldSelector.tsx');
+test('Worlds owns the catalog; it contains no Office card and returns through its callback', () => {
+  assert.equal(fs.existsSync(path.join(root, 'src/renderer/src/components/WorldSelector.tsx')), false);
+  const worlds = source('src/renderer/src/worlds/WorldsView.tsx');
   const settings = source('src/renderer/src/components/WorldsSettings.tsx');
-  for (const control of [selector, settings]) {
+  for (const control of [worlds, settings]) {
     assert.match(control, /updateConfig\(/);
     assert.doesNotMatch(control, /hiveTasks|setAgent|archiveAgent|saveWorldProfile/);
   }
-  assert.match(selector, /selectedWorld/);
+  assert.match(worlds, /WORLD_REGISTRY\.filter\(\(world\) => world\.id !== 'office'\)/);
+  assert.match(worlds, /onClick=\{onReturnToOffice\}/);
+  assert.match(worlds, /<WorldHost config=\{config\} \/>/);
   assert.match(settings, /worldsEnabled/);
+});
+
+test('global route restores only after async config hydration and persists user changes only', () => {
+  const app = source('src/renderer/src/App.tsx');
+  assert.match(app, /const globalViewHydrated = useRef\(false\)/);
+  assert.match(app, /if \(!config \|\| globalViewHydrated\.current\) return/);
+  assert.match(app, /globalViewHydrated\.current = true/);
+  assert.match(app, /config\.lastGlobalView/);
+  assert.match(app, /const onGlobalViewChange/);
+  assert.match(app, /window\.cth\.updateConfig\(\{ lastGlobalView: nextView \}\)/);
+  assert.match(app, /onView=\{onGlobalViewChange\}/);
 });
 
 test('WorldHost delegates selection to transactional lifecycle layers instead of branching by world id', () => {

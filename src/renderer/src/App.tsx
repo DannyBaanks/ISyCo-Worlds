@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useStore, selectedAgent } from '@/store/store';
 import { startMockLoop, stopMockLoop } from '@/store/mockEvents';
 import type { HarnessConfig } from '@/store/config';
 import { DEFAULT_ORG_TRIGGER } from '@shared/triggers';
-import { OfficeFloor } from '@/scene/office/OfficeFloor';
 import { WorldHost } from '@/worlds/WorldHost';
-import { WorldSelector } from '@/components/WorldSelector';
+import { WorldsView } from '@/worlds/WorldsView';
 import { useHive } from '@/hooks/useHive';
 import { useResolvedGodName } from '@/hooks/useResolvedGodName';
 import { useGodNameSync } from '@/i18n/useGodNameSync';
@@ -84,6 +83,9 @@ export function App() {
   /** Which global surface fills the main area (title-bar tabs). Visual only:
    *  the floor, terminals and agents stay mounted while Marketplace is up. */
   const [globalView, setGlobalView] = useState<GlobalView>('office');
+  // Route hydration is deliberately one-shot. `config` arrives asynchronously;
+  // rendering its temporary default must never write over a saved visual route.
+  const globalViewHydrated = useRef(false);
   const [quitWarn, setQuitWarn] = useState<{ ptyCount: number } | null>(null);
   const [closing, setClosing] = useState<ClosingTimeState | null>(null);
   const [vpWidth, setVpWidth] = useState<number>(window.innerWidth);
@@ -148,6 +150,28 @@ export function App() {
   // Config subscription — the copy loaded above would otherwise go stale the
   // moment anything saves a setting.
   useEffect(() => window.cth.onConfigChanged(setConfig), []);
+
+  // Restore a persisted visual preference only after the real async config is
+  // available. Later config broadcasts are inputs, not a request to persist
+  // again, so config → state → updateConfig cannot form a loop.
+  useEffect(() => {
+    if (!config || globalViewHydrated.current) return;
+    globalViewHydrated.current = true;
+    setGlobalView(config.lastGlobalView ?? 'office');
+  }, [config]);
+
+  // Disabling Worlds remotely or from Settings leaves operational state alone
+  // and returns this visual shell to Office without writing another config.
+  useEffect(() => {
+    if (!globalViewHydrated.current || config?.worldsEnabled === true || globalView !== 'worlds') return;
+    setGlobalView('office');
+  }, [config?.worldsEnabled, globalView]);
+
+  const onGlobalViewChange = (nextView: GlobalView): void => {
+    if (nextView === globalView || (nextView === 'worlds' && config?.worldsEnabled !== true)) return;
+    setGlobalView(nextView);
+    if (globalViewHydrated.current) void window.cth.updateConfig({ lastGlobalView: nextView });
+  };
 
   // Quit warning subscription
   useEffect(() => window.cth.onCloseRequested((info) => setQuitWarn(info)), []);
@@ -277,6 +301,10 @@ export function App() {
     return <HivePicker config={config} onOpenCurrent={() => setHiveOpened(true)} />;
   }
 
+  // Office and Marketplace always request the fallback projection. This object
+  // only changes which renderer is mounted; it does not alter persisted config.
+  const officeWorldConfig: HarnessConfig = { ...config, worldsEnabled: false };
+
   return (
     <div style={{
       display: 'flex', flexDirection: 'column',
@@ -344,13 +372,12 @@ export function App() {
         <div style={{ width: 1, alignSelf: 'stretch', margin: '6px 2px', background: 'var(--cth-ink-300)' }} />
         <GlobalNav
           view={globalView}
-          onView={setGlobalView}
+          onView={onGlobalViewChange}
           onOpenSettings={(section) => { setSettingsSection(section); setSettingsOpen(true); }}
           settingsOpen={settingsOpen}
           density={density}
           worldsEnabled={config.worldsEnabled === true}
         />
-        <WorldSelector config={config} />
         {/* v0.3.4: theme + fullscreen live HERE (top right), not buried in the
             terminal header — and the theme darkens the whole app, terminals
             included (design/theme.ts + tokens.css dark block). */}
@@ -424,7 +451,8 @@ export function App() {
       }}>
         {globalView === 'marketplace' && <MarketplaceView />}
         <div style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative' }}>
-          <WorldHost config={config} />
+          {globalView === 'worlds' && <WorldsView config={config} onReturnToOffice={() => onGlobalViewChange('office')} />}
+          {globalView !== 'worlds' && <WorldHost config={officeWorldConfig} />}
           <MemoryPanel />
           {agentCount === 0 && godStatus === 'booting' && <MichaelBooting />}
           {agentCount === 0 && godStatus !== 'booting' && (
