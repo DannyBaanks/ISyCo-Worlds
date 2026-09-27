@@ -159,7 +159,7 @@ git commit -m "feat(worlds): add global Worlds tab"
 
 **Interfaces:**
 - `WorldsView({ config, onReturnToOffice }: { config: HarnessConfig; onReturnToOffice: () => void }): ReactNode` owns catalog controls and one alternative-world host slot.
-- `App` initializes `globalView` from `config.lastGlobalView`, writes view changes through `window.cth.updateConfig`, and renders Office, Marketplace, or Worlds without unmounting semantic side panels.
+- `App` restores `globalView` only after the asynchronous real `config` has arrived. It writes a changed user-selected view through `window.cth.updateConfig`, and renders Office, Marketplace, or Worlds without unmounting semantic side panels.
 
 - [ ] **Step 1: Write failing shell tests**
 
@@ -173,7 +173,7 @@ Expected: FAIL because the current app keeps `WorldHost` in the Office slot and 
 
 - [ ] **Step 3: Implement the dedicated surface and route persistence**
 
-Create `WorldsView` with the registry-driven list and a clear selected state. A Monster Trainer selection writes only `selectedWorld`; Office selection calls `onReturnToOffice`. In `App`, make Office and Worlds mutually exclusive canvas owners, update `lastGlobalView` on global-nav changes, and pass `worldsEnabled` to `GlobalNav`. Preserve Marketplace's overlay behavior and all existing non-world surfaces.
+Create `WorldsView` with the registry-driven list and a clear selected state. A Monster Trainer selection writes only `selectedWorld`; Office selection calls `onReturnToOffice`. In `App`, begin with an in-memory Office route but restore `lastGlobalView` in an explicit effect only after the real config load resolves. Guard persistence with a hydrated/user-change ref so boot restoration never writes Office over a stored Worlds route and config-change hydration never loops back through `updateConfig`. Then make Office and Worlds mutually exclusive canvas owners, update `lastGlobalView` only on user global-nav changes, and pass `worldsEnabled` to `GlobalNav`. Preserve Marketplace's overlay behavior and all existing non-world surfaces.
 
 - [ ] **Step 4: Run focused shell/navigation tests and typecheck**
 
@@ -203,6 +203,13 @@ git commit -m "feat(worlds): move world selection into global surface"
 - `WorldEngine.markDisposed(token)` advances the pending candidate to mount only after the prior canvas cleanup has completed.
 - `WorldHost` renders at most one `WorldRuntimeSurface`; it reports renderer READY/failure and performs no full-page reload during a normal selection.
 
+**Failure guarantee:** A **pre-disposal** resource/preload failure preserves the
+current READY renderer because disposal has not been requested. A
+**post-disposal** renderer failure cannot preserve that previous renderer: the
+single-renderer invariant has already released it. It attempts Office exactly
+once; if Office fails, it enters Recovery. Do not describe the latter path as
+transactionally preserving the last READY renderer.
+
 - [ ] **Step 1: Write failing lifecycle tests**
 
 Replace the hidden-staging assertion in `test/world-engine.test.cjs` with a serialized trace: Office is READY; Monster resources resolve while Office remains READY; exactly after Office disposal acknowledgement Monster becomes the sole mount candidate; Monster READY makes it active. Add a resource-failure case proving Office remains active because disposal was never requested. Add three consecutive failed transitions that prove no stale mount, disposal, or listener count accumulates. Extend Office/Monster lifecycle tests to assert each unmount calls its existing Pixi destruction path once, and assert the host never invokes `window.location.reload()` for a normal selection.
@@ -215,7 +222,7 @@ Expected: FAIL because the current engine exposes simultaneous active/candidate 
 
 - [ ] **Step 3: Implement serialized handoff**
 
-Keep the manifest/resource loop and `WorldLifecycleError` fields. After successful preload, queue the ready mount for disposal and retain the next world internally; do not expose the next renderer to React until `markDisposed` acknowledges cleanup. On a candidate renderer failure after disposal, perform the existing one-shot Office fallback; if that fails, enter Recovery. Make `visibleMounts`/host rendering derive one live mount only and remove the invisible opacity staging layer.
+Keep the manifest/resource loop and `WorldLifecycleError` fields. After successful preload, queue the ready mount for disposal and retain the next world internally; do not expose the next renderer to React until `markDisposed` acknowledges cleanup. Preserve the active renderer on every pre-disposal preload failure. On a post-disposal candidate renderer failure, perform the existing one-shot Office fallback; if that fails, enter Recovery. Make `visibleMounts`/host rendering derive one live mount only and remove the invisible opacity staging layer.
 
 - [ ] **Step 4: Run focused lifecycle tests and typecheck**
 
@@ -247,7 +254,7 @@ Expected: all tests pass, typechecks pass, and the build emits Office, Starter V
 
 - [ ] **Step 2: Manual Electron witness**
 
-Start the development app with the Worlds flag enabled. Verify: Office → Worlds → Monster Trainer → Office three times; a missing-world-resource recovery; then reload while Monster Trainer is selected. Confirm the same agents, selected agent, task detail state, and live terminals remain available. Record any GPU/context warning as a failure rather than treating reload as success.
+Start the development app with the Worlds flag enabled. Verify: Office → Worlds → Monster Trainer → Office three times; a missing-world-resource recovery; then reload while Monster Trainer is selected. Confirm the same agents, selected agent, task detail state, and live terminals remain available. During each Office → Worlds → Monster Trainer → Office pass, use temporary instrumentation or existing test surfaces to count Pixi `Application`, canvas, and ticker ownership: never permit two world renderers at once; each released renderer destroys exactly once; returning to Office leaves no Monster Trainer canvas, ticker, or listener; after three passes all counts return to the baseline. Do not add a production metrics framework. Record any GPU/context warning as a failure rather than treating reload as success.
 
 ## Plan Self-Review
 
