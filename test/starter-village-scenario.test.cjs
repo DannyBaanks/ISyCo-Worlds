@@ -51,3 +51,17 @@ test('Starter Village atlas is original project artwork with reusable source-pix
   assert.match(atlas, /data-tile="stable"/);
   assert.match(fs.readFileSync(attributionPath, 'utf8'), /starter-village-atlas\.svg/);
 });
+
+test('Starter Village keeps a validated original PNG atlas alongside legacy art', () => {
+  const atlasPath = path.join(root, 'src/renderer/src/assets/worlds/starter-village/starter-village-atlas.png');
+  const attributionPath = path.join(root, 'src/renderer/src/assets/ATTRIBUTION.md');
+  assert.equal(fs.existsSync(atlasPath), true, 'the replacement PNG atlas must be available to the manifest');
+  const png = fs.readFileSync(atlasPath);
+  assert.equal(png.toString('hex', 0, 8), '89504e470d0a1a0a', 'replacement art must be a real PNG');
+  assert.equal(png.readUInt32BE(16), 1448, 'generated atlas width is part of the validated frame layout');
+  assert.equal(png.readUInt32BE(20), 1086, 'generated atlas height is part of the validated frame layout');
+  const attribution = fs.readFileSync(attributionPath, 'utf8');
+  assert.match(attribution, /starter-village-atlas\.png/);
+  assert.match(attribution, /original.*pixel.art/i);
+  assert.match(attribution, /starter-village-atlas\.svg/);
+});

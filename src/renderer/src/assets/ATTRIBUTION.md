@@ -32,10 +32,13 @@ reading old commits or an old copy of this file, that is the change you are look
 
 ## Starter Village atlas is original Munder Worlds art
 
-`worlds/starter-village/starter-village-atlas.svg` is hand-authored source-pixel artwork created
-for this project in 2026. It contains original terrain, route, laboratory, stable, vegetation and
-prop tiles for Monster Trainer's Starter Village. It is not derived from, traced from, or licensed
-from Pokémon, Nintendo, Game Freak, LimeZu, or any other third party.
+`worlds/starter-village/starter-village-atlas.png` is original pixel-art scenery generated for this
+project on 2026-09-27 and reviewed for use in Monster Trainer's Starter Village. It contains
+terrain, route, laboratory, stable, vegetation and prop art. It is not derived from, traced from,
+or licensed from Pokémon, Nintendo, Game Freak, LimeZu, or any other third party.
+
+`worlds/starter-village/starter-village-atlas.svg` is the earlier hand-authored source-pixel atlas
+and is retained as legacy artwork; it is not removed by this refresh.
 
 ## Tiled map
 
