@@ -15,7 +15,8 @@ export const STARTER_VILLAGE_ANCHOR_IDS = [
 export type ScenarioAnchorId = typeof STARTER_VILLAGE_ANCHOR_IDS[number];
 export type StarterVillageTileId =
   | 'grass' | 'training-grass' | 'dirt' | 'road' | 'water' | 'tree' | 'shrub' | 'flowers'
-  | 'guide-house' | 'stable' | 'fence' | 'rock' | 'lantern' | 'crate' | 'sign';
+  | 'guide-house' | 'stable' | 'fence-horizontal' | 'fence-vertical' | 'fence-post'
+  | 'rock' | 'lantern' | 'crate' | 'sign';
 
 export interface ScenarioTilePlacement {
   tile: StarterVillageTileId;
@@ -26,6 +27,7 @@ export interface ScenarioTilePlacement {
 export interface ScenarioLayer {
   id: 'backdrop' | 'terrain' | 'roads' | 'structures' | 'foreground';
   zIndex: number;
+  fill?: StarterVillageTileId;
   tiles: readonly ScenarioTilePlacement[];
 }
 
@@ -62,8 +64,10 @@ function rectangle(tile: StarterVillageTileId, left: number, top: number, width:
   }));
 }
 
-const allGrass = rectangle('grass', 0, 0, STARTER_VILLAGE_COLUMNS, STARTER_VILLAGE_ROWS);
-const trainingGrass = rectangle('training-grass', 3, 11, 8, 4);
+const trainingGrass = [
+  ...rectangle('training-grass', 3, 11, 8, 5),
+  ...rectangle('training-grass', 16, 10, 4, 4)
+];
 const waterEdge = rectangle('water', 0, 10, 2, 6);
 
 export const STARTER_VILLAGE_SCENARIO: StarterVillageScenario = {
@@ -73,8 +77,8 @@ export const STARTER_VILLAGE_SCENARIO: StarterVillageScenario = {
     columns: STARTER_VILLAGE_COLUMNS,
     rows: STARTER_VILLAGE_ROWS,
     layers: [
-      { id: 'backdrop', zIndex: 0, tiles: [{ tile: 'grass', x: 0, y: 0 }] },
-      { id: 'terrain', zIndex: 10, tiles: [...allGrass, ...trainingGrass, ...waterEdge] },
+      { id: 'backdrop', zIndex: 0, fill: 'grass', tiles: [] },
+      { id: 'terrain', zIndex: 10, tiles: [...trainingGrass, ...waterEdge] },
       {
         id: 'roads',
         zIndex: 20,
@@ -94,8 +98,15 @@ export const STARTER_VILLAGE_SCENARIO: StarterVillageScenario = {
           { tile: 'sign', x: 7, y: 6 },
           { tile: 'lantern', x: 8, y: 7 },
           { tile: 'lantern', x: 16, y: 8 },
-          { tile: 'crate', x: 20, y: 9 },
-          ...rectangle('fence', 15, 9, 6, 1)
+          { tile: 'crate', x: 21, y: 8 },
+          ...rectangle('fence-horizontal', 16, 9, 4, 1),
+          ...rectangle('fence-horizontal', 16, 14, 4, 1),
+          ...rectangle('fence-vertical', 15, 10, 1, 4),
+          ...rectangle('fence-vertical', 20, 10, 1, 4),
+          { tile: 'fence-post', x: 15, y: 9 },
+          { tile: 'fence-post', x: 20, y: 9 },
+          { tile: 'fence-post', x: 15, y: 14 },
+          { tile: 'fence-post', x: 20, y: 14 }
         ]
       },
       {

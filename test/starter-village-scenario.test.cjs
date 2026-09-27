@@ -39,6 +39,39 @@ test('Starter Village selects only integral scales and preserves 1x below map si
   assert.equal(Scenario.integerScaleForViewport(200, 200), 1);
 });
 
+test('Starter Village fills the ground continuously and extends its south training strip', () => {
+  const backdrop = Scenario.STARTER_VILLAGE_SCENARIO.map.layers.find((layer) => layer.id === 'backdrop');
+  assert.equal(backdrop.fill, 'grass', 'the base ground should be one repeating fill, not isolated outlined tiles');
+  assert.deepEqual(backdrop.tiles, []);
+  const training = Scenario.STARTER_VILLAGE_SCENARIO.map.layers.find((layer) => layer.id === 'terrain').tiles
+    .filter((tile) => tile.tile === 'training-grass');
+  assert.equal(training.some((tile) => tile.y === 15), true, 'the lower rectangle reaches the last logical map row');
+});
+
+test('Starter Village closes a reusable-fence corral directly below the stable', () => {
+  const layers = Scenario.STARTER_VILLAGE_SCENARIO.map.layers;
+  const fences = layers.find((layer) => layer.id === 'structures').tiles;
+  const paddock = layers.find((layer) => layer.id === 'terrain').tiles;
+  const at = (x, y) => fences.find((tile) => tile.x === x && tile.y === y)?.tile;
+  for (let x = 16; x <= 19; x += 1) {
+    assert.equal(at(x, 9), 'fence-horizontal', `north rail at ${x},9`);
+    assert.equal(at(x, 14), 'fence-horizontal', `south rail at ${x},14`);
+  }
+  assert.equal(at(15, 9), 'fence-post');
+  assert.equal(at(20, 9), 'fence-post');
+  assert.equal(at(15, 14), 'fence-post');
+  assert.equal(at(20, 14), 'fence-post');
+  for (let y = 10; y <= 13; y += 1) {
+    assert.equal(at(15, y), 'fence-vertical', `west rail at 15,${y}`);
+    assert.equal(at(20, y), 'fence-vertical', `east rail at 20,${y}`);
+  }
+  for (let y = 10; y <= 13; y += 1) {
+    for (let x = 16; x <= 19; x += 1) {
+      assert.ok(paddock.some((tile) => tile.tile === 'training-grass' && tile.x === x && tile.y === y), `corral floor at ${x},${y}`);
+    }
+  }
+});
+
 test('Starter Village atlas is original project artwork with reusable source-pixel tiles', () => {
   const atlasPath = path.join(root, 'src/renderer/src/assets/worlds/starter-village/starter-village-atlas.svg');
   const attributionPath = path.join(root, 'src/renderer/src/assets/ATTRIBUTION.md');
@@ -70,7 +103,7 @@ test('Starter Village keeps a validated original PNG atlas alongside legacy art'
   assert.match(Scenario.STARTER_VILLAGE_SCENARIO.resources[0].url, /starter-village-atlas\.png$/);
   assert.deepEqual(Object.keys(AtlasFrames.STARTER_VILLAGE_ATLAS_FRAMES), [
     'grass', 'training-grass', 'dirt', 'road', 'water', 'tree', 'shrub', 'flowers',
-    'guide-house', 'stable', 'fence', 'rock', 'lantern', 'crate', 'sign'
+    'guide-house', 'stable', 'fence-horizontal', 'fence-vertical', 'fence-post', 'rock', 'lantern', 'crate', 'sign'
   ]);
   for (const [id, frame] of Object.entries(AtlasFrames.STARTER_VILLAGE_ATLAS_FRAMES)) {
     assert.ok(frame.x >= 0 && frame.y >= 0, `${id} frame origin must be non-negative`);
