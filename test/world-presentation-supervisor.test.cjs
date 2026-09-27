@@ -109,3 +109,25 @@ test('a renderer that crashes during async host bootstrap cannot be adopted or l
   assert.equal(supervisor.getStatus().error.phase, 'BOOTSTRAPPING');
   assert.equal(destroyed, 1);
 });
+
+test('projection updates during async host creation are retained for the bootstrap command', async () => {
+  let resolveHost;
+  const hostReady = new Promise((resolve) => { resolveHost = resolve; });
+  const host = { id: 'late-host', commands: [], send(command) { this.commands.push(command); }, async destroy() {} };
+  const supervisor = new WorldPresentationSupervisor({
+    createHost: () => hostReady,
+    onStatus: () => {},
+    onIntent: () => {}
+  });
+  const starting = supervisor.start('monster-trainer', projection);
+  const latestProjection = {
+    agents: [{ id: 'atlas', name: 'Atlas', state: 'working', archived: false }],
+    tasks: [{ id: 'task-1', title: 'Current task', assignee: 'atlas', status: 'running', awaitsHuman: false }],
+    visualIdentities: { atlas: { version: 1, agentId: 'atlas', seed: 'hydrated-seed', appearances: {}, updatedAt: 'now' } }
+  };
+  assert.equal(await supervisor.updateProjection(latestProjection), true);
+  resolveHost(host);
+  await starting;
+  assert.equal(host.commands[0].type, 'bootstrap');
+  assert.deepEqual(host.commands[0].projection, latestProjection);
+});

@@ -49,9 +49,12 @@ export class WorldPresentationSupervisor {
   }
 
   async updateProjection(projection: WorldPresentationProjection): Promise<boolean> {
-    if (!this.host || !this.profileId || !isWorldPresentationCommand({ type: 'update-projection', profileId: this.profileId, generation: this.generation, projection })) return false;
+    if (!this.profileId || !isWorldPresentationCommand({ type: 'update-projection', profileId: this.profileId, generation: this.generation, projection })) return false;
     this.projection = structuredClone(projection);
-    this.host.send({ type: 'update-projection', profileId: this.profileId, generation: this.generation, projection: this.projection });
+    // Resource loading can take time before createHost resolves. Retain the
+    // newest semantic snapshot and include it in bootstrap instead of dropping
+    // updates that arrive during loadURL.
+    this.host?.send({ type: 'update-projection', profileId: this.profileId, generation: this.generation, projection: this.projection });
     return true;
   }
 
@@ -93,7 +96,6 @@ export class WorldPresentationSupervisor {
 
   private async createAndBootstrap(): Promise<WorldPresentationStatus> {
     const profileId = this.profileId!;
-    const projection = this.projection!;
     this.generation += 1;
     const generation = this.generation;
     this.setStatus({ phase: 'BOOTSTRAPPING', profileId, generation });
@@ -109,6 +111,11 @@ export class WorldPresentationSupervisor {
         throw new Error('visual renderer exited during bootstrap');
       }
       this.host = host;
+      const projection = this.projection;
+      if (!projection || this.profileId !== profileId || generation !== this.generation) {
+        await this.destroyCurrent();
+        return this.getStatus();
+      }
       host.send({ type: 'bootstrap', profileId, generation, projection });
       return this.getStatus();
     } catch (error) {
