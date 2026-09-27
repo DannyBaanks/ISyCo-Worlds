@@ -256,7 +256,20 @@
         "selector": "世界",
         "office": "办公室",
         "monsterTrainer": "怪兽训练师（实验性）",
-        "returnToOffice": "返回办公室"
+        "returnToOffice": "返回办公室",
+        "startupTitle": "选择世界配置",
+        "activeProfile": "当前运行配置",
+        "preferredProfile": "下次启动偏好",
+        "noneActive": "没有活动配置",
+        "activeTag": "运行中",
+        "useWorld": "启动 {{world}}",
+        "restartInto": "重启并进入 {{world}}",
+        "activating": "正在启动…",
+        "confirmTitle": "重启 Harness 运行时？",
+        "confirmBody": "这会停止当前配置的终端和服务，然后启动 {{world}}。当前配置的数据会保留以供恢复。",
+        "confirmRestart": "重启到所选世界",
+        "activationFailed": "无法启动配置",
+        "statusUnavailable": "无法读取当前世界配置。请重新打开设置后重试。"
       }
     },
     "agentsModels": {

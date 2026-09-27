@@ -12,9 +12,8 @@
  * and the dropdown render, so the two can never drift apart.
  */
 
-/** Which global surface fills the main area. Switching is visual only: the
- *  floor, the terminals and every agent process stay mounted underneath. */
-export type GlobalView = 'office' | 'marketplace' | 'worlds';
+/** Global surfaces; semantic world profiles are selected via startup/settings. */
+export type GlobalView = 'office' | 'marketplace';
 
 export type SettingsSection =
   | 'General' | 'Prerequisites' | 'Agents & Models' | 'Autonomy & Budgets'

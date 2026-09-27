@@ -252,11 +252,24 @@
       "worlds": {
         "title": "Mundos",
         "enable": "Activar mundos visuales",
-        "description": "Prueba vistas experimentales de los mismos agentes activos. La Oficina sigue siendo la opción por defecto y puedes volver cuando quieras.",
+        "description": "Cada mundo tiene su propia Hive, acciones y capacidades. Cambiar un perfil activo reinicia el runtime del harness; el espacio de trabajo del proyecto sigue compartido.",
         "selector": "MUNDO",
         "office": "Oficina",
         "monsterTrainer": "Monster Trainer (experimental)",
-        "returnToOffice": "Volver a la Oficina"
+        "returnToOffice": "Volver a la Oficina",
+        "startupTitle": "Elige un perfil de mundo",
+        "activeProfile": "Runtime activo",
+        "preferredProfile": "Preferencia para el próximo inicio",
+        "noneActive": "No hay un perfil activo",
+        "activeTag": "ACTIVO",
+        "useWorld": "Iniciar {{world}}",
+        "restartInto": "Reiniciar en {{world}}",
+        "activating": "Iniciando…",
+        "confirmTitle": "¿Reiniciar el runtime del harness?",
+        "confirmBody": "Esto detendrá las terminales y servicios activos del perfil actual y luego iniciará {{world}}. Los datos del perfil actual se conservan para recuperarlos.",
+        "confirmRestart": "Reiniciar en el mundo elegido",
+        "activationFailed": "No se pudo iniciar el perfil",
+        "statusUnavailable": "No se pudo leer el perfil de mundo activo. Vuelve a abrir Configuración para intentarlo de nuevo."
       }
     },
     "agentsModels": {

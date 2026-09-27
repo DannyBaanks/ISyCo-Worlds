@@ -252,11 +252,24 @@
       "worlds": {
         "title": "Worlds",
         "enable": "Enable visual worlds",
-        "description": "Try experimental views of the same live agents. Office stays the default and you can switch back anytime.",
+        "description": "Each world has its own Hive, actions, and capabilities. Changing an active profile restarts the harness runtime; your project workspace stays shared.",
         "selector": "WORLD",
         "office": "Office",
         "monsterTrainer": "Monster Trainer (experimental)",
-        "returnToOffice": "Back to Office"
+        "returnToOffice": "Back to Office",
+        "startupTitle": "Choose a world profile",
+        "activeProfile": "Active runtime",
+        "preferredProfile": "Next startup preference",
+        "noneActive": "No profile active",
+        "activeTag": "ACTIVE",
+        "useWorld": "Start {{world}}",
+        "restartInto": "Restart into {{world}}",
+        "activating": "Starting…",
+        "confirmTitle": "Restart harness runtime?",
+        "confirmBody": "This stops the current profile's live terminals and services, then starts {{world}}. The current profile data stays saved for recovery.",
+        "confirmRestart": "Restart into selected world",
+        "activationFailed": "Could not start profile",
+        "statusUnavailable": "Could not read the active world profile. Retry by reopening Settings."
       }
     },
     "agentsModels": {

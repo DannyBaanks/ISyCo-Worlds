@@ -8,27 +8,26 @@ const path = require('node:path');
 const root = process.cwd();
 const source = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('App makes Office and Worlds mutually exclusive canvas surfaces while preserving operations', () => {
+test('App keeps the Office projection mounted and uses Worlds only for a missing runtime', () => {
   const app = source('src/renderer/src/App.tsx');
-  assert.match(app, /globalView === 'worlds' && <WorldsView/);
-  assert.match(app, /globalView !== 'worlds' && <WorldHost/);
+  assert.match(app, /if \(worldProfileStatus && !worldProfileStatus\.activeProfileId\)/);
+  assert.match(app, /<WorldHost config=\{officeWorldConfig\} \/>/);
   assert.match(app, /<MemoryPanel\s*\/>/);
   assert.match(app, /<AgentStrip\s+config=\{config\}\s*\/>/);
   assert.doesNotMatch(app, /<OfficeFloor\s*\/>/);
 });
 
-test('Worlds owns the catalog; it contains no Office card and returns through its callback', () => {
+test('Worlds owns the semantic profile selector and never mutates agent/task truth', () => {
   assert.equal(fs.existsSync(path.join(root, 'src/renderer/src/components/WorldSelector.tsx')), false);
   const worlds = source('src/renderer/src/worlds/WorldsView.tsx');
   const settings = source('src/renderer/src/components/WorldsSettings.tsx');
   for (const control of [worlds, settings]) {
-    assert.match(control, /updateConfig\(/);
+    assert.match(control, /WorldsView/);
     assert.doesNotMatch(control, /hiveTasks|setAgent|archiveAgent|saveWorldProfile/);
   }
-  assert.match(worlds, /WORLD_REGISTRY\.filter\(\(world\) => world\.id !== 'office'\)/);
-  assert.match(worlds, /onClick=\{onReturnToOffice\}/);
-  assert.match(worlds, /<WorldHost config=\{config\} \/>/);
-  assert.match(settings, /worldsEnabled/);
+  assert.match(worlds, /WORLD_IDS\.map/);
+  assert.match(worlds, /confirmWorldProfileActivation/);
+  assert.doesNotMatch(worlds, /updateConfig\(\{\s*selectedWorld/);
 });
 
 test('global route restores only after async config hydration and persists user changes only', () => {

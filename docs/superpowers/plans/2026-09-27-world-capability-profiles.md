@@ -118,10 +118,10 @@
 - Modify: `src/renderer/src/i18n/locales/es.json`
 - Test: `test/world-profile-selector.test.cjs`
 
-- [ ] **Step 1: Add failing UI tests** that select a startup profile, show active versus preferred profile, require confirmation for changing an active profile, and never switch the current scene before activation reports success.
-- [ ] **Step 2: Implement startup selection against `activateWorldProfile`** and replace the current global visual tab behavior. Keep profile selection in startup/onboarding and explicit restart controls only; remove the Worlds sibling global-navigation tab once a profile is active, while keeping Marketplace navigation unchanged.
-- [ ] **Step 3: Add translated lifecycle/loading/error/confirmation copy** for English and Spanish.
-- [ ] **Step 4: Run selector tests, `npm run typecheck`, and `npm run test:focused`.** Manually verify startup choice and semantic profile confirmation in Electron.
+- [x] **Step 1: Add failing UI tests** that select a startup profile, show active versus preferred profile, require confirmation for changing an active profile, and never switch the current scene before activation reports success.
+- [x] **Step 2: Implement startup selection against `activateWorldProfile`** and replace the current global visual tab behavior. Keep profile selection in startup/onboarding and explicit restart controls only; remove the Worlds sibling global-navigation tab once a profile is active, while keeping Marketplace navigation unchanged.
+- [x] **Step 3: Add translated lifecycle/loading/error/confirmation copy** for English and Spanish.
+- [x] **Step 4: Run selector tests, `npm run typecheck`, and `npm run test:focused`.** Manually verify startup choice and semantic profile confirmation in Electron.
 - [ ] **Step 5: Commit** as `feat(worlds): select semantic profile at startup`.
 
 ## Definition of Done

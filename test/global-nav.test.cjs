@@ -46,20 +46,18 @@ test('Marketplace paints over the office, it never unmounts it', () => {
   // The floor, the sidebar (terminals) and the agent strip render unconditionally;
   // only the Marketplace overlay depends on the view.
   assert.match(app, /\{globalView === 'marketplace' && <MarketplaceView \/>\}/);
-  // Marketplace retains the Office renderer; only the dedicated Worlds route
-  // owns the alternative renderer.
-  assert.match(app, /globalView !== 'worlds' && <WorldHost config=\{officeWorldConfig\} \/>/);
+  // The Office renderer remains mounted; semantic profile changes are not routes.
+  assert.match(app, /<WorldHost config=\{officeWorldConfig\} \/>/);
   assert.doesNotMatch(app, /globalView === 'office' &&/);
   assert.doesNotMatch(app, /globalView !== 'marketplace' &&/);
   assert.match(app, /<AgentStrip config=\{config\} \/>/);
 });
 
-test('Worlds is a gated global destination, not an office-local control', () => {
-  assert.match(src('src/renderer/src/components/globalNavModel.ts'), /GlobalView = 'office' \| 'marketplace' \| 'worlds'/);
-  assert.match(nav, /worldsEnabled: boolean/);
-  assert.match(nav, /\{worldsEnabled && \(/);
-  assert.match(nav, /onClick=\{\(\) => onView\('worlds'\)\}/);
-  assert.match(nav, /shell\.nav\.worlds/);
+test('Worlds is not a sibling global destination; Marketplace remains available', () => {
+  assert.match(src('src/renderer/src/components/globalNavModel.ts'), /GlobalView = 'office' \| 'marketplace'/);
+  assert.doesNotMatch(nav, /onView\('worlds'\)/);
+  assert.match(nav, /onView\('marketplace'\)/);
+  assert.match(src('src/renderer/src/components/WorldsSettings.tsx'), /WorldsView/);
 });
 
 test('Marketplace does not pretend: no catalog, nothing installs, the prepare button is disabled', () => {

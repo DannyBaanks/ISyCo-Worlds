@@ -83,6 +83,7 @@ export function App() {
   /** Which global surface fills the main area (title-bar tabs). Visual only:
    *  the floor, terminals and agents stay mounted while Marketplace is up. */
   const [globalView, setGlobalView] = useState<GlobalView>('office');
+  const [worldProfileStatus, setWorldProfileStatus] = useState<Awaited<ReturnType<typeof window.cth.getWorldProfileStatus>> | null>(null);
   // Route hydration is deliberately one-shot. `config` arrives asynchronously;
   // rendering its temporary default must never write over a saved visual route.
   const globalViewHydrated = useRef(false);
@@ -151,24 +152,26 @@ export function App() {
   // moment anything saves a setting.
   useEffect(() => window.cth.onConfigChanged(setConfig), []);
 
+  useEffect(() => {
+    if (!config) return;
+    let cancelled = false;
+    void window.cth.getWorldProfileStatus().then((status) => {
+      if (!cancelled) setWorldProfileStatus(status);
+    }).catch(() => { /* renderer remains usable; Settings can retry the query */ });
+    return () => { cancelled = true; };
+  }, [config?.preferredWorldProfile, hiveOpened]);
+
   // Restore a persisted visual preference only after the real async config is
   // available. Later config broadcasts are inputs, not a request to persist
   // again, so config → state → updateConfig cannot form a loop.
   useEffect(() => {
     if (!config || globalViewHydrated.current) return;
     globalViewHydrated.current = true;
-    setGlobalView(config.lastGlobalView ?? 'office');
+    setGlobalView(config.lastGlobalView === 'marketplace' ? 'marketplace' : 'office');
   }, [config]);
 
-  // Disabling Worlds remotely or from Settings leaves operational state alone
-  // and returns this visual shell to Office without writing another config.
-  useEffect(() => {
-    if (!globalViewHydrated.current || config?.worldsEnabled === true || globalView !== 'worlds') return;
-    setGlobalView('office');
-  }, [config?.worldsEnabled, globalView]);
-
   const onGlobalViewChange = (nextView: GlobalView): void => {
-    if (nextView === globalView || (nextView === 'worlds' && config?.worldsEnabled !== true)) return;
+    if (nextView === globalView) return;
     setGlobalView(nextView);
     if (globalViewHydrated.current) void window.cth.updateConfig({ lastGlobalView: nextView });
   };
@@ -301,6 +304,12 @@ export function App() {
     return <HivePicker config={config} onOpenCurrent={() => setHiveOpened(true)} />;
   }
 
+  // A failed/blocked profile bootstrap has no active scene to display. Let the
+  // operator choose a profile explicitly; the action starts the harness runtime.
+  if (worldProfileStatus && !worldProfileStatus.activeProfileId) {
+    return <WorldsView config={config} onActivated={setWorldProfileStatus} />;
+  }
+
   // Office and Marketplace always request the fallback projection. This object
   // only changes which renderer is mounted; it does not alter persisted config.
   const officeWorldConfig: HarnessConfig = { ...config, worldsEnabled: false };
@@ -376,7 +385,6 @@ export function App() {
           onOpenSettings={(section) => { setSettingsSection(section); setSettingsOpen(true); }}
           settingsOpen={settingsOpen}
           density={density}
-          worldsEnabled={config.worldsEnabled === true}
         />
         {/* v0.3.4: theme + fullscreen live HERE (top right), not buried in the
             terminal header — and the theme darkens the whole app, terminals
@@ -451,8 +459,7 @@ export function App() {
       }}>
         {globalView === 'marketplace' && <MarketplaceView />}
         <div style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative' }}>
-          {globalView === 'worlds' && <WorldsView config={config} onReturnToOffice={() => onGlobalViewChange('office')} />}
-          {globalView !== 'worlds' && <WorldHost config={officeWorldConfig} />}
+          <WorldHost config={officeWorldConfig} />
           <MemoryPanel />
           {agentCount === 0 && godStatus === 'booting' && <MichaelBooting />}
           {agentCount === 0 && godStatus !== 'booting' && (
