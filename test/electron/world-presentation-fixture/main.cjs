@@ -33,6 +33,12 @@ async function closeVisual(primary, view) {
   await Promise.race([destroyed, timeout('visual WebContents disposal')]);
 }
 
+async function crashVisual(view) {
+  const gone = new Promise((resolve) => view.webContents.once('render-process-gone', (_event, details) => resolve(details)));
+  view.webContents.forcefullyCrashRenderer();
+  return Promise.race([gone, timeout('visual renderer crash event')]);
+}
+
 async function runWitness() {
   const primary = new BrowserWindow({
     width: 800,
@@ -42,30 +48,54 @@ async function runWitness() {
   });
   await primary.loadURL('data:text/html,<title>Primary GUI</title><main>primary gui</main>');
   const primaryPid = primary.webContents.getOSProcessId();
+  const semanticSession = Object.freeze({
+    profileId: 'monster-trainer',
+    sessionId: 'session-stays-with-primary',
+    agentIds: Object.freeze(['atlas', 'birch']),
+    taskIds: Object.freeze(['task-1', 'task-2'])
+  });
+  const sessionBefore = JSON.stringify(semanticSession);
 
-  const first = await createVisual(primary, 1);
-  const firstVisualPid = first.webContents.getOSProcessId();
-  if (firstVisualPid === primaryPid) throw new Error('candidate visual WebContents shares the primary GUI renderer PID');
-
-  await closeVisual(primary, first);
-  if (primary.isDestroyed() || primary.webContents.isDestroyed()) throw new Error('closing visual host destroyed the primary GUI');
-  const restarted = await createVisual(primary, 2);
-  const restartedVisualPid = restarted.webContents.getOSProcessId();
-  if (restartedVisualPid === primaryPid) throw new Error('recreated visual WebContents shares the primary GUI renderer PID');
-  if (primary.webContents.getOSProcessId() !== primaryPid) throw new Error('primary GUI renderer PID changed during visual restart');
+  const visualPids = [];
+  const visualContents = [];
+  let visualCrashes = 0;
+  let current = null;
+  for (let generation = 1; generation <= 4; generation += 1) {
+    if (current) {
+      const details = await crashVisual(current);
+      if (!details || !details.reason) throw new Error('visual renderer crash did not report a reason');
+      visualCrashes += 1;
+      if (primary.isDestroyed() || primary.webContents.isDestroyed()) throw new Error('visual renderer crash destroyed the primary GUI');
+      if (JSON.stringify(semanticSession) !== sessionBefore) throw new Error('visual renderer crash changed primary-owned semantic session state');
+      await closeVisual(primary, current);
+    }
+    current = await createVisual(primary, generation);
+    const visualPid = current.webContents.getOSProcessId();
+    if (visualPid === primaryPid) throw new Error(`visual generation ${generation} shares the primary GUI renderer PID`);
+    visualPids.push(visualPid);
+    visualContents.push(current.webContents);
+    if (primary.isDestroyed() || primary.webContents.isDestroyed()) throw new Error('closing visual host destroyed the primary GUI');
+    if (primary.webContents.getOSProcessId() !== primaryPid) throw new Error('primary GUI renderer PID changed during visual restart');
+    if (JSON.stringify(semanticSession) !== sessionBefore) throw new Error('visual restart changed primary-owned semantic session state');
+  }
 
   const witness = {
     marker: 'WORLD_PRESENTATION_PID_WITNESS',
     primaryPid,
-    firstVisualPid,
-    restartedVisualPid,
-    distinctFromPrimary: firstVisualPid !== primaryPid && restartedVisualPid !== primaryPid,
+    firstVisualPid: visualPids[0],
+    restartedVisualPid: visualPids.at(-1),
+    visualPids,
+    hostGenerations: visualPids.length,
+    visualCrashes,
+    allRetiredWebContentsDestroyed: visualContents.slice(0, -1).every((contents) => contents.isDestroyed()),
+    semanticSessionStable: JSON.stringify(semanticSession) === sessionBefore,
+    distinctFromPrimary: visualPids.every((pid) => pid > 0 && pid !== primaryPid),
     primaryPidStable: primary.webContents.getOSProcessId() === primaryPid,
     primaryAliveAfterVisualRestart: !primary.isDestroyed() && !primary.webContents.isDestroyed(),
-    visualGenerationRecreated: !restarted.webContents.isDestroyed()
+    visualGenerationRecreated: current !== null && !current.webContents.isDestroyed()
   };
   console.log(JSON.stringify(witness));
-  await closeVisual(primary, restarted);
+  await closeVisual(primary, current);
   primary.close();
   app.quit();
   return witness;

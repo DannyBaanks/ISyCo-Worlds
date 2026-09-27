@@ -70,6 +70,8 @@ test('the standalone child entry consumes only the narrow world bridge, never th
   assert.match(html, /worldHost\.tsx/);
   assert.match(entry, /WorldPresentationHost/);
   assert.match(host, /window\.worldPresentation/);
+  assert.match(source('src/renderer/src/worlds/WorldHost.tsx'), /visualIdentities/);
+  assert.match(source('src/renderer/src/worlds/monster/MonsterTrainerSurface.tsx'), /createIdentityResolver\(projection\.visualIdentities/);
   assert.doesNotMatch(host, /useStore|hiveTasks|WorldsView|App/);
 });
 

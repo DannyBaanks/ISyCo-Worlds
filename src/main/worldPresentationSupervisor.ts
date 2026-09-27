@@ -14,6 +14,7 @@ import { isWorldId, type WorldId } from '../shared/worlds';
 
 export interface WorldPresentationHost {
   id: string | number;
+  isAlive?(): boolean;
   send(command: WorldPresentationCommand): void;
   destroy(): Promise<void> | void;
 }
@@ -102,6 +103,10 @@ export class WorldPresentationSupervisor {
       if (generation !== this.generation || this.profileId !== profileId) {
         await host.destroy();
         return this.getStatus();
+      }
+      if (host.isAlive && !host.isAlive()) {
+        await host.destroy();
+        throw new Error('visual renderer exited during bootstrap');
       }
       this.host = host;
       host.send({ type: 'bootstrap', profileId, generation, projection });

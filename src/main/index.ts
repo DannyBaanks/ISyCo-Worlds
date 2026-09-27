@@ -2499,11 +2499,13 @@ function createWorldPresentationSupervisor(win: BrowserWindow): WorldPresentatio
       win.contentView.addChildView(view);
       view.setBounds({ x: 0, y: 0, width: 0, height: 0 });
       worldPresentationView = view;
+      let renderProcessGone = false;
       const onEvent = (event: Electron.IpcMainEvent, payload: unknown): void => {
         if (event.sender === view.webContents) emit(payload);
       };
       ipcMain.on('world-presentation:event', onEvent);
       const onGone = (_event: Electron.Event, details: Electron.RenderProcessGoneDetails): void => {
+        renderProcessGone = true;
         emit({
           type: 'failed', profileId, generation,
           error: {
@@ -2515,6 +2517,7 @@ function createWorldPresentationSupervisor(win: BrowserWindow): WorldPresentatio
       view.webContents.on('render-process-gone', onGone);
       const host = {
         id: view.webContents.id,
+        isAlive: () => !renderProcessGone && !view.webContents.isDestroyed(),
         send(command: import('../shared/worldPresentationProtocol').WorldPresentationCommand) {
           if (!view.webContents.isDestroyed()) view.webContents.send('world-presentation:command', command);
         },

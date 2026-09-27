@@ -1,4 +1,5 @@
 import { isWorldId, type WorldId } from './worlds';
+import { isVisualIdentityProfileV1, type VisualIdentityProfileV1 } from './worldProfiles';
 
 export type WorldPresentationPhase = 'IDLE' | 'VALIDATING' | 'BOOTSTRAPPING' | 'MOUNTING' | 'READY' | 'RECOVERY';
 export type WorldPresentationAgentState = 'idle' | 'working' | 'waiting' | 'blocked' | 'other';
@@ -7,6 +8,7 @@ export type WorldPresentationAgentState = 'idle' | 'working' | 'waiting' | 'bloc
 export interface WorldPresentationProjection {
   agents: Array<{ id: string; name: string; state: WorldPresentationAgentState; archived: boolean }>;
   tasks: Array<{ id: string; title: string; assignee: string | null; status: string; awaitsHuman: boolean }>;
+  visualIdentities?: Record<string, VisualIdentityProfileV1>;
 }
 
 export type WorldPresentationCommand =
@@ -48,7 +50,9 @@ const validProjection = (value: unknown): value is WorldPresentationProjection =
   const states = ['idle', 'working', 'waiting', 'blocked', 'other'];
   return Array.isArray(p.agents) && Array.isArray(p.tasks)
     && p.agents.every((a) => !!a && validId(a.id) && typeof a.name === 'string' && states.includes(a.state) && typeof a.archived === 'boolean')
-    && p.tasks.every((t) => !!t && validId(t.id) && typeof t.title === 'string' && (t.assignee === null || validId(t.assignee)) && typeof t.status === 'string' && typeof t.awaitsHuman === 'boolean');
+    && p.tasks.every((t) => !!t && validId(t.id) && typeof t.title === 'string' && (t.assignee === null || validId(t.assignee)) && typeof t.status === 'string' && typeof t.awaitsHuman === 'boolean')
+    && (p.visualIdentities === undefined || (!!p.visualIdentities && typeof p.visualIdentities === 'object' && !Array.isArray(p.visualIdentities)
+      && Object.entries(p.visualIdentities).every(([agentId, profile]) => validId(agentId) && isVisualIdentityProfileV1(profile) && profile.agentId === agentId)));
 };
 const validCause = (value: unknown): value is { name: string; message: string } => !!value && typeof value === 'object'
   && typeof (value as { name?: unknown }).name === 'string' && typeof (value as { message?: unknown }).message === 'string';

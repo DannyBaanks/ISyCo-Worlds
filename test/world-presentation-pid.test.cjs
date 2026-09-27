@@ -37,6 +37,12 @@ test('Electron visual WebContents owns a separately restartable OS renderer proc
   assert.equal(witness.primaryPidStable, true, JSON.stringify(witness));
   assert.equal(witness.primaryAliveAfterVisualRestart, true, JSON.stringify(witness));
   assert.equal(witness.visualGenerationRecreated, true, JSON.stringify(witness));
+  assert.equal(witness.hostGenerations, 4, JSON.stringify(witness));
+  assert.equal(witness.visualCrashes, 3, JSON.stringify(witness));
+  assert.equal(witness.allRetiredWebContentsDestroyed, true, JSON.stringify(witness));
+  assert.equal(witness.semanticSessionStable, true, JSON.stringify(witness));
+  assert.equal(witness.visualPids.length, 4, JSON.stringify(witness));
+  assert.ok(witness.visualPids.every((pid) => pid !== witness.primaryPid), JSON.stringify(witness));
   assert.ok(witness.primaryPid > 0);
   assert.ok(witness.firstVisualPid > 0);
   assert.ok(witness.restartedVisualPid > 0);

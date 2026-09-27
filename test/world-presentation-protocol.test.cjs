@@ -17,6 +17,12 @@ test('accepts only well-formed bootstrap/restart/dispose/update commands', () =>
   assert.equal(P.isWorldPresentationCommand({ type: 'bootstrap', profileId: 'office', generation: 0, projection }), false);
   assert.equal(P.isWorldPresentationCommand({ type: 'restart', generation: -1 }), false);
   assert.equal(P.isWorldPresentationCommand({ type: 'bootstrap', profileId: 'office', generation: 1, projection: { agents: [{ id: '', name: 'x', state: 'hacking', archived: false }], tasks: [] } }), false);
+  const identityProjection = {
+    agents: [], tasks: [],
+    visualIdentities: { atlas: { version: 1, agentId: 'atlas', seed: 'stable-seed', appearances: {}, updatedAt: 'now' } }
+  };
+  assert.equal(P.isWorldPresentationCommand({ type: 'bootstrap', profileId: 'monster-trainer', generation: 1, projection: identityProjection }), true);
+  assert.equal(P.isWorldPresentationCommand({ type: 'bootstrap', profileId: 'monster-trainer', generation: 1, projection: { ...identityProjection, visualIdentities: { atlas: { ...identityProjection.visualIdentities.atlas, agentId: 'other' } } } }), false);
 });
 
 test('validates host events and prevents stale or foreign renderer messages from becoming current', () => {

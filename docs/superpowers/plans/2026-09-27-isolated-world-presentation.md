@@ -106,10 +106,10 @@
 - Test: `test/world-presentation-session.test.cjs`
 - Modify: `test/world-engine.test.cjs` and/or existing app integration witness only where appropriate.
 
-- [ ] **Step 1: Add failing integration assertions** recording active profile/session ids, agent/PTy owners, task snapshot identity, primary GUI PID, visual PID, and Pixi ownership before/after visual crash/restart.
-- [ ] **Step 2: Exercise three visual crashes/restarts** and assert session/profile/agent identities are unchanged, PIDs differ, every retired visual host exits once, and Pixi/listener/ticker counts return to baseline.
-- [ ] **Step 3: Exercise missing dev and packaged resource cases** and confirm Recovery appears in the main GUI while the harness remains active.
-- [ ] **Step 4: Run all world tests and build; manually verify resize/compositing and GPU behavior** in Electron.
+- [x] **Step 1: Add failure/recovery assertions** for stable semantic projection identity, primary GUI PID, visual PID, and runtime resource errors. Live Harness/PTy identity is not injected into the standalone fixture; see the Task 4 ruling in the SDD ledger.
+- [x] **Step 2: Exercise three visual crashes/restarts** and assert the primary GUI PID and fixture semantic snapshot remain unchanged, child PIDs are distinct, and retired WebContents are destroyed. Pixi ownership cleanup remains covered by existing Pixi lifecycle tests, not measured by this Electron fixture.
+- [x] **Step 3: Exercise missing dev and packaged resource cases** through the WorldEngine resolver seam; verify the READY Office candidate remains active with a structured target error. This is headless lifecycle evidence, not a live GUI/Harness integration witness.
+- [x] **Step 4: Run all world tests and build.** Manual resize/compositing and GPU behavior in Electron remain pending and are not claimed as demonstrated.
 - [ ] **Step 5: Commit** as `test(worlds): verify visual recovery preserves harness session`.
 
 ## Definition of Done

@@ -67,7 +67,7 @@ function ProjectedMonsterTrainerSurface({ projection, onIntent, onReady, onRende
   const snapshot: CanonicalWorldSnapshot = projection;
   const transitions = previous.current ? deriveVisualTransitions(previous.current, snapshot) : [];
   previous.current = snapshot;
-  const identityFor = useMemo(() => createIdentityResolver({}), []);
+  const identityFor = useMemo(() => createIdentityResolver(projection.visualIdentities ?? {}), [projection.visualIdentities]);
   const reducedMotion = useMemo(
     () => typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
     []

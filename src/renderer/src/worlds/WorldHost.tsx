@@ -123,11 +123,12 @@ function visibleMounts(state: WorldEngineState): readonly WorldMount[] {
 
 function IsolatedWorldViewport({ profileId }: { profileId: 'monster-trainer' }) {
   const viewportRef = useRef<HTMLDivElement | null>(null);
-  const { snapshot } = useWorldProjection();
+  const { snapshot, visualIdentities } = useWorldProjection();
   const projection = useMemo<WorldPresentationProjection>(() => ({
     agents: snapshot.agents.map((agent) => ({ ...agent })),
-    tasks: snapshot.tasks.map((task) => ({ ...task }))
-  }), [snapshot]);
+    tasks: snapshot.tasks.map((task) => ({ ...task })),
+    visualIdentities
+  }), [snapshot, visualIdentities]);
   const [status, setStatus] = useState<WorldPresentationStatus>({ phase: 'BOOTSTRAPPING', profileId, generation: 0 });
   const started = useRef(false);
   const acceptStatus = (next: WorldPresentationStatus): void => setStatus((current) => {

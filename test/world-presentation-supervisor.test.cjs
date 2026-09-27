@@ -96,3 +96,16 @@ test('a runtime renderer failure enters Recovery and retires the failed host exa
   assert.equal(host.destroyed, 1);
   assert.equal(host.emit({ type: 'ready', profileId: 'office', generation: 1 }), false);
 });
+
+test('a renderer that crashes during async host bootstrap cannot be adopted or later report READY', async () => {
+  let destroyed = 0;
+  const supervisor = new WorldPresentationSupervisor({
+    createHost: async () => ({ id: 'crashed-before-adoption', send() {}, isAlive: () => false, async destroy() { destroyed += 1; } }),
+    onStatus: () => {},
+    onIntent: () => {}
+  });
+  await supervisor.start('monster-trainer', projection);
+  assert.equal(supervisor.getStatus().phase, 'RECOVERY');
+  assert.equal(supervisor.getStatus().error.phase, 'BOOTSTRAPPING');
+  assert.equal(destroyed, 1);
+});
