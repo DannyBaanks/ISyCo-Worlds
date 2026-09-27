@@ -155,12 +155,11 @@ export const STARTER_VILLAGE_SCENARIO: StarterVillageScenario = {
   }
 };
 
-/** Selects a whole-pixel scene scale; values below 1x retain a scrollable 1x map. */
-export function integerScaleForViewport(width: number, height: number): 1 | 2 | 3 | 4 {
+/** Selects an integral scale from available width; extra map height scrolls instead of shrinking the art. */
+export function integerScaleForViewport(width: number, _height: number): 1 | 2 | 3 | 4 {
   const mapWidth = STARTER_VILLAGE_COLUMNS * STARTER_VILLAGE_TILE_SIZE;
-  const mapHeight = STARTER_VILLAGE_ROWS * STARTER_VILLAGE_TILE_SIZE;
-  for (const scale of [4, 3, 2] as const) {
-    if (width >= mapWidth * scale && height >= mapHeight * scale) return scale;
-  }
+  if (width >= mapWidth * 4) return 4;
+  if (width >= mapWidth * 3) return 3;
+  if (width >= mapWidth * 2) return 2;
   return 1;
 }

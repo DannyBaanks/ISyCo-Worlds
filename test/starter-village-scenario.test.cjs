@@ -35,6 +35,8 @@ test('Starter Village selects only integral scales and preserves 1x below map si
   assert.equal(Scenario.integerScaleForViewport(2000, 1600), 4);
   assert.equal(Scenario.integerScaleForViewport(1200, 1200), 3);
   assert.equal(Scenario.integerScaleForViewport(800, 800), 2);
+  assert.equal(Scenario.integerScaleForViewport(800, 600), 2, 'a taller map must scroll vertically instead of shrinking when its width still fits at 2x');
+  assert.equal(Scenario.integerScaleForViewport(2000, 700), 4, 'the available width determines the crisp display scale');
   assert.equal(Scenario.integerScaleForViewport(500, 300), 1);
   assert.equal(Scenario.integerScaleForViewport(200, 200), 1);
 });
