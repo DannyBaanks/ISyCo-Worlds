@@ -5,6 +5,7 @@ import type { WorldCompositionV1 } from '../shared/worldComposition';
 import type { VisualIdentityProfileV1 } from '../shared/worldProfiles';
 import type { WorldProfileLifecycleError, WorldProfileRuntimeStatus } from '../main/worldProfileLifecycle';
 import type { WorldPresentationComposition, WorldPresentationIntentMessage, WorldPresentationIntent, WorldPresentationProjection, WorldPresentationStatus } from '../shared/worldPresentationProtocol';
+import type { WorldHelperProviderMetadata, WorldHelperProviderId, WorldHelperSafeSnapshot } from '../shared/worldHelper';
 import type { HireManifest } from '../shared/hire';
 export type { HireManifest } from '../shared/hire';
 import type { IntegrationRecord, IntegrationTemplate } from '../shared/integrations';
@@ -1388,6 +1389,28 @@ const api = {
     ipcRenderer.invoke('providerKey:has', backend),
   providerKeyClear: (backend: string): Promise<{ ok: boolean; error?: string }> =>
     ipcRenderer.invoke('providerKey:clear', backend),
+  // Optional GUS World Helper. Credentials are one-way into main safeStorage;
+  // every read returns metadata/presence only, never key material.
+  worldHelperProviders: (): Promise<WorldHelperProviderMetadata[]> => ipcRenderer.invoke('world-helper:providers'),
+  worldHelperSnapshot: (): Promise<WorldHelperSafeSnapshot> => ipcRenderer.invoke('world-helper:snapshot'),
+  worldHelperKeyPresent: (provider: WorldHelperProviderId): Promise<boolean> => ipcRenderer.invoke('world-helper:providerKeyPresent', provider),
+  worldHelperConfigure: (request: { provider: WorldHelperProviderId; model: string; apiKey?: string }): Promise<{ ok: boolean; category?: string }> =>
+    ipcRenderer.invoke('world-helper:configure', request),
+  worldHelperReplaceKey: (apiKey: string): Promise<{ ok: boolean; category?: string }> => ipcRenderer.invoke('world-helper:replaceKey', apiKey),
+  worldHelperRemoveKey: (): Promise<{ ok: boolean }> => ipcRenderer.invoke('world-helper:removeKey'),
+  worldHelperRemove: (): Promise<{ ok: boolean }> => ipcRenderer.invoke('world-helper:remove'),
+  worldHelperChat: (message: string): Promise<{ ok: boolean; category?: string; proposal?: { id: string; reply: string; worldSuggestion?: WorldId; workers: Array<{ name: string; provider: string; role: string; purpose: string }> } }> =>
+    ipcRenderer.invoke('world-helper:chat', message),
+  worldHelperApprove: (proposalId: string, selectedNames: string[]): Promise<{ ok: boolean; category?: string; launched?: string[] }> =>
+    ipcRenderer.invoke('world-helper:approve', proposalId, selectedNames),
+  worldHelperStop: (): Promise<{ ok: boolean }> => ipcRenderer.invoke('world-helper:stop'),
+  worldHelperDismissSetup: (): Promise<{ ok: boolean }> => ipcRenderer.invoke('world-helper:dismissSetup'),
+  worldHelperOverlayVisible: (visible: boolean): Promise<boolean> => ipcRenderer.invoke('world-helper:overlay-visible', visible),
+  onWorldHelperState: (cb: (snapshot: WorldHelperSafeSnapshot) => void): (() => void) => {
+    const listener = (_event: IpcRendererEvent, snapshot: WorldHelperSafeSnapshot) => cb(snapshot);
+    ipcRenderer.on('world-helper:state', listener);
+    return () => ipcRenderer.removeListener('world-helper:state', listener);
+  },
   // Realtime Michael (voice orchestrator) — MAIN mints a short-lived EPHEMERAL token
   // from the BYOK OpenAI key; the real key NEVER crosses IPC. `realtimeHasOpenAiKey`
   // is a presence boolean only (gates the voice toggle, like providerKeyHas).

@@ -2656,6 +2656,7 @@ function createWorldPresentationSupervisor(win: BrowserWindow): WorldPresentatio
         }
       });
       win.contentView.addChildView(view);
+      raiseWorldHelperOverlay(win);
       view.setBounds({ x: 0, y: 0, width: 0, height: 0 });
       worldPresentationView = view;
       let renderProcessGone = false;
@@ -2717,6 +2718,67 @@ function createWorldPresentationSupervisor(win: BrowserWindow): WorldPresentatio
   });
 }
 
+function layoutWorldHelperOverlay(win: BrowserWindow, view: WebContentsView): void {
+  if (view.webContents.isDestroyed() || win.isDestroyed()) return;
+  const { width, height } = win.getContentBounds();
+  const overlayWidth = Math.min(460, Math.max(320, width - 24));
+  const overlayHeight = Math.min(760, Math.max(360, height - 24));
+  view.setBounds({ x: Math.max(0, width - overlayWidth - 12), y: Math.max(12, height - overlayHeight - 12), width: overlayWidth, height: overlayHeight });
+}
+
+function raiseWorldHelperOverlay(win: BrowserWindow): void {
+  const overlay = worldHelperOverlayView;
+  if (!overlay || overlay.webContents.isDestroyed() || win.isDestroyed()) return;
+  win.contentView.addChildView(overlay);
+}
+
+function createWorldHelperOverlayView(win: BrowserWindow): WebContentsView {
+  const view = new WebContentsView({
+    webPreferences: {
+      preload: join(__dirname, '../preload/worldHelperOverlay.js'),
+      sandbox: true,
+      contextIsolation: true,
+      nodeIntegration: false,
+      backgroundThrottling: false
+    }
+  });
+  worldHelperOverlayView = view;
+  win.contentView.addChildView(view);
+  view.setBounds({ x: 0, y: 0, width: 0, height: 0 });
+  view.setVisible(false);
+  view.setBackgroundColor('#00000000');
+  const layout = () => layoutWorldHelperOverlay(win, view);
+  win.on('resize', layout);
+  win.on('maximize', layout);
+  win.on('unmaximize', layout);
+  view.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https:\/\//i.test(url)) shell.openExternal(url);
+    return { action: 'deny' };
+  });
+  const loading = isDev && process.env.ELECTRON_RENDERER_URL
+    ? view.webContents.loadURL(new URL('/world-helper-overlay.html', process.env.ELECTRON_RENDERER_URL).toString())
+    : view.webContents.loadFile(join(__dirname, '../renderer/world-helper-overlay.html'));
+  void loading.catch(() => { /* GUS overlay failure must not affect the world */ });
+  view.webContents.once('destroyed', () => {
+    win.removeListener('resize', layout);
+    win.removeListener('maximize', layout);
+    win.removeListener('unmaximize', layout);
+    if (worldHelperOverlayView === view) worldHelperOverlayView = null;
+  });
+  return view;
+}
+
+function setWorldHelperOverlayVisible(win: BrowserWindow, visible: boolean): boolean {
+  const view = worldHelperOverlayView;
+  if (!view || view.webContents.isDestroyed() || win.isDestroyed()) return false;
+  if (visible) {
+    layoutWorldHelperOverlay(win, view);
+    raiseWorldHelperOverlay(win);
+  }
+  view.setVisible(visible);
+  return true;
+}
+
 function createWindow(opts: { floor?: boolean } = {}): BrowserWindow {
   const isFloor = opts.floor === true;
 
@@ -2766,6 +2828,7 @@ function createWindow(opts: { floor?: boolean } = {}): BrowserWindow {
   if (!isFloor) mainWindow = win;
   if (!isFloor) {
     worldPresentationOwner = win;
+    createWorldHelperOverlayView(win);
     worldPresentationSupervisor = createWorldPresentationSupervisor(win);
   }
 
@@ -2881,6 +2944,12 @@ function createWindow(opts: { floor?: boolean } = {}): BrowserWindow {
       worldPresentationSupervisor = null;
       if (worldPresentationOwner === win) worldPresentationOwner = null;
       worldPresentationView = null;
+      const overlay = worldHelperOverlayView;
+      worldHelperOverlayView = null;
+      if (overlay) {
+        try { win.contentView.removeChildView(overlay); } catch { /* window already gone */ }
+        if (!overlay.webContents.isDestroyed()) overlay.webContents.close({ waitForBeforeUnload: false });
+      }
     }
     allWindows.delete(win);
     // A closed floor must not leave its terminals running headless. (Natural
@@ -3662,6 +3731,23 @@ ipcMain.handle('world-helper:overlay-configure', async (evt, payload: unknown) =
   if (!isWorldHelperOverlaySender(evt) || !payload || typeof payload !== 'object' || Array.isArray(payload)) return { ok: false, category: 'unavailable' };
   return ensureWorldHelperHost().configure(payload as { provider: unknown; model: unknown; apiKey?: unknown });
 });
+ipcMain.handle('world-helper:overlay-removeKey', async (evt) => {
+  if (!isWorldHelperOverlaySender(evt)) return { ok: false };
+  await ensureWorldHelperHost().removeCurrentKey();
+  return { ok: true };
+});
+ipcMain.handle('world-helper:overlay-remove', async (evt) => {
+  if (!isWorldHelperOverlaySender(evt)) return { ok: false };
+  await ensureWorldHelperHost().removeProviderKey();
+  return { ok: true };
+});
+ipcMain.handle('world-helper:overlay-openProviderHelp', (evt, provider: unknown) => {
+  if (!isWorldHelperOverlaySender(evt)) return false;
+  const metadata = worldHelperProviders().find((item) => item.id === provider);
+  if (!metadata) return false;
+  void shell.openExternal(metadata.apiKeyHelpUrl);
+  return true;
+});
 ipcMain.handle('world-helper:overlay-chat', async (evt, message: unknown) => {
   if (!isWorldHelperOverlaySender(evt)) return { ok: false, category: 'unavailable' };
   const owner = currentWorldHelperOverlayContents();
@@ -3684,6 +3770,15 @@ ipcMain.handle('world-helper:overlay-dismissSetup', async (evt) => {
   if (!isWorldHelperOverlaySender(evt)) return { ok: false };
   await ensureWorldHelperHost().dismissSetup();
   return { ok: true };
+});
+ipcMain.handle('world-helper:overlay-hide', (evt) => {
+  if (!isWorldHelperOverlaySender(evt) || !worldPresentationOwner) return false;
+  return setWorldHelperOverlayVisible(worldPresentationOwner, false);
+});
+ipcMain.handle('world-helper:overlay-visible', (evt, visible: unknown) => {
+  const owner = worldPresentationOwner;
+  if (!owner || owner.isDestroyed() || evt.sender !== owner.webContents) return false;
+  return setWorldHelperOverlayVisible(owner, visible === true);
 });
 
 // Probe an integration's reachability through the broker's own auth path (admin-only;
