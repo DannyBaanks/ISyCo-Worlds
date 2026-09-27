@@ -2,7 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Assets } from 'pixi.js';
 import { PixelButton } from '@/components/PixelButton';
 import type { WorldLifecycleError, WorldMount, WorldResourceResolver } from './WorldEngine';
-import type { WorldPresentationIntent, WorldPresentationProjection } from '@shared/worldPresentationProtocol';
+import type { WorldPresentationCommand, WorldPresentationComposition, WorldPresentationIntent, WorldPresentationProjection } from '@shared/worldPresentationProtocol';
 import { worldById } from './worldRegistry';
 
 class SurfaceErrorBoundary extends Component<{
@@ -46,6 +46,8 @@ export function WorldRuntimeSurface({
   onRenderFailure,
   onDisposed,
   presentationProjection,
+  presentationComposition,
+  compositionSaveResult,
   onIntent
 }: {
   mount: WorldMount;
@@ -53,6 +55,8 @@ export function WorldRuntimeSurface({
   onRenderFailure: (token: number, cause: unknown) => void;
   onDisposed: (token: number) => void;
   presentationProjection?: WorldPresentationProjection;
+  presentationComposition?: WorldPresentationComposition;
+  compositionSaveResult?: Extract<WorldPresentationCommand, { type: 'update-composition' }>;
   onIntent?: (intent: WorldPresentationIntent) => void;
 }) {
   const world = worldById(mount.worldId);
@@ -69,6 +73,8 @@ export function WorldRuntimeSurface({
       <SurfaceErrorBoundary onFailure={(cause) => onRenderFailure(mount.token, cause)}>
         {world.render({
           projection: presentationProjection,
+          composition: presentationComposition,
+          compositionSaveResult,
           onIntent,
           onReady: () => onReady(mount.token),
           onRenderFailure: (cause) => onRenderFailure(mount.token, cause),

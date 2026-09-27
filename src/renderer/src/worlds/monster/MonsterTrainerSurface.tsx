@@ -2,7 +2,7 @@ import { useMemo, useRef } from 'react';
 import { useStore } from '@/store/store';
 import { useWorldProjection } from '../useWorldProjection';
 import { MonsterTrainerWorld } from './MonsterTrainerWorld';
-import type { WorldPresentationIntent, WorldPresentationProjection } from '@shared/worldPresentationProtocol';
+import type { WorldPresentationCommand, WorldPresentationComposition, WorldPresentationIntent, WorldPresentationProjection } from '@shared/worldPresentationProtocol';
 import { createIdentityResolver } from '../identityResolver';
 import { deriveVisualTransitions, type CanonicalWorldSnapshot } from '../worldProjection';
 
@@ -16,21 +16,28 @@ export function MonsterTrainerSurface({
   onRenderFailure,
   onDisposed,
   projection,
+  composition,
+  compositionSaveResult,
   onIntent
 }: {
   onReady?: () => void;
   onRenderFailure?: (cause: unknown) => void;
   onDisposed?: () => void;
   projection?: WorldPresentationProjection;
+  composition?: WorldPresentationComposition;
+  compositionSaveResult?: Extract<WorldPresentationCommand, { type: 'update-composition' }>;
   onIntent?: (intent: WorldPresentationIntent) => void;
 }) {
   if (projection) {
-    return <ProjectedMonsterTrainerSurface projection={projection} onIntent={onIntent} onReady={onReady} onRenderFailure={onRenderFailure} onDisposed={onDisposed} />;
+    return <ProjectedMonsterTrainerSurface projection={projection} composition={composition} compositionSaveResult={compositionSaveResult} onIntent={onIntent} onReady={onReady} onRenderFailure={onRenderFailure} onDisposed={onDisposed} />;
   }
-  return <ConnectedMonsterTrainerSurface onReady={onReady} onRenderFailure={onRenderFailure} onDisposed={onDisposed} />;
+  return <ConnectedMonsterTrainerSurface composition={composition} compositionSaveResult={compositionSaveResult} onIntent={onIntent} onReady={onReady} onRenderFailure={onRenderFailure} onDisposed={onDisposed} />;
 }
 
-function ConnectedMonsterTrainerSurface({ onReady, onRenderFailure, onDisposed }: {
+function ConnectedMonsterTrainerSurface({ composition, compositionSaveResult, onIntent, onReady, onRenderFailure, onDisposed }: {
+  composition?: WorldPresentationComposition;
+  compositionSaveResult?: Extract<WorldPresentationCommand, { type: 'update-composition' }>;
+  onIntent?: (intent: WorldPresentationIntent) => void;
   onReady?: () => void;
   onRenderFailure?: (cause: unknown) => void;
   onDisposed?: () => void;
@@ -49,6 +56,9 @@ function ConnectedMonsterTrainerSurface({ onReady, onRenderFailure, onDisposed }
       onAgentSelect={(agentId) => useStore.getState().select(agentId)}
       onTaskOpen={(taskId) => useStore.getState().openTaskDetail(taskId)}
       reducedMotion={reducedMotion}
+      composition={composition}
+      compositionSaveResult={compositionSaveResult}
+      onIntent={onIntent}
       onReady={onReady}
       onRenderFailure={onRenderFailure}
       onDisposed={onDisposed}
@@ -56,8 +66,10 @@ function ConnectedMonsterTrainerSurface({ onReady, onRenderFailure, onDisposed }
   );
 }
 
-function ProjectedMonsterTrainerSurface({ projection, onIntent, onReady, onRenderFailure, onDisposed }: {
+function ProjectedMonsterTrainerSurface({ projection, composition, compositionSaveResult, onIntent, onReady, onRenderFailure, onDisposed }: {
   projection: WorldPresentationProjection;
+  composition?: WorldPresentationComposition;
+  compositionSaveResult?: Extract<WorldPresentationCommand, { type: 'update-composition' }>;
   onIntent?: (intent: WorldPresentationIntent) => void;
   onReady?: () => void;
   onRenderFailure?: (cause: unknown) => void;
@@ -80,6 +92,9 @@ function ProjectedMonsterTrainerSurface({ projection, onIntent, onReady, onRende
       onAgentSelect={(agentId) => onIntent?.({ type: 'select-agent', agentId })}
       onTaskOpen={(taskId) => onIntent?.({ type: 'open-task', taskId })}
       reducedMotion={reducedMotion}
+      composition={composition}
+      compositionSaveResult={compositionSaveResult}
+      onIntent={onIntent}
       onReady={onReady}
       onRenderFailure={onRenderFailure}
       onDisposed={onDisposed}
