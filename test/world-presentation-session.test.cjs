@@ -15,7 +15,7 @@ test('visual supervisor has no dependency on Harness stores, PTYs, Hive, or sess
   const child = source('src/renderer/src/worlds/WorldPresentationHost.tsx');
   assert.doesNotMatch(supervisor, /from ['"].*(?:pty|hive|roster|session|config)/i);
   assert.doesNotMatch(child, /useStore|hiveTasks|pty:|world-profile:confirmActivation/);
-  assert.match(supervisor, /onIntent\(event\.intent\)/);
+  assert.match(supervisor, /onIntent\(event\.intent, \{ profileId: event\.profileId, generation: event\.generation \}\)/);
 });
 
 test('missing dev and packaged resources report different causes while a primary Office remains READY', async () => {

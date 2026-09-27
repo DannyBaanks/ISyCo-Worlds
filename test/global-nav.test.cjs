@@ -101,7 +101,7 @@ test('the menu is a real ARIA menu button and closes on outside click', () => {
   assert.match(nav, /aria-expanded=\{menuOpen\}/);
   assert.match(nav, /role="menuitem"/);
   assert.match(nav, /addEventListener\('mousedown', onDown\)/);
-  assert.match(nav, /className="cth-titlebar-nodrag cth-globalnav"/, 'clickable inside the drag region');
+  assert.match(nav, /className="cth-titlebar-nodrag cth-globalnav cth-world-nav"/, 'clickable inside the drag region with a world-skin hook');
 });
 
 test('title bar keeps version, auto mode, theme and focus-mode controls', () => {
