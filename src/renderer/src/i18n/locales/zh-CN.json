@@ -602,7 +602,7 @@
   "onboarding": {
     "titles": {
       "language": "选择你的语言",
-      "persona": "欢迎来到 MUNDER DIFFLIN",
+      "persona": "选择你的开始方式",
       "welcome": "认识你的办公室",
       "home": "第 1 步，共 4 步 · HARNESS 主目录",
       "homePlain": "第 1 步，共 4 步 · 为应用找一个家",
@@ -623,15 +623,16 @@
         "ja": "日语"
       }
     },
+    "progress": "你的启程之旅",
     "persona": {
-      "headline": "一个 24/7 工作的你",
-      "body": "Munder Difflin 把你在用的 CLI 智能体变成你的克隆——一个经营着一屋子长期运行智能体、在你离开时持续工作的存在。它管理着围绕它们的一切：上下文、记忆、任务、触发器、环境、文件和集成。",
-      "bodyLocal": " 一切都在本机运行。",
-      "ask": "首先——你是谁？（我们会据此定制设置）",
-      "technicalTitle": "我是技术人员",
-      "technicalDesc": "我写代码或用终端工作。给我看 CLI 命令、标志和模型 ID。",
-      "nonTechnicalTitle": "我是非技术人员",
-      "nonTechnicalDesc": "我从事市场、销售、运营或刚入门。请用通俗语言解释。"
+      "headline": "按你的方式打造工作空间",
+      "body": "把你的助手、项目和任务都放在同一个地方。",
+      "bodyLocal": "所有内容都保存在这台电脑上。",
+      "ask": "你希望我们怎样引导你？",
+      "technicalTitle": "显示全部细节",
+      "technicalDesc": "我熟悉技术术语，也想自己调整选项。",
+      "nonTechnicalTitle": "一步一步带我来",
+      "nonTechnicalDesc": "我更喜欢清晰的解释，也希望有人帮我选择。"
     },
     "welcome": {
       "headline": "你的克隆以及它经营的楼层",

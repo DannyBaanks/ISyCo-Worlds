@@ -229,6 +229,86 @@ canvas, img, svg { image-rendering: pixelated; image-rendering: crisp-edges; }
   outline-color: var(--cth-world-wood);
 }
 
+/* First-run setup uses the same field-station language as Monster Trainer:
+   warm timber, a readable parchment surface, and a small game-like route marker. */
+.cth-onboarding-overlay {
+  --cth-world-wall: #eee3cd;
+  --cth-world-wood: #795032;
+  --cth-world-trim: #c79555;
+  background-color: #d7c09c;
+  background-image:
+    linear-gradient(90deg, rgba(70, 45, 24, 0.12), transparent 18%, transparent 82%, rgba(70, 45, 24, 0.12)),
+    repeating-linear-gradient(0deg, rgba(121, 80, 50, 0.10) 0 2px, transparent 2px 28px),
+    repeating-linear-gradient(90deg, transparent 0 64px, rgba(121, 80, 50, 0.06) 64px 67px);
+  color: var(--cth-ink-900);
+}
+.cth-onboarding-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+  padding: 8px 12px;
+  color: #fff7e8;
+  background: #51351f;
+  box-shadow: inset 0 0 0 2px #2f2116, inset 0 -4px 0 #795032, 0 3px 0 rgba(47, 33, 22, 0.3);
+  font: 10px/1 var(--cth-font-display);
+  text-transform: uppercase;
+}
+.cth-onboarding-progress-label { white-space: nowrap; color: #f3cb78; }
+.cth-onboarding-progress-caption { white-space: nowrap; color: #e7d7bc; }
+.cth-onboarding-progress-track {
+  display: flex;
+  flex: 1;
+  gap: 3px;
+  height: 12px;
+  padding: 2px;
+  background: #302116;
+  box-shadow: inset 0 0 0 1px #a77c49;
+}
+.cth-onboarding-progress-track span { flex: 1; background: #60442a; }
+.cth-onboarding-progress-track span.is-lit { background: #e0b353; box-shadow: inset 0 -2px 0 #b17c32; }
+.cth-onboarding-panel {
+  background: #eee3cd !important;
+  box-shadow: inset 0 0 0 4px #795032, inset 0 0 0 7px #c79555, 0 8px 0 rgba(57, 38, 23, 0.35) !important;
+}
+.cth-onboarding-panel > div:first-child {
+  background: linear-gradient(180deg, #7e5734, #51351f) !important;
+  color: #fff3dc !important;
+  box-shadow: inset 0 -3px 0 #c79555 !important;
+  padding: 9px 16px 7px !important;
+}
+.cth-onboarding-choice {
+  color: var(--cth-ink-900);
+  transition: transform 100ms steps(2, end), box-shadow 100ms steps(2, end), background-color 100ms steps(2, end);
+}
+.cth-onboarding-choice:hover { transform: translateY(-2px); }
+.cth-onboarding-choice:focus-visible { outline: 3px solid #386b50; outline-offset: 3px; }
+.cth-onboarding-persona-choice {
+  min-height: 142px;
+  justify-content: center;
+  padding: 16px !important;
+  background: #fff8e9 !important;
+  box-shadow: inset 0 0 0 2px #a68050, 0 4px 0 #795032 !important;
+}
+.cth-onboarding-persona-choice[aria-pressed='true'] {
+  background: #e2edcf !important;
+  box-shadow: inset 0 0 0 3px #4f7e50, 0 4px 0 #3d613e !important;
+}
+.cth-onboarding-persona-choice > span:first-child {
+  width: 40px !important;
+  height: 40px !important;
+  color: #fff8e9;
+  background: #638451 !important;
+  box-shadow: inset 0 0 0 2px #3e5e36 !important;
+}
+.cth-onboarding-step[data-onboarding-step='persona'] .cth-onboarding-panel > div:last-child {
+  background: #d9c39e;
+}
+:root[data-cth-theme='dark'] .cth-onboarding-overlay { background-color: #30271d; }
+:root[data-cth-theme='dark'] .cth-onboarding-panel { background: #25221d !important; }
+:root[data-cth-theme='dark'] .cth-onboarding-persona-choice { background: #342c21 !important; }
+:root[data-cth-theme='dark'] .cth-onboarding-persona-choice[aria-pressed='true'] { background: #293523 !important; }
+
 /* Keyframes — pixel-style: step-based, no easing */
 @keyframes cth-blink {
   0%, 49% { opacity: 1; }

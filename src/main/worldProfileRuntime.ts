@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { access, cp, mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { access, cp, lstat, mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 
 export interface WorldRuntimeRoots {
@@ -49,6 +49,15 @@ async function exists(path: string): Promise<boolean> {
   try { await access(path); return true; } catch { return false; }
 }
 
+async function directoryEntriesWithoutSockets(path: string): Promise<string[]> {
+  const names = await readdir(path);
+  const entries: string[] = [];
+  for (const name of names) {
+    if (!(await lstat(join(path, name))).isSocket()) entries.push(name);
+  }
+  return entries;
+}
+
 async function sameTree(left: string, right: string): Promise<boolean> {
   if (!(await exists(left)) || !(await exists(right))) return false;
   const [a, b] = await Promise.all([stat(left), stat(right)]);
@@ -58,7 +67,10 @@ async function sameTree(left: string, right: string): Promise<boolean> {
     return aBytes.equals(bBytes);
   }
   if (!a.isDirectory()) return false;
-  const [aNames, bNames] = await Promise.all([readdir(left), readdir(right)]);
+  const [aNames, bNames] = await Promise.all([
+    directoryEntriesWithoutSockets(left),
+    directoryEntriesWithoutSockets(right)
+  ]);
   if (aNames.length !== bNames.length || aNames.some((name) => !bNames.includes(name))) return false;
   for (const name of aNames) if (!(await sameTree(join(left, name), join(right, name)))) return false;
   return true;
@@ -106,7 +118,14 @@ export async function migrateLegacyMunderState(
   const staging = join(roots.profile, `.legacy-migration-${randomUUID()}`);
   await mkdir(staging, { recursive: true });
   try {
-    for (const name of present) await cp(join(roots.workspace, name), join(staging, name), { recursive: true, errorOnExist: true, force: false });
+    for (const name of present) {
+      await cp(join(roots.workspace, name), join(staging, name), {
+        recursive: true,
+        errorOnExist: true,
+        force: false,
+        filter: async (source) => !(await lstat(source)).isSocket()
+      });
+    }
 
     for (const name of present) {
       const source = join(roots.workspace, name);
