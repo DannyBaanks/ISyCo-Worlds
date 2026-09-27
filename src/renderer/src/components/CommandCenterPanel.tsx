@@ -151,6 +151,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
   return (
     <PixelPanel
       variant="default"
+      className="cth-world-command-panel cth-world-panel"
       noPadding
       style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0, overflow: 'hidden' }}
     >
@@ -296,7 +297,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
             <Centered>{t('commandCenter.terminalFullscreen')}</Centered>
           ) : agent.ptyId ? (
             <>
-              <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
+              <div className="cth-world-terminal" style={{ flex: 1, minHeight: 0, display: 'flex' }}>
                 <PtyTerminalView
                   key={terminalInstanceKey(agent.ptyId, agent.terminalGeneration)}
                   ptyId={agent.ptyId}

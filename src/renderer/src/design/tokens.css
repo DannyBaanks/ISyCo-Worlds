@@ -171,3 +171,59 @@
   /* Hard shadow reads as depth, not void */
   --cth-shadow-hard: 4px 4px 0 rgba(0, 0, 0, 0.45);
 }
+
+/* Monster Trainer's visual skin is intentionally scoped to its live app shell.
+   Office and the standalone Worlds picker continue to use the Munder palette. */
+.cth-app-shell[data-world-skin='monster-trainer'] {
+  --cth-cream-50: #fffaf0;
+  --cth-cream-100: #eee3cd;
+  --cth-cream-200: #d7c09c;
+  --cth-cream-300: #c1a478;
+  --cth-paper-100: #fffaf0;
+  --cth-paper-200: #f1e5ce;
+  --cth-ink-900: #332319;
+  --cth-ink-700: #59402e;
+  --cth-ink-500: #785e46;
+  --cth-ink-300: #927755;
+  --cth-ink-100: #d1bd9e;
+  --cth-coral: #b85e4b; --cth-coral-light: #f1d4c7;
+  --cth-mint: #5b8754; --cth-mint-light: #dce8cd;
+  --cth-sky: #4b8490; --cth-sky-light: #d6e8e8;
+  --cth-lemon: #d2a94b; --cth-lemon-light: #f3e4b8;
+  --cth-lilac: #8873aa; --cth-lilac-light: #e7dded;
+  --cth-peach: #c77c50; --cth-peach-light: #f0dcc7;
+  --cth-on-accent: #332319;
+  --cth-world-wall: #eee3cd;
+  --cth-world-wood: #795032;
+  --cth-world-trim: #c79555;
+  --cth-world-titlebar: linear-gradient(180deg, #f1e6cf 0%, #d8c09a 100%);
+  color-scheme: light;
+  background-color: var(--cth-world-wall);
+  box-shadow: inset 0 0 0 4px var(--cth-world-wood), inset 0 0 0 6px var(--cth-world-trim);
+}
+
+:root[data-cth-theme='dark'] .cth-app-shell[data-world-skin='monster-trainer'] {
+  --cth-cream-50: #1b1916;
+  --cth-cream-100: #25221d;
+  --cth-cream-200: #312b22;
+  --cth-cream-300: #43382b;
+  --cth-paper-100: #211f1a;
+  --cth-paper-200: #2b2821;
+  --cth-ink-900: #f0e6d3;
+  --cth-ink-700: #d3c3a5;
+  --cth-ink-500: #ad9b7f;
+  --cth-ink-300: #8b7a61;
+  --cth-ink-100: #484033;
+  --cth-coral: #df8b75; --cth-coral-light: #482c27;
+  --cth-mint: #91b879; --cth-mint-light: #293523;
+  --cth-sky: #83bac0; --cth-sky-light: #25383a;
+  --cth-lemon: #d8b85e; --cth-lemon-light: #39311e;
+  --cth-lilac: #b4a2d0; --cth-lilac-light: #332b3d;
+  --cth-peach: #e3a77d; --cth-peach-light: #3b2c21;
+  --cth-on-accent: #271e16;
+  --cth-world-wall: #25221d;
+  --cth-world-wood: #110e0b;
+  --cth-world-trim: #80603d;
+  --cth-world-titlebar: linear-gradient(180deg, #383026 0%, #29231b 100%);
+  color-scheme: dark;
+}

@@ -89,7 +89,7 @@ export function GlobalNav({
   return (
     <nav
       aria-label={t('shell.nav.label')}
-      className="cth-titlebar-nodrag cth-globalnav"
+      className="cth-titlebar-nodrag cth-globalnav cth-world-nav"
       style={{ display: 'flex', alignItems: 'stretch', gap: 2, minWidth: 0 }}
     >
       <button
