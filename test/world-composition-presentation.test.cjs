@@ -96,10 +96,11 @@ test('parent hydrates and validates composition separately from semantic project
 test('layout edits render from composition data without recreating the Pixi application or touching semantic projection', () => {
   const world = fs.readFileSync(path.join(root, 'src/renderer/src/worlds/monster/MonsterTrainerWorld.tsx'), 'utf8');
   const scene = fs.readFileSync(path.join(root, 'src/renderer/src/worlds/monster/StarterVillageScene.ts'), 'utf8');
-  assert.match(world, /buildStarterVillageScene\(\{ \.\.\.ctx, composition: ctx\.layout \}\)/);
-  assert.match(world, /useEffect\([\s\S]*new Application\([\s\S]*\}, \[activeIds, scale\]\)/, 'composition state is not an application lifecycle dependency');
+  assert.match(world, /buildStarterVillageScene\(\{ \.\.\.ctx, composition: ctx\.layout, workerMotions: motion\.snapshot\(\) \}\)/);
+  assert.match(world, /useEffect\([\s\S]*new Application\([\s\S]*\}, \[scale\]\)/, 'composition and roster changes stay inside the visual renderer lifecycle');
   assert.match(scene, /for \(const cell of composition\.terrain\)/);
   assert.match(scene, /composition\.placements/);
   assert.match(scene, /selectedPlacementId/);
-  assert.match(scene, /anchorId === 'stable'[\s\S]*?resolveStarterVillageAnchor\(composition, anchorId\)/);
+  assert.match(scene, /resolveStarterVillageAnchor/);
+  assert.match(scene, /root\.updateWorkers/);
 });

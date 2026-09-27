@@ -95,6 +95,17 @@ The house art can be prepared from newly authored project-original sprites and a
 - Editing the Office layout or applying Monster Trainer tokens to Office, settings, or other profiles.
 - Reworking the shared command-center information architecture; only the Monster Trainer presentation is themed.
 
+## Approved visual-worker extension (2026-09-27)
+
+Companion-inspired movement and evolution silhouettes are now an explicit renderer layer above the original static-worker contract:
+
+- Active worker snapshots project to a small set of semantic destinations (`professor`, `training-grass`, and `village-idle`). The actor follows four-way logical-tile routes around water and declared solid structure/prop footprints, then shows an action pose. It does not roam autonomously, choose work, alter assignments, or write to Hive/tasks/agents.
+- Motion is session-local visual state. Only current agent/task snapshots choose destinations; it is discarded with the visual renderer. Workers retain their seeded identity and palette while pose and direction animate in integer logical pixels.
+- Creature art has three explicit visual stages (`baby`, `middle`, `final`). A renderer input selects the stage; each stage changes the silhouette while preserving the worker's variant/palette identity. This art/motion slice does not calculate XP, decay, thresholds, or reset policy; a progression owner may supply the stage in a later integration without giving the renderer operational authority.
+- No path is inferred from raster pixels. Current collision uses the composition's water cells and semantic object footprints; interaction-point metadata remains inert until a later station-behavior layer.
+
+The extension supersedes the earlier “static workers / no pathfinding” and “evolution out of scope” clauses only for this read-only visual projection. Gameplay, training effects, autonomous decisions, Hive/Harness mutations, and progression accounting remain out of scope.
+
 ## Open implementation boundary
 
 Before implementing persistence, map the existing local world-profile storage and IPC seams. Reuse a world/profile-scoped store if one already fits; otherwise add the smallest validated storage bridge for this versioned visual-layout document. Do not place layout state in Hive folders or in agent identity profiles. Keep generic layout types/runtime independent of Monster Trainer content; the Monster Trainer integration may depend on the generic composition API, never the reverse.

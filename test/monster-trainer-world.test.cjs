@@ -53,7 +53,7 @@ test('Starter Village structures use authored layer order, footprint bounds and 
 test('layout and selection updates redraw in the owned renderer without entering its lifecycle dependencies', () => {
   const world = source('src/renderer/src/worlds/monster/MonsterTrainerWorld.tsx');
   assert.match(world, /ctx\.layout, ctx\.selectedPlacementId, ctx\.buildMode/);
-  assert.match(world, /\}, \[activeIds, scale\]\)/, 'only active agents and integer scale recreate the Pixi application');
+  assert.match(world, /\}, \[scale\]\)/, 'roster changes stay inside the visual renderer; only integer scale recreates the Pixi application');
   assert.match(world, /roundPixels:\s*true/);
   assert.match(world, /app\.renderer\.render\(app\.stage\)/);
 });

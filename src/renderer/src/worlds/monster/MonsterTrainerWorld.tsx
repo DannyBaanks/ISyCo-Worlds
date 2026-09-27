@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Application, Container, Ticker } from 'pixi.js';
+import { Application, Ticker } from 'pixi.js';
 import 'pixi.js/unsafe-eval';
 import type { IdentityForAgent } from '../identityResolver';
 import type { CanonicalWorldSnapshot, VisualTransition, WorldAgent, WorldTask } from '../worldProjection';
@@ -28,7 +28,7 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
     id: item.id, label: item.label, kind: item.kind,
     removable: STARTER_VILLAGE_COMPOSITION_DEFINITION.objects[item.id]?.removable ?? false
   })), []);
-  const activeAgents = props.snapshot.agents.filter((agent) => !agent.archived); const activeIds = activeAgents.map((agent) => agent.id).join('|');
+  const activeAgents = props.snapshot.agents.filter((agent) => !agent.archived);
   useEffect(() => { const viewport = viewportRef.current; if (!viewport || typeof ResizeObserver === 'undefined') return; const observer = new ResizeObserver(([entry]) => { const next = integerScaleForViewport(entry.contentRect.width, entry.contentRect.height); setScale((current) => current === next ? current : next); }); observer.observe(viewport); return () => observer.disconnect(); }, []);
   useEffect(() => {
     const host = hostRef.current; if (!host) return; const app = new Application(); let ticker: ((ticker: Ticker) => void) | null = null; let alive = true; let initSettled = false; let disposedReported = false; let failed = false; let releaseLease: (() => boolean) | undefined;
@@ -88,7 +88,7 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
     } catch (cause) { release(); if (!alive) return; reportFailure(cause); }
     finally { initSettled = true; if (!alive) finalizeDisposal(); } })();
     return () => { alive = false; if (initSettled) finalizeDisposal(); };
-  }, [activeIds, scale]);
+  }, [scale]);
   useEffect(() => { ctxRef.current = { agents: activeAgents, tasks: props.snapshot.tasks, identityFor: props.identityFor, growthStageForAgent: props.growthStageForAgent, onAgentSelect: props.onAgentSelect, onTaskOpen: props.onTaskOpen, layout: editor.present, selectedPlacementId, buildMode: mode === 'build', onPlacementSelect: setSelectedPlacementId }; });
   useEffect(() => {
     const result = props.compositionSaveResult;
