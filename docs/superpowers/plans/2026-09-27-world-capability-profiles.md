@@ -55,11 +55,11 @@
 - `WorldProfileDescriptor`: `id`, `labelKey`, `requiredCapabilities`, `optionalCapabilities`, `sharedCapabilities`, `presentationId`.
 - `resolveWorldProfile(profileId, profiles, capabilities, overrides?)` returns a deterministic topologically ordered `ResolvedWorldProfile` or structured `WorldProfileResolutionError`.
 
-- [ ] **Step 1: Add failing registry tests** for resolving `office` and `monster-trainer`, explicit shared capability inclusion, inactive foreign capabilities, duplicate identity, missing dependency, dependency cycle, and conflict.
-- [ ] **Step 2: Run `npm run test:focused -- test/world-capability-registry.test.cjs`** and confirm the new tests fail because the registry API is missing.
-- [ ] **Step 3: Implement serializable descriptors and `resolveWorldProfile`** with stable topological ordering and structured validation errors. Keep descriptors free of Electron and filesystem imports.
-- [ ] **Step 4: Register initial profiles and built-in capability descriptors through one explicit registry entry point.** Both main profiles may declare broad independent baseline access; shared entries require explicit profile inclusion.
-- [ ] **Step 5: Run the focused registry tests and `npm run typecheck`**; confirm all graph/identity cases pass without world-specific conditionals in resolver code.
+- [x] **Step 1: Add failing registry tests** for resolving `office` and `monster-trainer`, explicit shared capability inclusion, inactive foreign capabilities, duplicate identity, missing dependency, dependency cycle, and conflict.
+- [x] **Step 2: Run `npm run test:focused -- test/world-capability-registry.test.cjs`** and confirm the new tests fail because the registry API is missing.
+- [x] **Step 3: Implement serializable descriptors and `resolveWorldProfile`** with stable topological ordering and structured validation errors. Keep descriptors free of Electron and filesystem imports.
+- [x] **Step 4: Register initial profiles and built-in capability descriptors through one explicit registry entry point.** Both main profiles may declare broad independent baseline access; shared entries require explicit profile inclusion.
+- [x] **Step 5: Run the focused registry tests and `npm run typecheck`**; confirm all graph/identity cases pass without world-specific conditionals in resolver code.
 - [ ] **Step 6: Commit** as `feat(worlds): add capability profile registry`.
 
 ### Task 2: Per-world roots and recoverable Munder migration
