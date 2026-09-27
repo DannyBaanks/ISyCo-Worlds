@@ -10,10 +10,12 @@ import { MonsterTrainerWorld } from './MonsterTrainerWorld';
  */
 export function MonsterTrainerSurface({
   onReady,
-  onRenderFailure
+  onRenderFailure,
+  onDisposed
 }: {
   onReady?: () => void;
   onRenderFailure?: (cause: unknown) => void;
+  onDisposed?: () => void;
 }) {
   const { snapshot, transitions, identityFor } = useWorldProjection();
   const reducedMotion = useMemo(
@@ -31,6 +33,7 @@ export function MonsterTrainerSurface({
       reducedMotion={reducedMotion}
       onReady={onReady}
       onRenderFailure={onRenderFailure}
+      onDisposed={onDisposed}
     />
   );
 }

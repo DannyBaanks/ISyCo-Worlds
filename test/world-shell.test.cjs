@@ -51,7 +51,9 @@ test('WorldHost delegates selection to transactional lifecycle layers instead of
   assert.match(runtime, /data-world-layer/);
   assert.match(runtime, /RECOVERY/);
   assert.match(host, /markDisposed/);
-  assert.match(host, /setRetiredTokens[\s\S]*filter\(/, 'retired token bookkeeping is pruned after disposal');
+  assert.match(host, /onDisposed=\{\(token\) => engine\.markDisposed\(token\)\}/, 'the renderer itself acknowledges disposal');
+  assert.doesNotMatch(host, /queueMicrotask/, 'a scheduled callback is not proof Pixi has been destroyed');
+  assert.match(runtime, /onDisposed: \(\) => onDisposed\(mount\.token\)/);
 });
 
 test('Monster Trainer keeps a scrollable integer-scale viewport for Starter Village', () => {

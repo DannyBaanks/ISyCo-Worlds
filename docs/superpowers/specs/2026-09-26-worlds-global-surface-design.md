@@ -71,9 +71,13 @@ possible. Once a renderer must be mounted, the currently live Pixi world is
 disposed first. This is deliberate: a hidden candidate canvas may consume a
 second GPU/WebGL context, the failure shape this design removes.
 
-The host owns DOM unmounting and calls the renderer's one cleanup path exactly
-once. The engine owns phase changes and structured `WorldLifecycleError`
-records. No renderer calls `window.location.reload()` for a normal switch. If
+The host owns DOM unmounting; the renderer acknowledges disposal only after its
+Pixi cleanup has actually completed, including a late asynchronous `init()`.
+A shared Pixi lease serializes initialization across the Office and Worlds tab
+hosts as well as within one `WorldEngine`. The engine owns phase changes and
+structured `WorldLifecycleError` records. A fallback Office READY surface keeps
+the target's structured error visible. No renderer calls
+`window.location.reload()` for a normal switch. If
 the outer renderer has failed unrecoverably, a user-visible recovery action may
 reload the renderer; the main process and Hive continue to own the semantic
 session, so the next mount reconstructs the same state.

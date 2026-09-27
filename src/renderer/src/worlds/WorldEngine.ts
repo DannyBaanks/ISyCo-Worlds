@@ -99,7 +99,7 @@ export class WorldEngine {
       phase: 'READY',
       active: candidate,
       pendingDisposals: this.state.pendingDisposals,
-      error: undefined
+      error: candidate.fallback ? this.state.error : undefined
     });
     return true;
   }

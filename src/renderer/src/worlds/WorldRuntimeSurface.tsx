@@ -42,11 +42,13 @@ export function createBrowserResourceResolver(): WorldResourceResolver {
 export function WorldRuntimeSurface({
   mount,
   onReady,
-  onRenderFailure
+  onRenderFailure,
+  onDisposed
 }: {
   mount: WorldMount;
   onReady: (token: number) => void;
   onRenderFailure: (token: number, cause: unknown) => void;
+  onDisposed: (token: number) => void;
 }) {
   const world = worldById(mount.worldId);
   return (
@@ -62,7 +64,8 @@ export function WorldRuntimeSurface({
       <SurfaceErrorBoundary onFailure={(cause) => onRenderFailure(mount.token, cause)}>
         {world.render({
           onReady: () => onReady(mount.token),
-          onRenderFailure: (cause) => onRenderFailure(mount.token, cause)
+          onRenderFailure: (cause) => onRenderFailure(mount.token, cause),
+          onDisposed: () => onDisposed(mount.token)
         })}
       </SurfaceErrorBoundary>
     </div>

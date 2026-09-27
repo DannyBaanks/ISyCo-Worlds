@@ -122,6 +122,8 @@ test('without a READY world, a failed target attempts Office exactly once', asyn
   assert.equal(calls.filter((call) => call.endsWith('office/office-tiles')).length, 1);
   assert.equal(engine.markReady(fallback.candidate.token), true);
   assert.equal(engine.getState().active.worldId, 'office');
+  assert.equal(engine.getState().error.worldId, 'monster-trainer', 'fallback READY still explains the failed target');
+  assert.equal(engine.getState().error.phase, 'BOOTSTRAPPING');
 });
 
 test('a failed Office fallback reaches Recovery Surface without Office retry loops', async () => {
