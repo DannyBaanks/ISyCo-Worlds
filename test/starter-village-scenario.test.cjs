@@ -180,6 +180,15 @@ test('Monster Trainer has a manifest-backed original building atlas and semantic
   assert.equal(definition.objects.laboratory.footprint.width, 6);
   assert.equal(definition.objects.stable.footprint.width, 6);
   assert.equal(definition.objects['village-home'].footprint.width, 4);
+  for (const [definitionId, assetId] of [['laboratory', 'laboratory'], ['stable', 'stable-building'], ['village-home', 'village-home']]) {
+    const object = definition.objects[definitionId];
+    const frame = frames[assetId];
+    assert.deepEqual(
+      [frame.renderWidth, frame.renderHeight],
+      [object.footprint.width * Scenario.STARTER_VILLAGE_TILE_SIZE, object.footprint.height * Scenario.STARTER_VILLAGE_TILE_SIZE],
+      `${definitionId} raster frame stays aligned with its logical multi-tile footprint`
+    );
+  }
   assert.equal(definition.objects.laboratory.stationKind, 'research');
   assert.ok(definition.objects.laboratory.interactionPoints.entrance);
   assert.equal(definition.objects.laboratory.interactionSlots[0].capacity, 1);

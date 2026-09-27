@@ -34,6 +34,29 @@ test('MonsterTrainerWorld owns exactly one Pixi lifecycle and destroys it', () =
   assert.match(world, /onDisposed\?\.\(\)/, 'the old renderer acknowledges only after release');
 });
 
+test('Starter Village structures use authored layer order, footprint bounds and scene-depth sorting', () => {
+  const scene = source('src/renderer/src/worlds/monster/StarterVillageScene.ts');
+  assert.match(scene, /STARTER_VILLAGE_STRUCTURE_LAYER_ORDER\s*=\s*\[[^\]]*contact-shadow[^\]]*foundation[^\]]*side-plane[^\]]*facade[^\]]*roof/s);
+  assert.match(scene, /structureRenderBounds\(/, 'render bounds derive from logical placement footprint');
+  assert.match(scene, /footprint\.width\s*\*\s*STARTER_VILLAGE_TILE_SIZE/);
+  assert.match(scene, /footprint\.height\s*\*\s*STARTER_VILLAGE_TILE_SIZE/);
+  assert.match(scene, /sortableChildren\s*=\s*true/);
+  assert.match(scene, /const z = bounds\.depth[\s\S]*?sprite\.zIndex = z/);
+  assert.match(scene, /layer\.zIndex\s*=\s*index/);
+  assert.match(scene, /roofFrame/);
+  assert.match(scene, /sidePlane/);
+  assert.match(scene, /contactShadow/);
+  assert.doesNotMatch(scene, /(?:contactShadow|foundation|sidePlane)\.setFillStyle/, 'do not invent detached geometry over the authored building raster');
+});
+
+test('layout and selection updates redraw in the owned renderer without entering its lifecycle dependencies', () => {
+  const world = source('src/renderer/src/worlds/monster/MonsterTrainerWorld.tsx');
+  assert.match(world, /ctx\.layout, ctx\.selectedPlacementId, ctx\.buildMode/);
+  assert.match(world, /\}, \[activeIds, scale\]\)/, 'only active agents and integer scale recreate the Pixi application');
+  assert.match(world, /roundPixels:\s*true/);
+  assert.match(world, /app\.renderer\.render\(app\.stage\)/);
+});
+
 test('MonsterTrainerWorld receives only props and callbacks, never operational state', () => {
   const world = source('src/renderer/src/worlds/monster/MonsterTrainerWorld.tsx');
   assert.doesNotMatch(world, /useWorldProjection|hiveTasks|worldProfiles|useStore/, 'no operational imports or hooks');
