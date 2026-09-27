@@ -95,6 +95,7 @@ import { toolCatalog, type ToolStatus } from '../shared/toolCatalog';
 import { listLocalSkills, loadCatalog, installSkill, uninstallSkill, type LocalSkill } from './skills';
 import { loadHero } from './hero';
 import { loadModelCatalog } from './modelCatalog';
+import { readWorldProfiles } from './worldProfiles';
 import {
   CODEX_REMOTE_SOCKET_RELATIVE,
   codexRemoteAliasPath,
@@ -3411,6 +3412,11 @@ function readAvatarOverrides(): Record<string, unknown> {
   }
 }
 ipcMain.handle('avatar:getOverrides', () => readAvatarOverrides());
+
+// ─── IPC: per-agent visual identities (Munder Worlds) ──────────────────────
+// This stays separate from Office's cast-slot override file: worlds resolve
+// identities by the real agent id.
+ipcMain.handle('worlds:getProfiles', () => readWorldProfiles());
 
 // ─── IPC: config ────────────────────────────────────────────────────────────
 ipcMain.handle('config:get', (): HarnessConfig => readConfig());

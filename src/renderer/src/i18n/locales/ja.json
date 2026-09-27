@@ -248,7 +248,16 @@
       "resetStartOver": "リセットして最初から",
       "arabicTerminal": "ターミナル内のアラビア語 / RTL テキスト",
       "arabicTerminalDesc": "ブラウザのテキストエンジンでターミナルを描画し、アラビア文字がつながり右から左に読めるようにします（xterm 自身に bidi はありません）。オフだと GPU レンダラ: 高速ですが RTL 非対応。開いているターミナルにも新しいターミナルにも適用されます。",
-      "arabicTerminalFollowsLanguage": "アプリの言語設定に従います。ここで切り替えるとどちらでも上書きでき、言語を変えても選択は保持されます。"
+      "arabicTerminalFollowsLanguage": "アプリの言語設定に従います。ここで切り替えるとどちらでも上書きでき、言語を変えても選択は保持されます。",
+      "worlds": {
+        "title": "ワールド",
+        "enable": "ビジュアルワールドを有効化",
+        "description": "同じライブエージェントの実験的なビューを試します。オフィスはデフォルトのまま、いつでも戻れます。",
+        "selector": "ワールド",
+        "office": "オフィス",
+        "monsterTrainer": "モンスタートレーナー (実験的)",
+        "returnToOffice": "オフィスに戻る"
+      }
     },
     "agentsModels": {
       "defaultModel": "デフォルトのエージェントモデル",

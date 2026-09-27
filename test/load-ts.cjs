@@ -7,9 +7,10 @@ const ts = require('typescript');
 const cache = new Map();
 
 function resolveTs(fromDir, request) {
-  const base = request.startsWith('@shared/')
-    ? path.resolve(__dirname, '..', 'src/shared', request.slice('@shared/'.length))
-    : path.resolve(fromDir, request);
+  const requestPath = request.replace(/[?].*$/, '');
+  const base = requestPath.startsWith('@shared/')
+    ? path.resolve(__dirname, '..', 'src/shared', requestPath.slice('@shared/'.length))
+    : path.resolve(fromDir, requestPath);
   for (const candidate of [base, `${base}.ts`, path.join(base, 'index.ts')]) {
     if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) return candidate;
   }
@@ -26,6 +27,11 @@ function loadFile(filename) {
     const json = { exports: JSON.parse(fs.readFileSync(filename, 'utf8')) };
     cache.set(filename, json);
     return json.exports;
+  }
+  if (filename.endsWith('.svg')) {
+    const asset = { exports: filename };
+    cache.set(filename, asset);
+    return asset.exports;
   }
   const source = fs.readFileSync(filename, 'utf8');
   const output = ts.transpileModule(source, {

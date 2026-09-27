@@ -46,7 +46,8 @@ test('Marketplace paints over the office, it never unmounts it', () => {
   // The floor, the sidebar (terminals) and the agent strip render unconditionally;
   // only the Marketplace overlay depends on the view.
   assert.match(app, /\{globalView === 'marketplace' && <MarketplaceView \/>\}/);
-  assert.match(app, /\n\s+<OfficeFloor \/>\n/);
+  // The floor slot now hosts worlds; WorldHost renders OfficeFloor by default.
+  assert.match(app, /\n\s+<WorldHost config=\{config\} \/>\n/);
   assert.doesNotMatch(app, /globalView === 'office' &&/);
   assert.doesNotMatch(app, /globalView !== 'marketplace' &&/);
   assert.match(app, /<AgentStrip config=\{config\} \/>/);
