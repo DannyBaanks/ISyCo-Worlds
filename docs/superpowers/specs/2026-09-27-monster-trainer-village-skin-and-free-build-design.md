@@ -64,7 +64,7 @@ The house art can be prepared from newly authored project-original sprites and a
 - Scenario identity stays `starter-village`; semantic anchor IDs remain stable.
 - Add explicit object identities and footprints to the editable layout representation. Anchor locations are resolved from object identity plus authored local offsets for structures that carry anchors; arbitrary scene coordinates are not the identity.
 - Structure definitions may include optional `stationKind`, `affinities`, interaction-slot definitions, and named local interaction points. These fields are inert declarative data in V1 and must be validated/serialized without introducing worker behavior.
-- Store `{ version, scenarioId, placements }` as a validated, versioned visual-layout document. Reject malformed, unknown asset IDs, out-of-bounds positions, footprint overlaps, and incompatible scenario versions without replacing the last valid saved layout.
+- Store `WorldCompositionV1` as `{ version: 1, scenarioId, placements, terrain }`, where `placements` contains placed structures/props and `terrain` contains the editable terrain brush data. Both fields are required parts of the versioned visual-layout document so Free Build terrain painting survives save/reload. Reject malformed, unknown asset IDs, out-of-bounds positions, footprint overlaps, and incompatible scenario versions without replacing the last valid saved layout.
 - Resource manifest lists the new house sprite resource(s). Both the regular development resolver and packaged resolver use the established WorldEngine/bootstrap route.
 - Layout reset returns to the authored immutable preset; saving a build-mode layout does not modify the preset source.
 
