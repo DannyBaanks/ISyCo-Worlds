@@ -41,6 +41,39 @@ test('global route restores only after async config hydration and persists user 
   assert.match(app, /onView=\{onGlobalViewChange\}/);
 });
 
+test('Monster Trainer HUD skin follows the active visual profile without config or theme writes', () => {
+  const app = source('src/renderer/src/App.tsx');
+  const tokens = source('src/renderer/src/design/tokens.css');
+  assert.doesNotMatch(app, /worldProfileStatus[\s\S]{0,180}updateConfig\(\{\s*(?:worldSkin|theme)/);
+  assert.match(app, /const worldSkin = worldProfileStatus\?\.activeProfileId === 'monster-trainer' \? 'monster-trainer' : undefined/);
+  assert.match(app, /data-world-skin=\{worldSkin\}/);
+  assert.match(tokens, /\.cth-app-shell\[data-world-skin=['"]monster-trainer['"]\]/);
+  assert.match(tokens, /data-cth-theme=['"]dark['"][\s\S]*?data-world-skin=['"]monster-trainer['"]/, 'dark skin has its own contrast-preserving palette');
+  assert.match(tokens, /--cth-world-wall/);
+  assert.match(tokens, /--cth-world-wood/);
+});
+
+test('skin classes decorate existing panels, navigation, terminal and agent strip without remounting app state', () => {
+  const app = source('src/renderer/src/App.tsx');
+  const panel = source('src/renderer/src/components/PixelPanel.tsx');
+  const detail = source('src/renderer/src/components/AgentDetailPanel.tsx');
+  const commandCenter = source('src/renderer/src/components/CommandCenterPanel.tsx');
+  const strip = source('src/renderer/src/components/AgentStrip.tsx');
+  const nav = source('src/renderer/src/components/GlobalNav.tsx');
+  const css = source('src/renderer/src/design/global.css');
+  assert.match(app, /className="cth-app-shell"/);
+  assert.match(detail, /cth-world-command-panel/);
+  assert.match(commandCenter, /cth-world-command-panel/);
+  assert.match(strip, /cth-world-agent-strip/);
+  assert.match(nav, /cth-world-nav/);
+  assert.match(panel, /<div className=\{className\}/, 'PixelPanel preserves skin marker classes supplied by callers');
+  assert.match(css, /cth-world-command-panel/);
+  assert.match(css, /cth-world-terminal/);
+  assert.match(css, /cth-world-agent-strip/);
+  assert.doesNotMatch(app, /key=\{worldProfileStatus\?\.activeProfileId/);
+  assert.match(app, /<WorldHost config=\{officeWorldConfig\} profileId=/, 'the visual skin does not replace or remount the semantic app tree');
+});
+
 test('WorldHost delegates scene lifecycle to WorldEngine and selects isolated presentation only at the host boundary', () => {
   const host = source('src/renderer/src/worlds/WorldHost.tsx');
   const runtime = source('src/renderer/src/worlds/WorldRuntimeSurface.tsx');

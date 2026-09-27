@@ -91,6 +91,7 @@ export function App() {
   const [closing, setClosing] = useState<ClosingTimeState | null>(null);
   const [vpWidth, setVpWidth] = useState<number>(window.innerWidth);
   const density = navDensity(vpWidth);
+  const worldSkin = worldProfileStatus?.activeProfileId === 'monster-trainer' ? 'monster-trainer' : undefined;
 
   // Deep link into Settings from anywhere in the tree. Settings' open state is
   // local to App, so a nested control (e.g. "set it now" beside a disabled Talk
@@ -315,7 +316,7 @@ export function App() {
   const officeWorldConfig: HarnessConfig = { ...config, worldsEnabled: false };
 
   return (
-    <div style={{
+    <div className="cth-app-shell" data-world-skin={worldSkin} style={{
       display: 'flex', flexDirection: 'column',
       width: '100vw', height: '100vh',
       overflow: 'hidden'
@@ -328,10 +329,10 @@ export function App() {
       <UpdateToast />
       {/* Title bar */}
       <div
-        className="cth-titlebar-drag"
+        className="cth-titlebar-drag cth-world-titlebar"
         style={{
           height: 36, minHeight: 36,
-          background: 'linear-gradient(180deg, var(--cth-cream-100) 0%, var(--cth-cream-200) 100%)',
+          background: 'var(--cth-world-titlebar, linear-gradient(180deg, var(--cth-cream-100) 0%, var(--cth-cream-200) 100%))',
           borderBottom: '1px solid var(--cth-ink-300)',
           display: 'flex',
           alignItems: 'center',
@@ -492,7 +493,7 @@ export function App() {
           viewportWidth={vpWidth}
         />
 
-        <div style={{
+        <div className="cth-world-sidebar" style={{
           width: sidebarWidth, flexShrink: 0,
           minHeight: 0, display: 'flex', flexDirection: 'column'
         }}>
