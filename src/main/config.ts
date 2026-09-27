@@ -25,6 +25,12 @@ import {
   type WebhookTrigger
 } from '../shared/triggers';
 
+export type GlobalVisualView = 'office' | 'marketplace' | 'worlds';
+
+function isGlobalVisualView(value: unknown): value is GlobalVisualView {
+  return value === 'office' || value === 'marketplace' || value === 'worlds';
+}
+
 /** A recurring auto-dispatched mission fired on an interval by the scheduler. */
 export interface ScheduledMission {
   id: string;
@@ -324,6 +330,8 @@ export interface HarnessConfig {
   worldsEnabled?: boolean;
   /** The selected visual renderer. Invalid persisted values fall back to Office. */
   selectedWorld?: WorldId;
+  /** Last global visual route. This only changes the projection, never runtime data. */
+  lastGlobalView?: GlobalVisualView;
   /** Per-CLI-provider local/self-hosted base URL (Ollama/LM Studio/vLLM, …) for the
    *  OpenCode/OpenISy/Crush/pi/qwen engines; applied at spawn (config-injection or proxy
    *  upstream). API KEYS are NOT stored here — they live write-only in the secret
@@ -458,6 +466,7 @@ const DEFAULTS: HarnessConfig = {
   officeTheme: 'office',
   worldsEnabled: false,
   selectedWorld: 'office',
+  lastGlobalView: 'office',
   slackEnabled: false,
   slackSigningSecret: undefined,
   slackBotToken: undefined,
@@ -609,10 +618,14 @@ export function readConfig(): HarnessConfig {
 }
 
 function normalizeWorldPreferences(cfg: HarnessConfig): HarnessConfig {
+  const worldsEnabled = cfg.worldsEnabled === true;
   return {
     ...cfg,
-    worldsEnabled: cfg.worldsEnabled === true,
-    selectedWorld: isWorldId(cfg.selectedWorld) ? cfg.selectedWorld : 'office'
+    worldsEnabled,
+    selectedWorld: isWorldId(cfg.selectedWorld) ? cfg.selectedWorld : 'office',
+    lastGlobalView: worldsEnabled && isGlobalVisualView(cfg.lastGlobalView)
+      ? cfg.lastGlobalView
+      : 'office'
   };
 }
 
@@ -686,6 +699,9 @@ export function writeConfig(patch: Partial<HarnessConfig>): HarnessConfig {
   const next: HarnessConfig = { ...current, ...patch };
   next.worldsEnabled = next.worldsEnabled === true;
   next.selectedWorld = isWorldId(next.selectedWorld) ? next.selectedWorld : 'office';
+  next.lastGlobalView = next.worldsEnabled && isGlobalVisualView(next.lastGlobalView)
+    ? next.lastGlobalView
+    : 'office';
   // Project INGESTION — a registered repo is typed by hand ("~/dev/foo") as often
   // as it is picked from the folder dialog. Expand `~` here so the persisted list
   // (and therefore every agent's default cwd) is ABSOLUTE; Node's fs/spawn treat
