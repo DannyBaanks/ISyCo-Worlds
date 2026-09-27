@@ -1,6 +1,6 @@
 import starterVillageAtlasUrl from '../../assets/worlds/starter-village/starter-village-atlas.png?url';
 import starterVillageBuildingsUrl from '../../assets/worlds/starter-village/starter-village-buildings.png?url';
-import type { CompositionScenarioDefinition } from '@shared/worldComposition';
+import { resolveRelativePoint, type CompositionScenarioDefinition, type GridPoint, type WorldCompositionV1 } from '@shared/worldComposition';
 
 export const STARTER_VILLAGE_TILE_SIZE = 16;
 export const STARTER_VILLAGE_COLUMNS = 24;
@@ -222,6 +222,102 @@ export const STARTER_VILLAGE_SCENARIO: StarterVillageScenario = {
     palette: [0x132532, 0x2f755b, 0x89bc5f, 0xd99a58, 0xf1db9d]
   }
 };
+
+export const STARTER_VILLAGE_ANCHOR_BINDINGS: Readonly<Partial<Record<ScenarioAnchorId, {
+  placementId: string;
+  localPoint: GridPoint;
+}>>> = {
+  professor: { placementId: 'lab-nw', localPoint: STARTER_VILLAGE_COMPOSITION_DEFINITION.objects.laboratory.semanticAnchors!.professor },
+  stable: { placementId: 'stable-east', localPoint: STARTER_VILLAGE_COMPOSITION_DEFINITION.objects.stable.semanticAnchors!.stable }
+};
+
+function terrainRows(terrainId: string, rows: readonly [y: number, left: number, right: number][]) {
+  return rows.flatMap(([y, left, right]) => Array.from({ length: right - left + 1 }, (_, i) => ({ x: left + i, y, terrainId })));
+}
+
+function propRow(definitionId: string, idPrefix: string, y: number, xs: readonly number[]) {
+  return xs.map((x, index) => ({ id: `${idPrefix}-${index + 1}`, definitionId, x, y }));
+}
+
+function deepFreeze<T>(value: T): T {
+  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const nested of Object.values(value as Record<string, unknown>)) deepFreeze(nested);
+  }
+  return value;
+}
+
+/** Curated version-one visual override. The base grass is implicit; only brush overrides are persisted. */
+export const STARTER_VILLAGE_PRESET: WorldCompositionV1 = deepFreeze({
+  version: 1,
+  scenarioId: 'starter-village',
+  placements: [
+    { id: 'lab-nw', definitionId: 'laboratory', x: 3, y: 2 },
+    { id: 'stable-east', definitionId: 'stable', x: 15, y: 4 },
+    { id: 'home-west', definitionId: 'village-home', x: 2, y: 9 },
+    { id: 'home-south', definitionId: 'village-home', x: 8, y: 17 },
+    ...propRow('tree', 'northwest-tree', 2, [0, 1]),
+    ...propRow('tree', 'northwest-tree-row', 3, [0, 1]),
+    ...propRow('tree', 'northeast-tree', 6, [22, 23]),
+    ...propRow('sign', 'laboratory-sign', 7, [5]),
+    ...propRow('lantern', 'laboratory-lantern', 8, [5]),
+    ...propRow('flowers', 'laboratory-flowers', 8, [8]),
+    ...propRow('shrub', 'laboratory-shrub', 8, [9]),
+    ...propRow('sign', 'west-home-sign', 13, [3]),
+    ...propRow('flowers', 'west-home-flowers', 14, [2, 8]),
+    ...propRow('rock', 'west-home-rock', 15, [9]),
+    ...propRow('shrub', 'west-home-shrub', 16, [1]),
+    ...propRow('flowers', 'south-home-flowers', 21, [7]),
+    ...propRow('lantern', 'south-home-lantern', 22, [9]),
+    ...propRow('crate', 'stable-crates', 9, [22]),
+    ...propRow('lantern', 'stable-lantern', 9, [20]),
+    ...propRow('rock', 'stable-rock', 12, [22]),
+    ...propRow('shrub', 'stable-shrub', 13, [22]),
+    ...propRow('fence-post', 'corral-nw-post', 10, [14]),
+    ...propRow('fence-post', 'corral-ne-post', 10, [21]),
+    ...propRow('fence-post', 'corral-sw-post', 15, [14]),
+    ...propRow('fence-post', 'corral-se-post', 15, [21]),
+    ...propRow('fence-horizontal', 'corral-north', 10, [15, 16, 17, 19, 20]),
+    ...propRow('fence-horizontal', 'corral-south', 15, [15, 16, 17, 18, 19, 20]),
+    ...propRow('fence-vertical', 'corral-west', 11, [14]),
+    ...propRow('fence-vertical', 'corral-west-12', 12, [14]),
+    ...propRow('fence-vertical', 'corral-west-13', 13, [14]),
+    ...propRow('fence-vertical', 'corral-west-14', 14, [14]),
+    ...propRow('fence-vertical', 'corral-east', 11, [21]),
+    ...propRow('fence-vertical', 'corral-east-12', 12, [21]),
+    ...propRow('fence-vertical', 'corral-east-13', 13, [21]),
+    ...propRow('fence-vertical', 'corral-east-14', 14, [21])
+  ],
+  terrain: [
+    ...terrainRows('training-grass', [
+      [14, 2, 6], [15, 2, 8], [16, 2, 8], [17, 3, 8], [18, 3, 7], [19, 4, 7], [20, 5, 8], [21, 6, 8]
+    ]),
+    ...terrainRows('training-grass', [
+      [11, 15, 17], [11, 19, 20], [12, 15, 17], [12, 19, 20],
+      [13, 15, 18], [13, 20, 20], [14, 15, 17], [14, 19, 20]
+    ]),
+    ...terrainRows('water', [
+      [16, 15, 16], [17, 14, 17], [18, 13, 18], [19, 13, 18], [20, 14, 17], [21, 15, 16], [22, 15, 15]
+    ]),
+    ...terrainRows('dirt', [
+      [7, 6, 10], [8, 10, 14], [9, 10, 12], [9, 15, 19], [10, 10, 10], [11, 10, 10], [12, 10, 10], [13, 4, 12],
+      [14, 12, 12], [15, 12, 12], [16, 12, 12], [17, 12, 12], [18, 12, 12], [19, 12, 12], [20, 12, 12], [21, 10, 12],
+      [9, 20, 21], [8, 22, 22], [7, 22, 22], [6, 22, 22], [5, 22, 22], [4, 22, 22]
+    ]),
+    ...terrainRows('road', [[3, 21, 22]])
+  ]
+});
+
+/** Resolves structure-bound semantic anchors from their stable placement identity. */
+export function resolveStarterVillageAnchor(layout: WorldCompositionV1, anchorId: ScenarioAnchorId): GridPoint {
+  const binding = STARTER_VILLAGE_ANCHOR_BINDINGS[anchorId];
+  if (binding) {
+    const placement = layout.placements.find((item) => item.id === binding.placementId);
+    if (placement) return resolveRelativePoint(placement, binding.localPoint);
+  }
+  const fallback = STARTER_VILLAGE_SCENARIO.anchorPlacements[anchorId];
+  return { x: fallback.x, y: fallback.y };
+}
 
 /** Selects an integral scale from available width; extra map height scrolls instead of shrinking the art. */
 export function integerScaleForViewport(width: number, _height: number): 1 | 2 | 3 | 4 {

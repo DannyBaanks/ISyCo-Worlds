@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const loadTs = require('./load-ts.cjs');
-const { validateComposition } = loadTs('src/shared/worldComposition.ts');
+const { applyCompositionCommand, resolveRelativePoint, validateComposition } = loadTs('src/shared/worldComposition.ts');
 
 const root = process.cwd();
 const Scenario = loadTs('src/renderer/src/worlds/monster/StarterVillageScenario.ts');
@@ -191,4 +191,109 @@ test('Monster Trainer has a manifest-backed original building atlas and semantic
   assert.match(attribution, /starter-village-buildings\.png/);
   assert.match(attribution, /original.*pixel.art/i);
   assert.match(fs.readFileSync(path.join(root, 'src/renderer/src/worlds/worldRegistry.ts'), 'utf8'), /resources: STARTER_VILLAGE_SCENARIO\.resources/);
+});
+
+test('Starter Village preset is immutable, valid, and binds stable semantic anchors to building identities', () => {
+  const preset = Scenario.STARTER_VILLAGE_PRESET;
+  assert.equal(preset.version, 1);
+  assert.equal(preset.scenarioId, 'starter-village');
+  assert.ok(Array.isArray(preset.terrain), 'the persisted composition includes editable terrain');
+  assert.equal(validateComposition(preset, Scenario.STARTER_VILLAGE_COMPOSITION_DEFINITION).ok, true);
+  assert.ok(Object.isFrozen(preset) && Object.isFrozen(preset.placements) && Object.isFrozen(preset.terrain));
+  assert.deepEqual(
+    preset.placements.filter((placement) => ['laboratory', 'stable'].includes(placement.definitionId)).map((placement) => placement.id),
+    ['lab-nw', 'stable-east']
+  );
+  assert.equal(Scenario.resolveStarterVillageAnchor(preset, 'professor').x, 6);
+  assert.equal(Scenario.resolveStarterVillageAnchor(preset, 'stable').x, 18);
+});
+
+test('moving an authored building carries its semantic anchor and local interaction points', () => {
+  const preset = Scenario.STARTER_VILLAGE_PRESET;
+  const definition = Scenario.STARTER_VILLAGE_COMPOSITION_DEFINITION;
+  const before = preset.placements.find((placement) => placement.id === 'lab-nw');
+  const afterEdit = applyCompositionCommand({ present: preset, past: [] }, {
+    type: 'move-object', placementId: 'lab-nw', x: 4, y: 2
+  }, definition);
+  assert.equal(afterEdit.ok, true);
+  const after = afterEdit.state.present.placements.find((placement) => placement.id === 'lab-nw');
+  assert.deepEqual(Scenario.resolveStarterVillageAnchor(afterEdit.state.present, 'professor'), { x: 7, y: 7 });
+  assert.deepEqual(resolveRelativePoint(after, definition.objects.laboratory.interactionPoints.entrance), { x: 7, y: 7 });
+  assert.deepEqual(resolveRelativePoint(after, definition.objects.laboratory.interactionPoints.work), { x: 8, y: 5 });
+  assert.equal(before.x, 3, 'the immutable preset and the previous placement remain unchanged');
+});
+
+test('ORGANIC COMPOSITION witness rejects blocky, corner-clamped, or disconnected authored layouts', () => {
+  const preset = Scenario.STARTER_VILLAGE_PRESET;
+  const definition = Scenario.STARTER_VILLAGE_COMPOSITION_DEFINITION;
+  const cells = new Map(preset.terrain.map((cell) => [`${cell.x},${cell.y}`, cell.terrainId]));
+  const byType = (terrainId) => preset.terrain.filter((cell) => cell.terrainId === terrainId);
+  const training = byType('training-grass');
+  const rowWidths = new Set();
+  for (let y = 0; y < definition.rows; y += 1) {
+    const width = training.filter((cell) => cell.y === y).length;
+    if (width) rowWidths.add(width);
+  }
+  assert.ok(rowWidths.size >= 3, 'the training grass outline has irregular row widths');
+
+  // Supporting numeric gate: find the largest solid same-brush rectangle.
+  let largestBrushRectangle = 0;
+  for (const terrainId of definition.terrainIds) {
+    for (let top = 0; top < definition.rows; top += 1) {
+      const columnRuns = Array(definition.columns).fill(0);
+      for (let bottom = top; bottom < definition.rows; bottom += 1) {
+        for (let x = 0; x < definition.columns; x += 1) {
+          columnRuns[x] = cells.get(`${x},${bottom}`) === terrainId ? columnRuns[x] + 1 : 0;
+        }
+        const height = bottom - top + 1;
+        let width = 0;
+        for (const current of columnRuns) {
+          width = current === height ? width + 1 : 0;
+          largestBrushRectangle = Math.max(largestBrushRectangle, width * height);
+        }
+      }
+    }
+  }
+  assert.ok(largestBrushRectangle <= Math.floor(definition.columns * definition.rows * 0.1));
+
+  const structures = preset.placements.filter((placement) => definition.objects[placement.definitionId].kind === 'structure');
+  for (const placement of structures) {
+    const { width, height } = definition.objects[placement.definitionId].footprint;
+    assert.ok(placement.x >= 2 && placement.y >= 2, `${placement.id} is not clamped to the northwest map corner`);
+    assert.ok(placement.x + width <= definition.columns - 2 && placement.y + height <= definition.rows - 2, `${placement.id} has environmental margin`);
+  }
+
+  const occupied = new Set();
+  for (const placement of preset.placements) {
+    const footprint = definition.objects[placement.definitionId].footprint;
+    for (let y = placement.y; y < placement.y + footprint.height; y += 1) {
+      for (let x = placement.x; x < placement.x + footprint.width; x += 1) occupied.add(`${x},${y}`);
+    }
+  }
+  assert.ok(definition.columns * definition.rows - occupied.size >= definition.columns * definition.rows * 0.2, 'negative space remains available');
+
+  const pathCells = new Set(preset.terrain.filter((cell) => cell.terrainId === 'dirt' || cell.terrainId === 'road').map(({ x, y }) => `${x},${y}`));
+  for (const placement of structures) {
+    const definitionForPlacement = definition.objects[placement.definitionId];
+    const entrance = resolveRelativePoint(placement, definitionForPlacement.interactionPoints.entrance);
+    const touchesPath = [[0, 0], [0, -1], [1, 0], [0, 1], [-1, 0]].some(([dx, dy]) => pathCells.has(`${entrance.x + dx},${entrance.y + dy}`));
+    assert.equal(touchesPath, true, `${placement.id} entrance connects naturally to the path network`);
+  }
+  assert.ok(training.some(({ x, y }) => [[0, -1], [1, 0], [0, 1], [-1, 0]].some(([dx, dy]) => pathCells.has(`${x + dx},${y + dy}`))));
+  const water = byType('water');
+  assert.ok(water.length >= 20 && water.every(({ x, y }) => x > 0 && x < 23 && y < 23));
+  assert.equal(water.some(({ y }) => y === 23), false, 'the southernmost edge remains grassy');
+
+  const props = preset.placements.filter((placement) => definition.objects[placement.definitionId].kind === 'prop');
+  const clusters = props.filter((center) => props.filter((item) => Math.abs(item.x - center.x) <= 2 && Math.abs(item.y - center.y) <= 2).length >= 3);
+  const distinctClusterCenters = clusters.filter((center, index) => clusters.findIndex((item) => Math.abs(item.x - center.x) <= 2 && Math.abs(item.y - center.y) <= 2) === index);
+  assert.ok(distinctClusterCenters.length >= 2, 'props form deliberate clusters rather than uniform scatter');
+
+  const distances = new Set();
+  for (let i = 0; i < structures.length; i += 1) {
+    for (let j = i + 1; j < structures.length; j += 1) {
+      distances.add(Math.abs(structures[i].x - structures[j].x) + Math.abs(structures[i].y - structures[j].y));
+    }
+  }
+  assert.ok(distances.size >= 3, 'structure spacing has deliberate variety');
 });
