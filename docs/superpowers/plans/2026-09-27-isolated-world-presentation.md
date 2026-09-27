@@ -51,10 +51,10 @@
 - Modify: `package.json`
 - Modify: `.github/workflows/ci.yml`
 
-- [ ] **Step 1: Add an Electron fixture** that creates a primary BrowserWindow and a candidate embedded visual WebContents, records both `getOSProcessId()` values, closes/recreates only the visual host, and exits nonzero unless the PIDs differ and the primary remains alive.
-- [ ] **Step 2: Add `test/world-presentation-pid.test.cjs`** to launch the fixture and assert its structured witness; expose it as `npm run test:world-presentation-pid`.
-- [ ] **Step 3: Run `npm run test:world-presentation-pid`** locally. On Linux CI run it under `xvfb-run -a`; run directly on Windows/macOS CI. Confirm separate PIDs, child-only restart, and stable primary PID.
-- [ ] **Step 4: If the candidate shares a PID, test the next isolated Electron host option.** Do not continue with a component/iframe/worker substitute; stop and report if no supported host meets the contract.
+- [x] **Step 1: Add an Electron fixture** that creates a primary BrowserWindow and a candidate embedded visual WebContents, records both `getOSProcessId()` values, closes/recreates only the visual host, and exits nonzero unless the PIDs differ and the primary remains alive.
+- [x] **Step 2: Add `test/world-presentation-pid.test.cjs`** to launch the fixture and assert its structured witness; expose it as `npm run test:world-presentation-pid`.
+- [x] **Step 3: Run `npm run test:world-presentation-pid`** locally. On Linux CI run it under `xvfb-run -a`; run directly on Windows/macOS CI. Confirm separate PIDs, child-only restart, and stable primary PID.
+- [x] **Step 4: If the candidate shares a PID, test the next isolated Electron host option.** Not needed: the first candidate produced a distinct OS PID and survived a child-only restart.
 - [ ] **Step 5: Commit the passing witness** as `test(worlds): prove isolated presentation process`.
 
 ### Task 2: Typed presentation IPC and main-process supervisor

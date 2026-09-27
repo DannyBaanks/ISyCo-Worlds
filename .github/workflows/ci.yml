@@ -88,6 +88,12 @@ jobs:
       # is in the tail of the log (TAP scatters them across ~6000 lines).
       - name: Focused tests
         run: npm run test:focused -- --test-reporter=spec
+      - name: Isolated Electron presentation PID witness (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm run test:world-presentation-pid
+      - name: Isolated Electron presentation PID witness (Windows/macOS)
+        if: runner.os != 'Linux'
+        run: npm run test:world-presentation-pid
       # Discovered, not listed: scripts/test-munder-cli.cjs runs every
       # tools/munder/*.test.cjs (today 10, incl. proveedor since M1/2026-09-26
       # and load-checked harness-p0). A new test file runs automatically; an
