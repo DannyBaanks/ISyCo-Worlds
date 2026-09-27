@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron';
 import type { AgentProvider } from '../shared/agentProvider';
 import type { WorldId } from '../shared/worlds';
+import type { WorldCompositionV1 } from '../shared/worldComposition';
 import type { VisualIdentityProfileV1 } from '../shared/worldProfiles';
 import type { WorldProfileLifecycleError, WorldProfileRuntimeStatus } from '../main/worldProfileLifecycle';
 import type { WorldPresentationIntent, WorldPresentationProjection, WorldPresentationStatus } from '../shared/worldPresentationProtocol';
@@ -690,6 +691,15 @@ const api = {
   confirmWorldProfileActivation: (profileId: WorldId): Promise<
     { ok: true; activeProfileId: string } | { ok: false; error: WorldProfileLifecycleError }
   > => ipcRenderer.invoke('world-profile:confirmActivation', profileId),
+
+  /** Read the user-authored visual override for the selected world's scenario. */
+  getWorldComposition: (profileId: WorldId, scenarioId: string): Promise<
+    { ok: true; layout: WorldCompositionV1 | null } | { ok: false; category: 'invalid' | 'io' }
+  > => ipcRenderer.invoke('world-composition:get', profileId, scenarioId),
+  /** Persist only the visual layout; never changes Hive or worker state. */
+  saveWorldComposition: (profileId: WorldId, layout: WorldCompositionV1): Promise<
+    { ok: true } | { ok: false; category: 'invalid' | 'io' }
+  > => ipcRenderer.invoke('world-composition:save', profileId, layout),
 
   // ─── Isolated visual presentation process ───────────────────────────────
   startWorldPresentation: (profileId: WorldId, projection: WorldPresentationProjection): Promise<WorldPresentationStatus> =>

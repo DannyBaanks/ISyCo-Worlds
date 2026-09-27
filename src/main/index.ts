@@ -96,6 +96,8 @@ import { listLocalSkills, loadCatalog, installSkill, uninstallSkill, type LocalS
 import { loadHero } from './hero';
 import { loadModelCatalog } from './modelCatalog';
 import { readWorldProfiles } from './worldProfiles';
+import { readWorldComposition, writeWorldComposition } from './worldCompositionStore';
+import { isWorldCompositionV1 } from '../shared/worldComposition';
 import { migrateLegacyMunderState, resolveWorldRuntimeRoots } from './worldProfileRuntime';
 import type { WorldId } from '../shared/worlds';
 import { isWorldId } from '../shared/worlds';
@@ -3532,6 +3534,26 @@ ipcMain.handle('world-profile:confirmActivation', (_evt, profileId: unknown) => 
     return { ok: false, error: { phase: 'VALIDATING', profileId: String(profileId), category: 'invalid-profile', cause: { name: 'Error', message: 'Invalid profile id' } } };
   }
   return activateWorldProfile(profileId, true);
+});
+
+// User-authored visual layout belongs to the parent app renderer and never to
+// the isolated presentation child. Keep its storage location fixed under
+// Electron userData; IPC accepts ids and validated data, never filesystem paths.
+ipcMain.handle('world-composition:get', (event, profileId: unknown, scenarioId: unknown) => {
+  if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents) {
+    return { ok: false, category: 'invalid' } as const;
+  }
+  if (profileId !== activeWorldProfileId || !isWorldId(profileId)) return { ok: false, category: 'invalid' } as const;
+  return readWorldComposition(app.getPath('userData'), profileId, scenarioId);
+});
+ipcMain.handle('world-composition:save', (event, profileId: unknown, layout: unknown) => {
+  if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents) {
+    return { ok: false, category: 'invalid' } as const;
+  }
+  if (profileId !== activeWorldProfileId || !isWorldId(profileId) || !isWorldCompositionV1(layout)) {
+    return { ok: false, category: 'invalid' } as const;
+  }
+  return writeWorldComposition(app.getPath('userData'), profileId, layout);
 });
 
 ipcMain.handle('world-presentation:start', async (event, profileId: unknown, projection: unknown) => {
