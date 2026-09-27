@@ -7,6 +7,7 @@ import type { WorldHelperStreamEvent } from '../shared/worldHelper';
 import type { ProviderFailureCategory, ProviderResult, WorldHelperProviderRegistry } from './worldHelperProviders';
 import type { WorldId } from '../shared/worlds';
 import { WorldHelperReplyDecoder } from './worldHelperStream';
+import { buildGusSystemPrompt } from './worldHelperRoleEngine';
 
 export interface WorldHelperPersistedState {
   provider: WorldHelperProviderId | null;
@@ -59,15 +60,6 @@ export type WorldHelperHostResult<T extends object = Record<never, never>> = { o
 const MAX_TRANSCRIPT = 80;
 const MAX_NOTICES = 80;
 const MAX_SEEN = 500;
-const PROPOSAL_SYSTEM = [
-  'You are GUS, an optional guide for ISyCo Worlds, not an authority.',
-  'Optionally recommend one available world by ID, but never claim to switch it or change configuration.',
-  'Respond ONLY with JSON: include reply, optional worldSuggestion (office or monster-trainer), and workers array of {name, provider, role, purpose}.',
-  'Use only installed provider IDs and role labels in the supplied context. If no real role fits, propose zero workers and explain why.',
-  'Maximum five workers. Never include commands, paths, capabilities, IDs, secrets, or action instructions.',
-  'Any proposal is inert and needs explicit human approval.'
-].join(' ');
-
 function redact(text: string): string {
   return text
     .replace(/-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z0-9 ]*PRIVATE KEY-----/g, '[redacted]')
@@ -290,6 +282,11 @@ export class WorldHelperHost {
     const previousConversation = this.deps.state.transcript.slice(0, -1).slice(-8)
       .map((item) => `${item.role === 'user' ? 'User' : 'GUS'}: ${item.text}`).join('\n');
     const prompt = `${JSON.stringify(safeContext)}\nConversation so far:\n${previousConversation}\nLatest user message: ${userText}`;
+    const systemPrompt = buildGusSystemPrompt({
+      world: safeContext.world,
+      availableRoles: safeContext.availableRoles,
+      installedProviders: safeContext.installedProviders
+    });
     const decoder = new WorldHelperReplyDecoder();
     let decodeFailed = false;
     const onProviderDelta = (rawDelta: string) => {
@@ -302,8 +299,8 @@ export class WorldHelperHost {
     let answer: ProviderResult;
     try {
       answer = this.deps.providers.stream
-        ? await this.deps.providers.stream(provider, key, model, PROPOSAL_SYSTEM, prompt, onProviderDelta, controller.signal)
-        : await this.deps.providers.complete(provider, key, model, PROPOSAL_SYSTEM, prompt);
+        ? await this.deps.providers.stream(provider, key, model, systemPrompt, prompt, onProviderDelta, controller.signal)
+        : await this.deps.providers.complete(provider, key, model, systemPrompt, prompt);
       if (!this.deps.providers.stream && answer.ok) onProviderDelta(answer.text);
     } catch { answer = { ok: false, category: 'offline' }; }
     if (!isActive()) return { ok: false, category: 'unavailable' };

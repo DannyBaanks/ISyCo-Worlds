@@ -13,8 +13,8 @@ function setup(options = {}) {
     state,
     providers: options.providers ?? {
       testConnection: async () => ({ ok: true }),
-      complete: async (_provider, _key, _model, _system, user) => {
-        calls.push(['complete', user]);
+      complete: async (_provider, _key, _model, system, user) => {
+        calls.push(['complete', user, system]);
         return { ok: true, text: JSON.stringify(options.response ?? { reply: 'Here is a small team.', workers: [{ name: 'Researcher', provider: 'codex', role: 'researcher', purpose: 'Investigate the issue.' }] }) };
       }
     },
@@ -77,6 +77,17 @@ test('provider context is minimal and redacts secret-shaped task titles and opaq
   assert.equal(modelInput.includes('/private/repo'), false);
   assert.equal(modelInput.includes('Old completed task'), false);
   assert.match(modelInput, /\[redacted\]/);
+});
+
+test('chat uses the registered GUS role and current world allowlists to build its system prompt', async () => {
+  const { host, calls } = setup({ response: { reply: 'Puedo ayudarte a investigar.', workers: [] }, context: { world: 'monster-trainer', workspaceAvailable: true, workers: [], tasks: [], installedProviders: ['codex'], availableRoles: ['Monster researcher'], workspace: '/safe/repo' } });
+  await host.configure({ provider: 'openai', model: 'gpt-5-mini', apiKey: 'secret' });
+  assert.equal((await host.chat('Ayúdame a investigar.')).ok, true);
+  const systemPrompt = calls.find(([kind]) => kind === 'complete')[2];
+  assert.match(systemPrompt, /Monster Trainer/);
+  assert.match(systemPrompt, /Monster researcher/);
+  assert.match(systemPrompt, /explicit human approval/i);
+  assert.doesNotMatch(systemPrompt, /Isymotron/);
 });
 
 test('model output with unknown engine, command, malformed JSON, or excess workers fails closed', async () => {
