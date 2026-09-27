@@ -33,9 +33,16 @@ async function closeVisual(primary, view) {
   await Promise.race([destroyed, timeout('visual WebContents disposal')]);
 }
 
-async function crashVisual(view) {
+async function crashVisual(view, primaryPid) {
+  const rendererPid = view.webContents.getOSProcessId();
+  if (!Number.isInteger(rendererPid) || rendererPid <= 0 || rendererPid === process.pid || rendererPid === primaryPid) {
+    throw new Error(`invalid visual renderer PID: ${rendererPid}`);
+  }
   const gone = new Promise((resolve) => view.webContents.once('render-process-gone', (_event, details) => resolve(details)));
-  view.webContents.forcefullyCrashRenderer();
+  // Kill the child OS process directly. forcefullyCrashRenderer() has proved
+  // unreliable on hosted Linux/Xvfb: it can leave the renderer alive without
+  // delivering render-process-gone, making this ownership witness hang.
+  process.kill(rendererPid, 'SIGKILL');
   return Promise.race([gone, timeout('visual renderer crash event')]);
 }
 
@@ -62,7 +69,7 @@ async function runWitness() {
   let current = null;
   for (let generation = 1; generation <= 4; generation += 1) {
     if (current) {
-      const details = await crashVisual(current);
+      const details = await crashVisual(current, primaryPid);
       if (!details || !details.reason) throw new Error('visual renderer crash did not report a reason');
       visualCrashes += 1;
       if (primary.isDestroyed() || primary.webContents.isDestroyed()) throw new Error('visual renderer crash destroyed the primary GUI');
