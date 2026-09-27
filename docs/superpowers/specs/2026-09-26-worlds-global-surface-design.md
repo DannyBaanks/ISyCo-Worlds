@@ -1,5 +1,10 @@
 # Worlds Global Surface — Design
 
+> **Superseded:** this earlier design made Worlds a sibling visual surface
+> sharing the Office operational session. The approved direction is now
+> documented in [`2026-09-27-world-capability-runtime-design.md`](./2026-09-27-world-capability-runtime-design.md): worlds are isolated capability
+> profiles, and their visual host has a separately restartable renderer.
+
 ## Intent
 
 Worlds are an optional visual projection of the existing Munder operational
