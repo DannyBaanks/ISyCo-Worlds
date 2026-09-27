@@ -36,39 +36,44 @@ function engineFor(options = {}) {
 async function makeReady(engine, worldId) {
   await engine.select(worldId);
   const candidate = engine.getState().candidate;
-  assert.ok(candidate, `${worldId} should be staged`);
+  assert.ok(candidate, `${worldId} should be mountable`);
   assert.equal(engine.markReady(candidate.token), true);
   return candidate;
 }
 
-test('Office and Monster Trainer bootstrap through the same engine and swap only after candidate READY', async () => {
-  const { engine } = engineFor();
-  const first = await makeReady(engine, 'office');
+test('Office and Monster Trainer hand off serially: preload, dispose, mount, then READY', async () => {
+  const { engine, calls } = engineFor();
+  const officeMount = await makeReady(engine, 'office');
 
   await engine.select('monster-trainer');
-  const staged = engine.getState();
-  assert.equal(staged.phase, 'MOUNTING');
-  assert.equal(staged.active.worldId, 'office', 'the current READY world remains active while staging');
-  assert.equal(staged.candidate.worldId, 'monster-trainer');
+  const preloaded = engine.getState();
+  assert.deepEqual(calls, ['dev:office/office-tiles', 'dev:monster-trainer/monster-stage']);
+  assert.equal(preloaded.phase, 'MOUNTING');
+  assert.equal(preloaded.active, undefined, 'the old renderer is released before a new one can mount');
+  assert.equal(preloaded.candidate, undefined, 'Monster never stages beside Office');
+  assert.equal(preloaded.pendingMount.worldId, 'monster-trainer');
+  assert.deepEqual(preloaded.pendingDisposals.map((mount) => mount.token), [officeMount.token]);
 
-  const second = staged.candidate;
-  assert.equal(engine.markReady(second.token), true);
-  const committed = engine.getState();
-  assert.equal(committed.phase, 'READY');
-  assert.equal(committed.active.worldId, 'monster-trainer');
-  assert.deepEqual(committed.pendingDisposals.map((mount) => mount.token), [first.token]);
-  assert.equal(engine.markDisposed(first.token), true, 'old world disposes once after commit');
-  assert.equal(engine.markDisposed(first.token), false, 'a repeated dispose cannot accumulate cleanup');
+  assert.equal(engine.markDisposed(officeMount.token), true);
+  const mounting = engine.getState();
+  assert.equal(mounting.candidate.worldId, 'monster-trainer');
+  assert.equal(mounting.pendingMount, undefined);
+  assert.deepEqual(mounting.pendingDisposals, []);
+  assert.equal(engine.markReady(mounting.candidate.token), true);
+  assert.equal(engine.getState().active.worldId, 'monster-trainer');
+  assert.equal(engine.markDisposed(officeMount.token), false, 'each released renderer is acknowledged once');
 });
 
-test('a missing target resource fails closed and retains the last READY world with structured cause', async () => {
+test('a missing target resource fails before disposal and preserves the current READY renderer', async () => {
   const { engine } = engineFor({ fail: new Set(['monster-trainer/monster-stage']) });
-  await makeReady(engine, 'office');
+  const officeMount = await makeReady(engine, 'office');
 
   await engine.select('monster-trainer');
   const state = engine.getState();
   assert.equal(state.phase, 'READY');
-  assert.equal(state.active.worldId, 'office');
+  assert.equal(state.active.token, officeMount.token);
+  assert.equal(state.candidate, undefined);
+  assert.deepEqual(state.pendingDisposals, []);
   assert.equal(state.error.phase, 'BOOTSTRAPPING');
   assert.equal(state.error.worldId, 'monster-trainer');
   assert.match(state.error.cause.message, /missing monster:\/\/stage/);
@@ -90,13 +95,10 @@ test('a missing required Starter Village atlas is a BOOTSTRAPPING failure that r
   assert.match(state.error.cause.message, /starter-village-atlas/);
 });
 
-test('a dev resource resolver can classify an unavailable external runtime without reviving it', async () => {
+test('a dev resource resolver classifies an unavailable external runtime without trying to revive it', async () => {
   const unavailable = Object.assign(new Error('Vite origin unavailable'), { category: 'external-resource' });
   const { engine } = engineFor({
-    resources: {
-      runtime: 'dev',
-      async resolve() { throw unavailable; }
-    }
+    resources: { runtime: 'dev', async resolve() { throw unavailable; } }
   });
 
   await engine.select('office');
@@ -105,21 +107,6 @@ test('a dev resource resolver can classify an unavailable external runtime witho
   assert.equal(state.error.category, 'external-resource');
   assert.equal(state.error.runtime, 'dev');
   assert.equal(state.error.cause, unavailable);
-});
-
-test('a failed Office replacement retains the previously READY Office mount', async () => {
-  const { engine } = engineFor();
-  const readyOffice = await makeReady(engine, 'office');
-
-  await engine.select('office');
-  const replacement = engine.getState().candidate;
-  assert.notEqual(replacement.token, readyOffice.token);
-  assert.equal(await engine.markFailed(replacement.token, new Error('Office reload failed')), true);
-
-  const state = engine.getState();
-  assert.equal(state.phase, 'READY');
-  assert.equal(state.active.token, readyOffice.token);
-  assert.deepEqual(state.pendingDisposals.map((mount) => mount.token), [replacement.token]);
 });
 
 test('without a READY world, a failed target attempts Office exactly once', async () => {
@@ -133,7 +120,6 @@ test('without a READY world, a failed target attempts Office exactly once', asyn
   assert.equal(fallback.phase, 'MOUNTING');
   assert.equal(fallback.candidate.worldId, 'office');
   assert.equal(calls.filter((call) => call.endsWith('office/office-tiles')).length, 1);
-  await Promise.resolve();
   assert.equal(engine.markReady(fallback.candidate.token), true);
   assert.equal(engine.getState().active.worldId, 'office');
 });
@@ -154,6 +140,64 @@ test('a failed Office fallback reaches Recovery Surface without Office retry loo
   assert.equal(calls.filter((call) => call.endsWith('office/office-tiles')).length, 1);
 });
 
+test('a post-disposal renderer failure releases Monster then attempts Office exactly once', async () => {
+  const { engine, calls } = engineFor();
+  const officeMount = await makeReady(engine, 'office');
+  await engine.select('monster-trainer');
+  engine.markDisposed(officeMount.token);
+  const monsterMount = engine.getState().candidate;
+  engine.markReady(monsterMount.token);
+
+  assert.equal(await engine.markFailed(monsterMount.token, new Error('ticker exploded')), true);
+  const recovering = engine.getState();
+  assert.equal(recovering.active, undefined, 'post-disposal cannot claim to preserve the prior READY mount');
+  assert.equal(recovering.candidate, undefined);
+  assert.equal(recovering.pendingMount.worldId, 'office');
+  assert.deepEqual(recovering.pendingDisposals.map((mount) => mount.token), [monsterMount.token]);
+  assert.equal(calls.filter((call) => call.endsWith('office/office-tiles')).length, 2);
+
+  engine.markDisposed(monsterMount.token);
+  const fallback = engine.getState().candidate;
+  assert.equal(fallback.worldId, 'office');
+  engine.markReady(fallback.token);
+  assert.equal(engine.getState().active.worldId, 'office');
+});
+
+test('a post-disposal Office fallback failure enters Recovery without retaining the broken world', async () => {
+  const fail = new Set();
+  const { engine } = engineFor({ fail });
+  const officeMount = await makeReady(engine, 'office');
+  await engine.select('monster-trainer');
+  engine.markDisposed(officeMount.token);
+  const monsterMount = engine.getState().candidate;
+  engine.markReady(monsterMount.token);
+  fail.add('office/office-tiles');
+
+  await engine.markFailed(monsterMount.token, new Error('renderer lost'));
+  const state = engine.getState();
+  assert.equal(state.phase, 'RECOVERY');
+  assert.equal(state.active, undefined);
+  assert.equal(state.error.worldId, 'office');
+  assert.deepEqual(state.pendingDisposals.map((mount) => mount.token), [monsterMount.token]);
+});
+
+test('three consecutive failed target selections retain one READY Office and accumulate no mount disposal', async () => {
+  const { engine, states } = engineFor({ fail: new Set(['monster-trainer/monster-stage']) });
+  const officeMount = await makeReady(engine, 'office');
+  const stateCount = states.length;
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await engine.select('monster-trainer');
+    const state = engine.getState();
+    assert.equal(state.active.token, officeMount.token);
+    assert.equal(state.candidate, undefined);
+    assert.equal(state.pendingMount, undefined);
+    assert.deepEqual(state.pendingDisposals, []);
+  }
+  assert.ok(states.length > stateCount, 'each failure is reported, but no renderer mount is added');
+  assert.equal(engine.markDisposed(officeMount.token), false, 'no disposal listener was armed for failed preloads');
+});
+
 test('dev and packaged resolvers exercise an identical WorldEngine lifecycle', async () => {
   async function trace(runtime) {
     const calls = [];
@@ -171,51 +215,4 @@ test('dev and packaged resolvers exercise an identical WorldEngine lifecycle', a
     dev.calls.map((call) => call.replace('dev:', '')),
     packaged.calls.map((call) => call.replace('packaged:', ''))
   );
-});
-
-test('an async renderer failure stages Office while the failed mount remains visible until fallback READY', async () => {
-  const { engine } = engineFor();
-  const officeMount = await makeReady(engine, 'office');
-  const monsterMount = await makeReady(engine, 'monster-trainer');
-  engine.markDisposed(officeMount.token);
-
-  assert.equal(await engine.markFailed(monsterMount.token, new Error('ticker exploded')), true);
-  const recovering = engine.getState();
-  assert.equal(recovering.phase, 'MOUNTING');
-  assert.equal(recovering.active.worldId, 'monster-trainer');
-  assert.equal(recovering.candidate.worldId, 'office');
-  assert.equal(recovering.error.phase, 'READY');
-  assert.equal(engine.markReady(recovering.candidate.token), true);
-  assert.equal(engine.getState().active.worldId, 'office');
-});
-
-test('an async renderer failure whose Office fallback also fails enters Recovery without retaining the broken world', async () => {
-  const fail = new Set();
-  const { engine } = engineFor({ fail });
-  const officeMount = await makeReady(engine, 'office');
-  const monsterMount = await makeReady(engine, 'monster-trainer');
-  engine.markDisposed(officeMount.token);
-  fail.add('office/office-tiles');
-
-  await engine.markFailed(monsterMount.token, new Error('renderer lost'));
-  const state = engine.getState();
-  assert.equal(state.phase, 'RECOVERY');
-  assert.equal(state.active, undefined);
-  assert.equal(state.error.worldId, 'office');
-  assert.deepEqual(state.pendingDisposals.map((mount) => mount.token), [monsterMount.token]);
-});
-
-test('consecutive failed staged switches retain READY Office and release every staged mount once', async () => {
-  const { engine } = engineFor();
-  await makeReady(engine, 'office');
-
-  for (let attempt = 0; attempt < 3; attempt++) {
-    await engine.select('monster-trainer');
-    const candidate = engine.getState().candidate;
-    assert.equal(await engine.markFailed(candidate.token, new Error(`renderer failure ${attempt}`)), true);
-    assert.equal(engine.getState().active.worldId, 'office');
-    assert.deepEqual(engine.getState().pendingDisposals.map((mount) => mount.token), [candidate.token]);
-    assert.equal(engine.markDisposed(candidate.token), true);
-    assert.deepEqual(engine.getState().pendingDisposals, []);
-  }
 });

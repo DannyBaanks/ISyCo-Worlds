@@ -38,7 +38,11 @@ export type WorldFailureCategory = 'manifest' | 'resource' | 'external-resource'
 export interface WorldEngineState {
   phase: WorldPhase;
   active?: WorldMount;
+  /** The only mount React may render. */
   candidate?: WorldMount;
+  /** A preloaded mount waiting until every released renderer is actually gone. */
+  pendingMount?: WorldMount;
+  /** Renderers React has been asked to unmount; host acknowledges cleanup once. */
   pendingDisposals: readonly WorldMount[];
   error?: WorldLifecycleError;
 }
@@ -51,12 +55,13 @@ export interface WorldEngineOptions {
 }
 
 /**
- * A renderer-agnostic transactional visual lifecycle.
+ * Renderer-agnostic visual lifecycle with serialized renderer ownership.
  *
- * The host mounts a candidate in a hidden slot once this engine reaches
- * MOUNTING, then calls `markReady`. Until then `active` remains the committed
- * world. The engine queues a retired mount only after a replacement commits;
- * the host acknowledges real renderer cleanup with `markDisposed`.
+ * Resources validate and preload while the committed world remains READY. Once
+ * preload succeeds, that renderer is released before the candidate is exposed
+ * to React. `markDisposed` is the explicit cleanup acknowledgement that makes
+ * the next mount legal. Therefore preload failures retain READY, while a
+ * renderer failure after disposal follows the finite Office → Recovery path.
  */
 export class WorldEngine {
   private readonly worlds = new Map<WorldId, WorldManifest>();
@@ -78,7 +83,7 @@ export class WorldEngine {
     return this.state;
   }
 
-  /** Start a fresh selection. A stale in-flight candidate is retired, never committed. */
+  /** Start a fresh selection. A stale in-flight mount is released, never committed. */
   async select(worldId: WorldId): Promise<WorldEngineState> {
     const request = ++this.requestToken;
     this.discardCandidate();
@@ -86,22 +91,20 @@ export class WorldEngine {
     return this.state;
   }
 
-  /** Called by the staged renderer once it has drawn a complete first frame. */
+  /** Called by the sole mounted renderer after its first complete frame. */
   markReady(token: number): boolean {
     const candidate = this.state.candidate;
     if (!candidate || candidate.token !== token) return false;
-
-    const previous = this.state.active;
     this.setState({
       phase: 'READY',
       active: candidate,
-      pendingDisposals: this.queueDisposal(previous),
+      pendingDisposals: this.state.pendingDisposals,
       error: undefined
     });
     return true;
   }
 
-  /** Called for async init/render failures from either a staged or active surface. */
+  /** Called for async init/render failures from a mounted surface. */
   async markFailed(token: number, cause: unknown): Promise<boolean> {
     const error = asError(cause);
     const candidate = this.state.candidate;
@@ -118,8 +121,9 @@ export class WorldEngine {
     const active = this.state.active;
     if (active?.token !== token) return false;
 
-    // An active renderer is no longer trustworthy. Keep it painted behind the
-    // fallback candidate until that candidate reaches READY, then retire it.
+    // An active renderer has already failed, so it cannot be considered a
+    // preservable READY world. Preload the one allowed Office fallback, then
+    // release it before exposing that fallback renderer.
     const request = ++this.requestToken;
     if (active.worldId === this.fallbackWorldId) {
       this.enterRecovery(active.worldId, 'READY', error, active);
@@ -129,11 +133,22 @@ export class WorldEngine {
     return true;
   }
 
-  /** The host calls this from the retiring surface's cleanup. It is idempotent. */
+  /** Acknowledge actual renderer/canvas cleanup. Idempotent by token. */
   markDisposed(token: number): boolean {
     const pendingDisposals = this.state.pendingDisposals.filter((mount) => mount.token !== token);
     if (pendingDisposals.length === this.state.pendingDisposals.length) return false;
-    this.setState({ ...this.state, pendingDisposals });
+
+    const next = { ...this.state, pendingDisposals };
+    if (pendingDisposals.length === 0 && this.state.pendingMount) {
+      this.setState({
+        ...next,
+        phase: 'MOUNTING',
+        candidate: this.state.pendingMount,
+        pendingMount: undefined
+      });
+    } else {
+      this.setState(next);
+    }
     return true;
   }
 
@@ -149,12 +164,7 @@ export class WorldEngine {
       return;
     }
 
-    this.setState({
-      ...this.state,
-      phase: 'VALIDATING',
-      candidate: undefined,
-      error: priorError
-    });
+    this.setState({ ...this.state, phase: 'VALIDATING', candidate: undefined, error: priorError });
     if (request !== this.requestToken) return;
 
     this.setState({ ...this.state, phase: 'BOOTSTRAPPING' });
@@ -171,8 +181,30 @@ export class WorldEngine {
     }
 
     if (request !== this.requestToken) return;
-    const candidate: WorldMount = { worldId, token: ++this.mountToken, fallback };
-    this.setState({ ...this.state, phase: 'MOUNTING', candidate });
+    this.afterPreload({ worldId, token: ++this.mountToken, fallback });
+  }
+
+  /** Never expose a renderer candidate while an earlier renderer still exists. */
+  private afterPreload(nextMount: WorldMount): void {
+    const active = this.state.active;
+    if (active) {
+      this.setState({
+        ...this.state,
+        phase: 'MOUNTING',
+        active: undefined,
+        candidate: undefined,
+        pendingMount: nextMount,
+        pendingDisposals: this.queueDisposal(active)
+      });
+      return;
+    }
+
+    if (this.state.pendingDisposals.length > 0) {
+      this.setState({ ...this.state, phase: 'MOUNTING', candidate: undefined, pendingMount: nextMount });
+      return;
+    }
+
+    this.setState({ ...this.state, phase: 'MOUNTING', candidate: nextMount, pendingMount: undefined });
   }
 
   private async fail(
@@ -187,8 +219,8 @@ export class WorldEngine {
     const active = this.state.active;
 
     if (active && !fallbackAttempt) {
-      // A candidate failed while a committed world remains healthy.
-      this.setState({ ...this.state, phase: 'READY', candidate: undefined, error: failure });
+      // Resource/manifest failure happened before the old renderer was released.
+      this.setState({ ...this.state, phase: 'READY', candidate: undefined, pendingMount: undefined, error: failure });
       return;
     }
 
@@ -210,10 +242,12 @@ export class WorldEngine {
 
   private discardCandidate(): void {
     const candidate = this.state.candidate;
-    if (!candidate) return;
+    const pendingMount = this.state.pendingMount;
+    if (!candidate && !pendingMount) return;
     this.setState({
       ...this.state,
       candidate: undefined,
+      pendingMount: undefined,
       pendingDisposals: this.queueDisposal(candidate)
     });
   }

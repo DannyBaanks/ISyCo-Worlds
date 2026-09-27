@@ -6,10 +6,7 @@ import { createBrowserResourceResolver, WorldRecoverySurface, WorldRuntimeSurfac
 
 const IDLE: WorldEngineState = { phase: 'IDLE', pendingDisposals: [] };
 
-/**
- * React adapter for the transactional engine. Mounts retain their keyed layers:
- * a staging layer becomes visible before the retiring layer is unmounted.
- */
+/** React adapter for the serialized engine. Exactly one Pixi surface may render. */
 export function WorldHost({ config }: { config: HarnessConfig }) {
   const [state, setState] = useState<WorldEngineState>(IDLE);
   const [retiredTokens, setRetiredTokens] = useState<ReadonlySet<number>>(() => new Set());
@@ -51,14 +48,12 @@ export function WorldHost({ config }: { config: HarnessConfig }) {
   }, [engine, retiring]);
 
   const mounts = visibleMounts(state, retiredTokens);
-  const activeToken = state.active?.token;
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
       {mounts.map((mount) => (
         <WorldRuntimeSurface
           key={mount.token}
           mount={mount}
-          active={mount.token === activeToken}
           onReady={(token) => engine.markReady(token)}
           onRenderFailure={(token, cause) => { void engine.markFailed(token, cause); }}
         />
@@ -79,9 +74,6 @@ export function WorldHost({ config }: { config: HarnessConfig }) {
 }
 
 function visibleMounts(state: WorldEngineState, retired: ReadonlySet<number>): readonly WorldMount[] {
-  const mounts = new Map<number, WorldMount>();
-  for (const mount of state.pendingDisposals) if (!retired.has(mount.token)) mounts.set(mount.token, mount);
-  if (state.active && !retired.has(state.active.token)) mounts.set(state.active.token, state.active);
-  if (state.candidate && !retired.has(state.candidate.token)) mounts.set(state.candidate.token, state.candidate);
-  return [...mounts.values()];
+  const mount = state.candidate ?? state.active;
+  return mount && !retired.has(mount.token) ? [mount] : [];
 }

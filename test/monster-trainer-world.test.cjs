@@ -61,3 +61,12 @@ test('WorldHost renders the registered Monster surface inside its error boundary
   assert.match(world, /function reportFailure\(cause: unknown\)/, 'one guarded recovery path covers async rendering too');
   assert.match(world, /catch \(cause\)\s*\{\s*reportFailure\(cause\);\s*\}/, 'ticker\/render exceptions trigger the Office fallback');
 });
+
+test('the host owns one visible renderer and never reloads the page to switch worlds', () => {
+  const host = source('src/renderer/src/worlds/WorldHost.tsx');
+  const runtime = source('src/renderer/src/worlds/WorldRuntimeSurface.tsx');
+  assert.doesNotMatch(host, /window\.location\.reload/);
+  assert.match(host, /const mounts = visibleMounts/);
+  assert.match(runtime, /data-world-active="true"/);
+  assert.doesNotMatch(runtime, /opacity: active|pointerEvents: active/);
+});

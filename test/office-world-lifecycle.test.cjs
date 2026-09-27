@@ -22,3 +22,8 @@ test('OfficeFloor forwards structured async failures instead of leaving its own 
   assert.match(office, /onGiveUp:[\s\S]*reportFailure\(/);
   assert.match(office, /const onTick = \(ticker: Ticker\) => \{[\s\S]*catch \(err\)[\s\S]*reportFailure\(err\)/);
 });
+
+test('OfficeFloor has a guarded cleanup path for each mounted Pixi application', () => {
+  assert.match(office, /return \(\) => \{[\s\S]*safeDestroy\(a\);[\s\S]*appRef\.current = null/);
+  assert.match(office, /function safeDestroy\(app: Application\)[\s\S]*app\.ticker\?\.stop\(\)[\s\S]*app\.destroy\(true/);
+});

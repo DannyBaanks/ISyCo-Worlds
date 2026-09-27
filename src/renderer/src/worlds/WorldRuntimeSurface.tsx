@@ -38,15 +38,13 @@ export function createBrowserResourceResolver(): WorldResourceResolver {
   };
 }
 
-/** A fixed-position layer keeps a staged Pixi canvas fully sized but invisible. */
+/** The host gives this component sole renderer ownership; no invisible staging layer exists. */
 export function WorldRuntimeSurface({
   mount,
-  active,
   onReady,
   onRenderFailure
 }: {
   mount: WorldMount;
-  active: boolean;
   onReady: (token: number) => void;
   onRenderFailure: (token: number, cause: unknown) => void;
 }) {
@@ -55,12 +53,10 @@ export function WorldRuntimeSurface({
     <div
       data-world-layer={mount.token}
       data-world-id={mount.worldId}
-      data-world-active={active ? 'true' : 'false'}
+      data-world-active="true"
       style={{
         position: 'absolute', inset: 0,
-        opacity: active ? 1 : 0,
-        pointerEvents: active ? 'auto' : 'none',
-        zIndex: active ? 1 : 0
+        zIndex: 1
       }}
     >
       <SurfaceErrorBoundary onFailure={(cause) => onRenderFailure(mount.token, cause)}>
