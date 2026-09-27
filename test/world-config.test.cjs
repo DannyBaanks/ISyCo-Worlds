@@ -62,4 +62,11 @@ test('World preferences default safely, persist, and reject an unknown renderer'
     'utf8'
   );
   assert.equal(readConfig().lastGlobalView, 'office');
+
+  fs.writeFileSync(
+    path.join(userData, 'config.json'),
+    JSON.stringify({ ...saved, worldsEnabled: false, lastGlobalView: 'marketplace' }),
+    'utf8'
+  );
+  assert.equal(readConfig().lastGlobalView, 'marketplace');
 });

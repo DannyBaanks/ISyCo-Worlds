@@ -623,7 +623,8 @@ function normalizeWorldPreferences(cfg: HarnessConfig): HarnessConfig {
     ...cfg,
     worldsEnabled,
     selectedWorld: isWorldId(cfg.selectedWorld) ? cfg.selectedWorld : 'office',
-    lastGlobalView: worldsEnabled && isGlobalVisualView(cfg.lastGlobalView)
+    lastGlobalView: isGlobalVisualView(cfg.lastGlobalView)
+      && (cfg.lastGlobalView !== 'worlds' || worldsEnabled)
       ? cfg.lastGlobalView
       : 'office'
   };
@@ -699,7 +700,8 @@ export function writeConfig(patch: Partial<HarnessConfig>): HarnessConfig {
   const next: HarnessConfig = { ...current, ...patch };
   next.worldsEnabled = next.worldsEnabled === true;
   next.selectedWorld = isWorldId(next.selectedWorld) ? next.selectedWorld : 'office';
-  next.lastGlobalView = next.worldsEnabled && isGlobalVisualView(next.lastGlobalView)
+  next.lastGlobalView = isGlobalVisualView(next.lastGlobalView)
+    && (next.lastGlobalView !== 'worlds' || next.worldsEnabled)
     ? next.lastGlobalView
     : 'office';
   // Project INGESTION — a registered repo is typed by hand ("~/dev/foo") as often
