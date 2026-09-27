@@ -11,7 +11,7 @@ const source = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 test('App keeps the Office projection mounted and uses Worlds only for a missing runtime', () => {
   const app = source('src/renderer/src/App.tsx');
   assert.match(app, /if \(worldProfileStatus && !worldProfileStatus\.activeProfileId\)/);
-  assert.match(app, /<WorldHost config=\{officeWorldConfig\} \/>/);
+  assert.match(app, /<WorldHost config=\{officeWorldConfig\} profileId=\{worldProfileStatus\?\.activeProfileId === 'monster-trainer' \? 'monster-trainer' : 'office'\} \/>/);
   assert.match(app, /<MemoryPanel\s*\/>/);
   assert.match(app, /<AgentStrip\s+config=\{config\}\s*\/>/);
   assert.doesNotMatch(app, /<OfficeFloor\s*\/>/);
@@ -41,12 +41,14 @@ test('global route restores only after async config hydration and persists user 
   assert.match(app, /onView=\{onGlobalViewChange\}/);
 });
 
-test('WorldHost delegates selection to transactional lifecycle layers instead of branching by world id', () => {
+test('WorldHost delegates scene lifecycle to WorldEngine and selects isolated presentation only at the host boundary', () => {
   const host = source('src/renderer/src/worlds/WorldHost.tsx');
   const runtime = source('src/renderer/src/worlds/WorldRuntimeSurface.tsx');
   assert.match(host, /WorldEngine/);
   assert.match(host, /FALLBACK_WORLD_ID/);
   assert.doesNotMatch(host, /world\.id\s*===/);
+  assert.match(host, /startWorldPresentation/);
+  assert.match(host, /WorldSceneHost/);
   assert.match(runtime, /data-world-layer/);
   assert.match(runtime, /RECOVERY/);
   assert.match(host, /markDisposed/);

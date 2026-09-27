@@ -459,7 +459,7 @@ export function App() {
       }}>
         {globalView === 'marketplace' && <MarketplaceView />}
         <div style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative' }}>
-          <WorldHost config={officeWorldConfig} />
+          <WorldHost config={officeWorldConfig} profileId={worldProfileStatus?.activeProfileId === 'monster-trainer' ? 'monster-trainer' : 'office'} />
           <MemoryPanel />
           {agentCount === 0 && godStatus === 'booting' && <MichaelBooting />}
           {agentCount === 0 && godStatus !== 'booting' && (

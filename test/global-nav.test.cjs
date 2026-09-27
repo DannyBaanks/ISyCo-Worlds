@@ -47,7 +47,7 @@ test('Marketplace paints over the office, it never unmounts it', () => {
   // only the Marketplace overlay depends on the view.
   assert.match(app, /\{globalView === 'marketplace' && <MarketplaceView \/>\}/);
   // The Office renderer remains mounted; semantic profile changes are not routes.
-  assert.match(app, /<WorldHost config=\{officeWorldConfig\} \/>/);
+  assert.match(app, /<WorldHost config=\{officeWorldConfig\} profileId=\{/);
   assert.doesNotMatch(app, /globalView === 'office' &&/);
   assert.doesNotMatch(app, /globalView !== 'marketplace' &&/);
   assert.match(app, /<AgentStrip config=\{config\} \/>/);

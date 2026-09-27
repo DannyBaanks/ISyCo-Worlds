@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Assets } from 'pixi.js';
 import { PixelButton } from '@/components/PixelButton';
 import type { WorldLifecycleError, WorldMount, WorldResourceResolver } from './WorldEngine';
+import type { WorldPresentationIntent, WorldPresentationProjection } from '@shared/worldPresentationProtocol';
 import { worldById } from './worldRegistry';
 
 class SurfaceErrorBoundary extends Component<{
@@ -43,12 +44,16 @@ export function WorldRuntimeSurface({
   mount,
   onReady,
   onRenderFailure,
-  onDisposed
+  onDisposed,
+  presentationProjection,
+  onIntent
 }: {
   mount: WorldMount;
   onReady: (token: number) => void;
   onRenderFailure: (token: number, cause: unknown) => void;
   onDisposed: (token: number) => void;
+  presentationProjection?: WorldPresentationProjection;
+  onIntent?: (intent: WorldPresentationIntent) => void;
 }) {
   const world = worldById(mount.worldId);
   return (
@@ -63,6 +68,8 @@ export function WorldRuntimeSurface({
     >
       <SurfaceErrorBoundary onFailure={(cause) => onRenderFailure(mount.token, cause)}>
         {world.render({
+          projection: presentationProjection,
+          onIntent,
           onReady: () => onReady(mount.token),
           onRenderFailure: (cause) => onRenderFailure(mount.token, cause),
           onDisposed: () => onDisposed(mount.token)
@@ -72,9 +79,10 @@ export function WorldRuntimeSurface({
   );
 }
 
-export function WorldRecoverySurface({ error, onRetry }: {
+export function WorldRecoverySurface({ error, onRetry, retryLabel = 'Retry Office' }: {
   error?: WorldLifecycleError;
   onRetry: () => void;
+  retryLabel?: string;
 }) {
   const detail = error
     ? `${error.phase} · ${error.worldId} · ${error.cause.message}`
@@ -90,7 +98,7 @@ export function WorldRecoverySurface({ error, onRetry }: {
       <div style={{ maxWidth: 460, textAlign: 'center', display: 'grid', gap: 12 }}>
         <strong style={{ fontFamily: 'var(--cth-font-display)', fontSize: 13 }}>WORLD RECOVERY</strong>
         <span style={{ fontFamily: 'monospace', fontSize: 12, whiteSpace: 'pre-wrap' }}>{detail}</span>
-        <div><PixelButton variant="secondary" size="sm" onClick={onRetry}>Retry Office</PixelButton></div>
+        <div><PixelButton variant="secondary" size="sm" onClick={onRetry}>{retryLabel}</PixelButton></div>
       </div>
     </div>
   );

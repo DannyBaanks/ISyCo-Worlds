@@ -269,6 +269,7 @@ const pendingInstallRelaunch = new Map<string, { opts: AgentSpawnOptions; owner:
 let activeWorldProfileId: WorldId | null = 'office';
 let worldProfileLifecycle: WorldProfileLifecycle | null = null;
 let worldPresentationSupervisor: WorldPresentationSupervisor | null = null;
+let worldPresentationOwner: BrowserWindow | null = null;
 let initialProfileRuntimeReady = false;
 function activeProfileHome(): string | null {
   const workspaceRoot = readConfig().harnessHome;
@@ -2598,7 +2599,10 @@ function createWindow(opts: { floor?: boolean } = {}): BrowserWindow {
   // primary. The primary is also seeded synchronously so boot events route now.
   win.on('focus', () => { mainWindow = win; });
   if (!isFloor) mainWindow = win;
-  if (!isFloor) worldPresentationSupervisor = createWorldPresentationSupervisor(win);
+  if (!isFloor) {
+    worldPresentationOwner = win;
+    worldPresentationSupervisor = createWorldPresentationSupervisor(win);
+  }
 
   // Permission gate for the renderer (our own trusted, local content). The only
   // permission we constrain is microphone capture: it's allowed ONLY while a mic
@@ -2710,6 +2714,7 @@ function createWindow(opts: { floor?: boolean } = {}): BrowserWindow {
     if (!isFloor) {
       void worldPresentationSupervisor?.dispose();
       worldPresentationSupervisor = null;
+      if (worldPresentationOwner === win) worldPresentationOwner = null;
       worldPresentationView = null;
     }
     allWindows.delete(win);
@@ -3527,24 +3532,24 @@ ipcMain.handle('world-profile:confirmActivation', (_evt, profileId: unknown) => 
 });
 
 ipcMain.handle('world-presentation:start', async (event, profileId: unknown, projection: unknown) => {
-  if (!mainWindow || event.sender !== mainWindow.webContents || !worldPresentationSupervisor) return null;
+  if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents || !worldPresentationSupervisor) return null;
   if (profileId !== activeWorldProfileId || !projection || typeof projection !== 'object') return worldPresentationSupervisor.getStatus();
   return worldPresentationSupervisor.start(String(profileId), projection as WorldPresentationProjection);
 });
 ipcMain.handle('world-presentation:updateProjection', (event, projection: unknown) => {
-  if (!mainWindow || event.sender !== mainWindow.webContents || !worldPresentationSupervisor || !projection || typeof projection !== 'object') return false;
+  if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents || !worldPresentationSupervisor || !projection || typeof projection !== 'object') return false;
   return worldPresentationSupervisor.updateProjection(projection as WorldPresentationProjection);
 });
 ipcMain.handle('world-presentation:restart', (event) => {
-  if (!mainWindow || event.sender !== mainWindow.webContents || !worldPresentationSupervisor) return null;
+  if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents || !worldPresentationSupervisor) return null;
   return worldPresentationSupervisor.restartVisual();
 });
 ipcMain.handle('world-presentation:dispose', async (event) => {
-  if (!mainWindow || event.sender !== mainWindow.webContents || !worldPresentationSupervisor) return;
+  if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents || !worldPresentationSupervisor) return;
   await worldPresentationSupervisor.dispose();
 });
 ipcMain.on('world-presentation:bounds', (event, value: unknown) => {
-  if (!mainWindow || event.sender !== mainWindow.webContents || !worldPresentationView || !value || typeof value !== 'object') return;
+  if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents || !worldPresentationView || !value || typeof value !== 'object') return;
   const bounds = value as { x?: unknown; y?: unknown; width?: unknown; height?: unknown };
   if (![bounds.x, bounds.y, bounds.width, bounds.height].every((n) => typeof n === 'number' && Number.isFinite(n))) return;
   worldPresentationView.setBounds({
