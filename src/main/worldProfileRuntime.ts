@@ -157,4 +157,14 @@ export async function migrateLegacyMunderState(
   }
 }
 
+/** Legacy Munder state belongs to Office and must not gate other worlds. */
+export async function migrateLegacyOfficeStateForProfile(
+  workspaceRoot: string,
+  profileId: string | null
+): Promise<LegacyMigrationResult | { status: 'skipped'; copied: [] }> {
+  if (profileId !== 'office') return { status: 'skipped', copied: [] };
+  const { profileRoot } = resolveWorldRuntimeRoots(workspaceRoot, 'office');
+  return migrateLegacyMunderState(workspaceRoot, profileRoot);
+}
+
 export const LEGACY_MUNDER_STATE_ENTRIES = LEGACY_ENTRIES;

@@ -116,3 +116,38 @@ test('migration refuses a conflicting destination and leaves both sides untouche
     assert.equal(fs.readFileSync(path.join(profileRoot, 'roster.json'), 'utf8'), 'different');
   } finally { cleanup(); }
 });
+
+test('starting Monster Trainer skips the unrelated conflicting Office migration', async () => {
+  const { workspaceRoot, cleanup } = fixture();
+  try {
+    fs.mkdirSync(path.join(workspaceRoot, 'hive'), { recursive: true });
+    fs.writeFileSync(path.join(workspaceRoot, 'hive', 'agent.md'), 'legacy Office data');
+    const { profileRoot } = Runtime.resolveWorldRuntimeRoots(workspaceRoot, 'office');
+    fs.mkdirSync(path.join(profileRoot, 'hive'), { recursive: true });
+    fs.writeFileSync(path.join(profileRoot, 'hive', 'agent.md'), 'existing Office profile data');
+
+    const result = await Runtime.migrateLegacyOfficeStateForProfile(workspaceRoot, 'monster-trainer');
+
+    assert.deepEqual(result, { status: 'skipped', copied: [] });
+    assert.equal(fs.readFileSync(path.join(workspaceRoot, 'hive', 'agent.md'), 'utf8'), 'legacy Office data');
+    assert.equal(fs.readFileSync(path.join(profileRoot, 'hive', 'agent.md'), 'utf8'), 'existing Office profile data');
+  } finally { cleanup(); }
+});
+
+test('starting Office still fails closed on a conflicting legacy migration', async () => {
+  const { workspaceRoot, cleanup } = fixture();
+  try {
+    fs.mkdirSync(path.join(workspaceRoot, 'hive'), { recursive: true });
+    fs.writeFileSync(path.join(workspaceRoot, 'hive', 'agent.md'), 'legacy Office data');
+    const { profileRoot } = Runtime.resolveWorldRuntimeRoots(workspaceRoot, 'office');
+    fs.mkdirSync(path.join(profileRoot, 'hive'), { recursive: true });
+    fs.writeFileSync(path.join(profileRoot, 'hive', 'agent.md'), 'existing Office profile data');
+
+    await assert.rejects(
+      Runtime.migrateLegacyOfficeStateForProfile(workspaceRoot, 'office'),
+      { code: 'migration-conflict' }
+    );
+    assert.equal(fs.readFileSync(path.join(workspaceRoot, 'hive', 'agent.md'), 'utf8'), 'legacy Office data');
+    assert.equal(fs.readFileSync(path.join(profileRoot, 'hive', 'agent.md'), 'utf8'), 'existing Office profile data');
+  } finally { cleanup(); }
+});

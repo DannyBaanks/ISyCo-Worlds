@@ -98,7 +98,7 @@ import { loadModelCatalog } from './modelCatalog';
 import { readWorldProfiles } from './worldProfiles';
 import { readWorldComposition, writeWorldComposition } from './worldCompositionStore';
 import { isWorldCompositionV1 } from '../shared/worldComposition';
-import { migrateLegacyMunderState, resolveWorldRuntimeRoots } from './worldProfileRuntime';
+import { migrateLegacyMunderState, migrateLegacyOfficeStateForProfile, resolveWorldRuntimeRoots } from './worldProfileRuntime';
 import type { WorldId } from '../shared/worlds';
 import { isWorldId } from '../shared/worlds';
 import { WORLD_CAPABILITIES, WORLD_PROFILES, resolveWorldProfile } from './worldCapabilityRegistry';
@@ -5553,9 +5553,8 @@ async function bootstrapHiveServices(): Promise<void> {
     // Keep app-owned runtime state out of project/harness git status without
     // replacing or rewriting any existing user ignore rules.
     ensureHarnessGitignore(workspaceRoot);
-    const officeRoot = resolveWorldRuntimeRoots(workspaceRoot, 'office').profileRoot;
     try {
-      await migrateLegacyMunderState(workspaceRoot, officeRoot);
+      await migrateLegacyOfficeStateForProfile(workspaceRoot, activeWorldProfileId);
     } catch (error) {
       // Do not start services against the legacy shared root after an incomplete
       // copy. The harness remains stopped and the GUI can report/retry recovery.
