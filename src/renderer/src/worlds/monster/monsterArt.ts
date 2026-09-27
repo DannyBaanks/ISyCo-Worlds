@@ -1,5 +1,6 @@
 import type { VisualIdentityProfileV1 } from '@shared/worldProfiles';
 import type { WorldAgent, WorldTask } from '../worldProjection';
+import { MONSTER_SPECIES, speciesById, type EvolutionStage, type MonsterVariant, type SpeciesForm } from './monsterSpecies';
 
 /**
  * Original procedural creature art for the Monster Trainer world. Everything
@@ -7,8 +8,9 @@ import type { WorldAgent, WorldTask } from '../worldProjection';
  * and drawn as whole-pixel rectangles; no external images or franchise assets.
  */
 
-export const MONSTER_VARIANTS = ['blob', 'horn', 'shell', 'spike'] as const;
-export type MonsterVariant = typeof MONSTER_VARIANTS[number];
+export const MONSTER_VARIANTS = ['blob', 'horn', 'shell', 'spike'] as const satisfies readonly MonsterVariant[];
+export { MONSTER_SPECIES } from './monsterSpecies';
+export type { EvolutionStage, MonsterVariant } from './monsterSpecies';
 
 /** Bounded original palettes: [outline, body, accent]. */
 export const MONSTER_PALETTES: ReadonlyArray<readonly [number, number, number]> = [
@@ -20,6 +22,7 @@ export const MONSTER_PALETTES: ReadonlyArray<readonly [number, number, number]> 
 ] as const;
 
 export interface MonsterAppearance {
+  speciesId?: string;
   variant?: MonsterVariant;
   palette?: readonly [number, number, number];
 }
@@ -33,12 +36,14 @@ export interface PixelBlock {
 }
 
 export interface CreaturePlan {
+  speciesId: string;
+  speciesName: string;
+  affinity: string;
   variant: MonsterVariant;
   palette: readonly [number, number, number];
   blocks: readonly PixelBlock[];
 }
 
-export type EvolutionStage = 'baby' | 'middle' | 'final';
 export type CreatureAction = 'idle' | 'walk' | 'work' | 'blocked' | 'waiting';
 export type CreatureDirection = 'up' | 'right' | 'down' | 'left';
 export interface CreatureFrameOptions {
@@ -81,6 +86,7 @@ export function monsterAppearance(profile: VisualIdentityProfileV1): MonsterAppe
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
   const record = raw as Record<string, unknown>;
   const appearance: MonsterAppearance = {};
+  if (speciesById(record.speciesId)) appearance.speciesId = record.speciesId as string;
   if (typeof record.variant === 'string'
     && (MONSTER_VARIANTS as readonly string[]).includes(record.variant)) {
     appearance.variant = record.variant as MonsterVariant;
@@ -98,15 +104,18 @@ export function monsterAppearance(profile: VisualIdentityProfileV1): MonsterAppe
 export function creaturePlan(profile: VisualIdentityProfileV1): CreaturePlan {
   const overrides = monsterAppearance(profile);
   const hash = hashSeed(profile.seed);
-  const variant = overrides.variant ?? MONSTER_VARIANTS[hash % MONSTER_VARIANTS.length];
-  const palette = overrides.palette ?? MONSTER_PALETTES[(hash >>> 3) % MONSTER_PALETTES.length];
+  const species = speciesById(overrides.speciesId) ?? MONSTER_SPECIES[hash % MONSTER_SPECIES.length];
+  const variant = overrides.variant ?? species.variant;
+  const palette = overrides.palette ?? species.palette;
   const [outline, body, accent] = palette;
-
+  const shape = species.forms.baby.body;
   const blocks: PixelBlock[] = [
-    { x: 3, y: 6, w: 10, h: 8, color: outline },
-    { x: 4, y: 7, w: 8, h: 6, color: body },
-    { x: 5, y: 9, w: 2, h: 2, color: outline },
-    { x: 9, y: 9, w: 2, h: 2, color: outline }
+    { x: 7, y: 21, w: 10, h: 2, color: 0x21312b },
+    { ...shape, color: outline },
+    { x: shape.x + 1, y: shape.y + 1, w: shape.w - 2, h: shape.h - 2, color: body },
+    { x: shape.x + 2, y: shape.y + 3, w: 2, h: 2, color: outline },
+    { x: shape.x + shape.w - 4, y: shape.y + 3, w: 2, h: 2, color: outline },
+    ...speciesFeatureBlocks(species.forms.baby, palette)
   ];
   if (variant === 'horn') {
     blocks.push({ x: 6, y: 3, w: 4, h: 3, color: accent }, { x: 7, y: 2, w: 2, h: 1, color: accent });
@@ -121,7 +130,7 @@ export function creaturePlan(profile: VisualIdentityProfileV1): CreaturePlan {
   } else {
     blocks.push({ x: 4, y: 12, w: 8, h: 2, color: accent });
   }
-  return { variant, palette, blocks };
+  return { speciesId: species.id, speciesName: species.forms.baby.name, affinity: species.affinity, variant, palette, blocks };
 }
 
 /**
@@ -131,16 +140,13 @@ export function creaturePlan(profile: VisualIdentityProfileV1): CreaturePlan {
  */
 export function creatureFramePlan(profile: VisualIdentityProfileV1, pose: CreatureFrameOptions): CreatureFramePlan {
   const identity = creaturePlan(profile);
+  const species = speciesById(identity.speciesId)!;
+  const speciesForm = species.forms[pose.stage];
   const [outline, body, accent] = identity.palette;
   const { stage, action, direction, frame } = pose;
   const flip = direction === 'left';
   const side = direction === 'left' || direction === 'right';
-  const bodyShape: Record<EvolutionStage, { x: number; y: number; w: number; h: number }> = {
-    baby: { x: 7, y: 12, w: 10, h: 8 },
-    middle: { x: 5, y: 9, w: 14, h: 11 },
-    final: { x: 3, y: 7, w: 18, h: 13 }
-  };
-  const shape = bodyShape[stage];
+  const shape = speciesForm.body;
   const bob = action === 'idle' || action === 'waiting' ? frame : 0;
   const stride = action === 'walk' ? (frame === 0 ? -1 : 1) : 0;
   const blocks: PixelBlock[] = [
@@ -149,6 +155,7 @@ export function creatureFramePlan(profile: VisualIdentityProfileV1, pose: Creatu
     { x: shape.x, y: shape.y + bob, w: shape.w, h: shape.h - 1, color: outline },
     { x: shape.x + 1, y: shape.y + 1 + bob, w: shape.w - 2, h: shape.h - 3, color: body },
     { x: shape.x + 3, y: shape.y + 2 + bob, w: Math.max(2, Math.floor(shape.w / 3)), h: 2, color: accent },
+    ...speciesFeatureBlocks(speciesForm, identity.palette, bob),
     // Feet stay on the same ground line while alternating during movement.
     { x: flip ? 7 - stride : 7 + stride, y: 19, w: 4, h: 3, color: outline },
     { x: flip ? 13 + stride : 13 - stride, y: 19, w: 4, h: 3, color: outline }
@@ -180,7 +187,19 @@ export function creatureFramePlan(profile: VisualIdentityProfileV1, pose: Creatu
     blocks.push({ x: shape.x + 2, y: shape.y + 4 + bob, w: shape.w - 4, h: 1, color: outline });
   }
 
-  return { ...identity, width: 24, height: 24, stage, action, direction, blocks };
+  return { ...identity, speciesName: speciesForm.name, width: 24, height: 24, stage, action, direction, blocks };
+}
+
+function speciesFeatureBlocks(form: SpeciesForm, palette: readonly [number, number, number], bob = 0): PixelBlock[] {
+  const [outline, body, accent] = palette;
+  const colors = { outline, body, accent, highlight: 0xf5f0e6 } as const;
+  return form.features.map((feature) => ({
+    x: feature.x,
+    y: feature.y + bob,
+    w: feature.w,
+    h: feature.h,
+    color: colors[feature.tone]
+  }));
 }
 
 /** Only the four supported visual states exist; everything else reads idle. */
