@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const loadTs = require('./load-ts.cjs');
+const { validateComposition } = loadTs('src/shared/worldComposition.ts');
 
 const root = process.cwd();
 const Scenario = loadTs('src/renderer/src/worlds/monster/StarterVillageScenario.ts');
@@ -136,7 +137,7 @@ test('Starter Village keeps a validated original PNG atlas alongside legacy art'
   assert.match(attribution, /original.*pixel.art/i);
   assert.match(attribution, /starter-village-atlas\.svg/);
   assert.equal(Scenario.STARTER_VILLAGE_ATLAS_URL, atlasPath, 'the scenario manifest must resolve the PNG atlas');
-  assert.deepEqual(Scenario.STARTER_VILLAGE_SCENARIO.resources.map((resource) => resource.id), ['starter-village-atlas']);
+  assert.deepEqual(Scenario.STARTER_VILLAGE_SCENARIO.resources.map((resource) => resource.id), ['starter-village-atlas', 'starter-village-buildings']);
   assert.match(Scenario.STARTER_VILLAGE_SCENARIO.resources[0].url, /starter-village-atlas\.png$/);
   assert.deepEqual(Object.keys(AtlasFrames.STARTER_VILLAGE_ATLAS_FRAMES), [
     'grass', 'training-grass', 'dirt', 'road', 'water', 'tree', 'shrub', 'flowers',
@@ -149,4 +150,45 @@ test('Starter Village keeps a validated original PNG atlas alongside legacy art'
     assert.ok(frame.y + frame.height <= png.readUInt32BE(20), `${id} frame must fit atlas height`);
     assert.deepEqual([frame.renderWidth, frame.renderHeight], id === 'guide-house' || id === 'stable' ? [64, 48] : [16, 16]);
   }
+});
+
+test('Monster Trainer has a manifest-backed original building atlas and semantic structure catalog', () => {
+  const buildingAtlasPath = path.join(root, 'src/renderer/src/assets/worlds/starter-village/starter-village-buildings.png');
+  const attribution = fs.readFileSync(path.join(root, 'src/renderer/src/assets/ATTRIBUTION.md'), 'utf8');
+  assert.equal(fs.existsSync(buildingAtlasPath), true, 'the building sprite atlas is a required world resource');
+  const png = fs.readFileSync(buildingAtlasPath);
+  assert.equal(png.toString('hex', 0, 8), '89504e470d0a1a0a');
+  const width = png.readUInt32BE(16);
+  const height = png.readUInt32BE(20);
+  assert.equal(width, 512);
+  assert.equal(height, 256);
+
+  const frames = AtlasFrames.STARTER_VILLAGE_BUILDING_FRAMES;
+  assert.deepEqual(Object.keys(frames), ['laboratory', 'stable-building', 'village-home']);
+  for (const [id, frame] of Object.entries(frames)) {
+    assert.ok(frame.x >= 0 && frame.y >= 0 && frame.width > 0 && frame.height > 0, `${id} frame has valid dimensions`);
+    assert.ok(frame.x + frame.width <= width && frame.y + frame.height <= height, `${id} frame fits the PNG`);
+  }
+  assert.deepEqual([frames.laboratory.renderWidth, frames.laboratory.renderHeight], [96, 80]);
+  assert.deepEqual([frames['stable-building'].renderWidth, frames['stable-building'].renderHeight], [96, 80]);
+  assert.deepEqual([frames['village-home'].renderWidth, frames['village-home'].renderHeight], [64, 64]);
+
+  const definition = Scenario.STARTER_VILLAGE_COMPOSITION_DEFINITION;
+  assert.equal(definition.scenarioId, 'starter-village');
+  assert.deepEqual(definition.terrainIds, ['grass', 'training-grass', 'dirt', 'road', 'water']);
+  assert.equal(validateComposition({ version: 1, scenarioId: 'starter-village', placements: [], terrain: [] }, definition).ok, true);
+  assert.equal(definition.objects.laboratory.footprint.width, 6);
+  assert.equal(definition.objects.stable.footprint.width, 6);
+  assert.equal(definition.objects['village-home'].footprint.width, 4);
+  assert.equal(definition.objects.laboratory.stationKind, 'research');
+  assert.ok(definition.objects.laboratory.interactionPoints.entrance);
+  assert.equal(definition.objects.laboratory.interactionSlots[0].capacity, 1);
+  assert.deepEqual(definition.objects.stable.affinities, ['care', 'training']);
+  assert.ok(definition.objects.stable.interactionPoints.work);
+  assert.deepEqual(Object.keys(Scenario.STARTER_VILLAGE_ASSET_CATALOG).sort(), Object.keys(definition.objects).sort());
+  assert.ok(Scenario.STARTER_VILLAGE_SCENARIO.resources.some((resource) =>
+    resource.id === 'starter-village-buildings' && resource.url.endsWith('starter-village-buildings.png')));
+  assert.match(attribution, /starter-village-buildings\.png/);
+  assert.match(attribution, /original.*pixel.art/i);
+  assert.match(fs.readFileSync(path.join(root, 'src/renderer/src/worlds/worldRegistry.ts'), 'utf8'), /resources: STARTER_VILLAGE_SCENARIO\.resources/);
 });

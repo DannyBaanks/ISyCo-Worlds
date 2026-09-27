@@ -1,4 +1,6 @@
 import starterVillageAtlasUrl from '../../assets/worlds/starter-village/starter-village-atlas.png?url';
+import starterVillageBuildingsUrl from '../../assets/worlds/starter-village/starter-village-buildings.png?url';
+import type { CompositionScenarioDefinition } from '@shared/worldComposition';
 
 export const STARTER_VILLAGE_TILE_SIZE = 16;
 export const STARTER_VILLAGE_COLUMNS = 24;
@@ -17,6 +19,68 @@ export type StarterVillageTileId =
   | 'grass' | 'training-grass' | 'dirt' | 'road' | 'water' | 'tree' | 'shrub' | 'flowers'
   | 'guide-house' | 'stable' | 'fence-horizontal' | 'fence-vertical' | 'fence-post'
   | 'rock' | 'lantern' | 'crate' | 'sign';
+
+export type StarterVillageBuildingId = 'laboratory' | 'stable-building' | 'village-home';
+
+export interface StarterVillageAssetCatalogEntry {
+  id: string;
+  label: string;
+  kind: 'structure' | 'prop';
+  assetId: string;
+  frameId: StarterVillageTileId | StarterVillageBuildingId;
+}
+
+/** Monster Trainer-specific art labels and frame bindings; the composition runtime stays world-agnostic. */
+export const STARTER_VILLAGE_ASSET_CATALOG: Readonly<Record<string, StarterVillageAssetCatalogEntry>> = {
+  laboratory: { id: 'laboratory', label: 'Field laboratory', kind: 'structure', assetId: 'laboratory', frameId: 'laboratory' },
+  stable: { id: 'stable', label: 'Stable', kind: 'structure', assetId: 'stable-building', frameId: 'stable-building' },
+  'village-home': { id: 'village-home', label: 'Village home', kind: 'structure', assetId: 'village-home', frameId: 'village-home' },
+  tree: { id: 'tree', label: 'Tree', kind: 'prop', assetId: 'tree', frameId: 'tree' },
+  shrub: { id: 'shrub', label: 'Shrub', kind: 'prop', assetId: 'shrub', frameId: 'shrub' },
+  flowers: { id: 'flowers', label: 'Flowers', kind: 'prop', assetId: 'flowers', frameId: 'flowers' },
+  rock: { id: 'rock', label: 'Rock', kind: 'prop', assetId: 'rock', frameId: 'rock' },
+  lantern: { id: 'lantern', label: 'Lantern', kind: 'prop', assetId: 'lantern', frameId: 'lantern' },
+  crate: { id: 'crate', label: 'Crate', kind: 'prop', assetId: 'crate', frameId: 'crate' },
+  sign: { id: 'sign', label: 'Sign', kind: 'prop', assetId: 'sign', frameId: 'sign' },
+  'fence-horizontal': { id: 'fence-horizontal', label: 'Horizontal fence', kind: 'prop', assetId: 'fence-horizontal', frameId: 'fence-horizontal' },
+  'fence-vertical': { id: 'fence-vertical', label: 'Vertical fence', kind: 'prop', assetId: 'fence-vertical', frameId: 'fence-vertical' },
+  'fence-post': { id: 'fence-post', label: 'Fence post', kind: 'prop', assetId: 'fence-post', frameId: 'fence-post' }
+};
+
+/** V1 stations and authored interaction coordinates are descriptive only; no worker behavior consumes them. */
+export const STARTER_VILLAGE_COMPOSITION_DEFINITION: CompositionScenarioDefinition = {
+  scenarioId: 'starter-village',
+  columns: STARTER_VILLAGE_COLUMNS,
+  rows: STARTER_VILLAGE_ROWS,
+  terrainIds: ['grass', 'training-grass', 'dirt', 'road', 'water'],
+  objects: {
+    laboratory: {
+      id: 'laboratory', kind: 'structure', assetId: 'laboratory', footprint: { width: 6, height: 5 }, movable: true, removable: false,
+      semanticAnchors: { professor: { x: 3, y: 5 } },
+      stationKind: 'research', affinities: ['research', 'observation'],
+      interactionSlots: [{ id: 'research-desk', kind: 'research', capacity: 1 }],
+      interactionPoints: { entrance: { x: 3, y: 5 }, work: { x: 4, y: 3 }, idle: { x: 1, y: 5 } }
+    },
+    stable: {
+      id: 'stable', kind: 'structure', assetId: 'stable-building', footprint: { width: 6, height: 5 }, movable: true, removable: false,
+      semanticAnchors: { stable: { x: 3, y: 5 } },
+      stationKind: 'care', affinities: ['care', 'training'],
+      interactionSlots: [{ id: 'stable-care', kind: 'care', capacity: 2 }],
+      interactionPoints: { entrance: { x: 3, y: 5 }, work: { x: 4, y: 3 }, idle: { x: 1, y: 5 } }
+    },
+    'village-home': { id: 'village-home', kind: 'structure', assetId: 'village-home', footprint: { width: 4, height: 4 }, movable: true, removable: true, interactionPoints: { entrance: { x: 2, y: 4 } } },
+    tree: { id: 'tree', kind: 'prop', assetId: 'tree', footprint: { width: 1, height: 1 }, movable: true, removable: true },
+    shrub: { id: 'shrub', kind: 'prop', assetId: 'shrub', footprint: { width: 1, height: 1 }, movable: true, removable: true },
+    flowers: { id: 'flowers', kind: 'prop', assetId: 'flowers', footprint: { width: 1, height: 1 }, movable: true, removable: true },
+    rock: { id: 'rock', kind: 'prop', assetId: 'rock', footprint: { width: 1, height: 1 }, movable: true, removable: true },
+    lantern: { id: 'lantern', kind: 'prop', assetId: 'lantern', footprint: { width: 1, height: 1 }, movable: true, removable: true },
+    crate: { id: 'crate', kind: 'prop', assetId: 'crate', footprint: { width: 1, height: 1 }, movable: true, removable: true },
+    sign: { id: 'sign', kind: 'prop', assetId: 'sign', footprint: { width: 1, height: 1 }, movable: true, removable: true },
+    'fence-horizontal': { id: 'fence-horizontal', kind: 'prop', assetId: 'fence-horizontal', footprint: { width: 1, height: 1 }, movable: true, removable: true },
+    'fence-vertical': { id: 'fence-vertical', kind: 'prop', assetId: 'fence-vertical', footprint: { width: 1, height: 1 }, movable: true, removable: true },
+    'fence-post': { id: 'fence-post', kind: 'prop', assetId: 'fence-post', footprint: { width: 1, height: 1 }, movable: true, removable: true }
+  }
+};
 
 export interface ScenarioTilePlacement {
   tile: StarterVillageTileId;
@@ -39,7 +103,7 @@ export interface ScenarioAnchorPlacement {
 
 export interface StarterVillageScenario {
   id: 'starter-village';
-  resources: readonly { id: 'starter-village-atlas'; url: string }[];
+  resources: readonly { id: 'starter-village-atlas' | 'starter-village-buildings'; url: string }[];
   map: {
     columns: typeof STARTER_VILLAGE_COLUMNS;
     rows: typeof STARTER_VILLAGE_ROWS;
@@ -55,6 +119,7 @@ export interface StarterVillageScenario {
 }
 
 export const STARTER_VILLAGE_ATLAS_URL = starterVillageAtlasUrl;
+export const STARTER_VILLAGE_BUILDINGS_ATLAS_URL = starterVillageBuildingsUrl;
 
 function rectangle(tile: StarterVillageTileId, left: number, top: number, width: number, height: number): ScenarioTilePlacement[] {
   return Array.from({ length: width * height }, (_, index) => ({
@@ -79,7 +144,10 @@ const lakeAndRiver: ScenarioTilePlacement[] = [
 
 export const STARTER_VILLAGE_SCENARIO: StarterVillageScenario = {
   id: 'starter-village',
-  resources: [{ id: 'starter-village-atlas', url: STARTER_VILLAGE_ATLAS_URL }],
+  resources: [
+    { id: 'starter-village-atlas', url: STARTER_VILLAGE_ATLAS_URL },
+    { id: 'starter-village-buildings', url: STARTER_VILLAGE_BUILDINGS_ATLAS_URL }
+  ],
   map: {
     columns: STARTER_VILLAGE_COLUMNS,
     rows: STARTER_VILLAGE_ROWS,
