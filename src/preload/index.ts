@@ -3,6 +3,7 @@ import type { AgentProvider } from '../shared/agentProvider';
 import type { WorldId } from '../shared/worlds';
 import type { VisualIdentityProfileV1 } from '../shared/worldProfiles';
 import type { WorldProfileLifecycleError, WorldProfileRuntimeStatus } from '../main/worldProfileLifecycle';
+import type { WorldPresentationIntent, WorldPresentationProjection, WorldPresentationStatus } from '../shared/worldPresentationProtocol';
 import type { HireManifest } from '../shared/hire';
 export type { HireManifest } from '../shared/hire';
 import type { IntegrationRecord, IntegrationTemplate } from '../shared/integrations';
@@ -689,6 +690,26 @@ const api = {
   confirmWorldProfileActivation: (profileId: WorldId): Promise<
     { ok: true; activeProfileId: string } | { ok: false; error: WorldProfileLifecycleError }
   > => ipcRenderer.invoke('world-profile:confirmActivation', profileId),
+
+  // ─── Isolated visual presentation process ───────────────────────────────
+  startWorldPresentation: (profileId: WorldId, projection: WorldPresentationProjection): Promise<WorldPresentationStatus> =>
+    ipcRenderer.invoke('world-presentation:start', profileId, projection),
+  updateWorldPresentation: (projection: WorldPresentationProjection): Promise<boolean> =>
+    ipcRenderer.invoke('world-presentation:updateProjection', projection),
+  restartWorldPresentation: (): Promise<WorldPresentationStatus> => ipcRenderer.invoke('world-presentation:restart'),
+  disposeWorldPresentation: (): Promise<void> => ipcRenderer.invoke('world-presentation:dispose'),
+  setWorldPresentationBounds: (bounds: { x: number; y: number; width: number; height: number }): void =>
+    ipcRenderer.send('world-presentation:bounds', bounds),
+  onWorldPresentationStatus: (cb: (status: WorldPresentationStatus) => void): (() => void) => {
+    const listener = (_event: IpcRendererEvent, status: WorldPresentationStatus) => cb(status);
+    ipcRenderer.on('world-presentation:status', listener);
+    return () => ipcRenderer.removeListener('world-presentation:status', listener);
+  },
+  onWorldPresentationIntent: (cb: (intent: WorldPresentationIntent) => void): (() => void) => {
+    const listener = (_event: IpcRendererEvent, intent: WorldPresentationIntent) => cb(intent);
+    ipcRenderer.on('world-presentation:intent', listener);
+    return () => ipcRenderer.removeListener('world-presentation:intent', listener);
+  },
 
   // ─── Config ──────────────────────────────────────────────────────────────
   getConfig: (): Promise<HarnessConfig> =>

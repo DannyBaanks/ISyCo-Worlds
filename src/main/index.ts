@@ -1,4 +1,4 @@
-import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, shell, Notification } from 'electron';
+import { app, BrowserWindow, WebContentsView, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, shell, Notification } from 'electron';
 import { execFile, spawn } from 'node:child_process';
 import {
   rmSync, existsSync, openSync, readFileSync, readdirSync, statSync, cpSync, writeFileSync,
@@ -101,6 +101,8 @@ import type { WorldId } from '../shared/worlds';
 import { isWorldId } from '../shared/worlds';
 import { WORLD_CAPABILITIES, WORLD_PROFILES, resolveWorldProfile } from './worldCapabilityRegistry';
 import { WorldProfileLifecycle, type WorldProfileRuntimeStatus } from './worldProfileLifecycle';
+import { WorldPresentationSupervisor } from './worldPresentationSupervisor';
+import type { WorldPresentationProjection, WorldPresentationStatus } from '../shared/worldPresentationProtocol';
 import {
   CODEX_REMOTE_SOCKET_RELATIVE,
   codexRemoteAliasPath,
@@ -266,6 +268,7 @@ const ptyToAgent = new Map<string, string>();
 const pendingInstallRelaunch = new Map<string, { opts: AgentSpawnOptions; owner: Electron.WebContents | null; bin: string; rung: string }>();
 let activeWorldProfileId: WorldId | null = 'office';
 let worldProfileLifecycle: WorldProfileLifecycle | null = null;
+let worldPresentationSupervisor: WorldPresentationSupervisor | null = null;
 let initialProfileRuntimeReady = false;
 function activeProfileHome(): string | null {
   const workspaceRoot = readConfig().harnessHome;
@@ -2476,6 +2479,78 @@ ipcMain.handle('hire:openFile', async () => {
  * window — cascades its position, and on close stops only its OWN terminals
  * while the app keeps running.
  */
+let worldPresentationView: WebContentsView | null = null;
+
+/** The child owns visual rendering only. It receives a typed projection through
+ *  IPC and has a dedicated least-privilege preload, never the Harness bridge. */
+function createWorldPresentationSupervisor(win: BrowserWindow): WorldPresentationSupervisor {
+  return new WorldPresentationSupervisor({
+    createHost: async (generation, emit, profileId) => {
+      const view = new WebContentsView({
+        webPreferences: {
+          preload: join(__dirname, '../preload/worldHost.js'),
+          sandbox: true,
+          contextIsolation: true,
+          nodeIntegration: false,
+          backgroundThrottling: false
+        }
+      });
+      win.contentView.addChildView(view);
+      view.setBounds({ x: 0, y: 0, width: 0, height: 0 });
+      worldPresentationView = view;
+      const onEvent = (event: Electron.IpcMainEvent, payload: unknown): void => {
+        if (event.sender === view.webContents) emit(payload);
+      };
+      ipcMain.on('world-presentation:event', onEvent);
+      const onGone = (_event: Electron.Event, details: Electron.RenderProcessGoneDetails): void => {
+        emit({
+          type: 'failed', profileId, generation,
+          error: {
+            phase: 'BOOTSTRAPPING', profileId, category: 'host',
+            cause: { name: 'RenderProcessGone', message: `${details.reason}: exit ${details.exitCode}` }
+          }
+        });
+      };
+      view.webContents.on('render-process-gone', onGone);
+      const host = {
+        id: view.webContents.id,
+        send(command: import('../shared/worldPresentationProtocol').WorldPresentationCommand) {
+          if (!view.webContents.isDestroyed()) view.webContents.send('world-presentation:command', command);
+        },
+        async destroy() {
+          ipcMain.removeListener('world-presentation:event', onEvent);
+          view.webContents.removeListener('render-process-gone', onGone);
+          try { win.contentView.removeChildView(view); } catch { /* window already gone */ }
+          if (worldPresentationView === view) worldPresentationView = null;
+          if (!view.webContents.isDestroyed()) view.webContents.close({ waitForBeforeUnload: false });
+        }
+      };
+      let onLoadFailure: ((_event: Electron.Event, code: number, description: string) => void) | null = null;
+      const failed = new Promise<never>((_resolve, reject) => {
+        onLoadFailure = (_event, code, description) => reject(new Error(`World host load failed (${code}): ${description}`));
+        view.webContents.once('did-fail-load', onLoadFailure);
+      });
+      const loading = isDev && process.env.ELECTRON_RENDERER_URL
+        ? view.webContents.loadURL(new URL('/world-host.html', process.env.ELECTRON_RENDERER_URL).toString())
+        : view.webContents.loadFile(join(__dirname, '../renderer/world-host.html'));
+      try {
+        await Promise.race([loading, failed]);
+        if (onLoadFailure) view.webContents.removeListener('did-fail-load', onLoadFailure);
+        return host;
+      } catch (error) {
+        await host.destroy();
+        throw error;
+      }
+    },
+    onStatus: (status) => {
+      if (!win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send('world-presentation:status', status);
+    },
+    onIntent: (intent) => {
+      if (!win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send('world-presentation:intent', intent);
+    }
+  });
+}
+
 function createWindow(opts: { floor?: boolean } = {}): BrowserWindow {
   const isFloor = opts.floor === true;
 
@@ -2523,6 +2598,7 @@ function createWindow(opts: { floor?: boolean } = {}): BrowserWindow {
   // primary. The primary is also seeded synchronously so boot events route now.
   win.on('focus', () => { mainWindow = win; });
   if (!isFloor) mainWindow = win;
+  if (!isFloor) worldPresentationSupervisor = createWorldPresentationSupervisor(win);
 
   // Permission gate for the renderer (our own trusted, local content). The only
   // permission we constrain is microphone capture: it's allowed ONLY while a mic
@@ -2631,6 +2707,11 @@ function createWindow(opts: { floor?: boolean } = {}): BrowserWindow {
   }
 
   win.on('closed', () => {
+    if (!isFloor) {
+      void worldPresentationSupervisor?.dispose();
+      worldPresentationSupervisor = null;
+      worldPresentationView = null;
+    }
     allWindows.delete(win);
     // A closed floor must not leave its terminals running headless. (Natural
     // onExit teardown — archive + worktree cleanup — still runs per PTY.)
@@ -3443,6 +3524,35 @@ ipcMain.handle('world-profile:confirmActivation', (_evt, profileId: unknown) => 
     return { ok: false, error: { phase: 'VALIDATING', profileId: String(profileId), category: 'invalid-profile', cause: { name: 'Error', message: 'Invalid profile id' } } };
   }
   return activateWorldProfile(profileId, true);
+});
+
+ipcMain.handle('world-presentation:start', async (event, profileId: unknown, projection: unknown) => {
+  if (!mainWindow || event.sender !== mainWindow.webContents || !worldPresentationSupervisor) return null;
+  if (profileId !== activeWorldProfileId || !projection || typeof projection !== 'object') return worldPresentationSupervisor.getStatus();
+  return worldPresentationSupervisor.start(String(profileId), projection as WorldPresentationProjection);
+});
+ipcMain.handle('world-presentation:updateProjection', (event, projection: unknown) => {
+  if (!mainWindow || event.sender !== mainWindow.webContents || !worldPresentationSupervisor || !projection || typeof projection !== 'object') return false;
+  return worldPresentationSupervisor.updateProjection(projection as WorldPresentationProjection);
+});
+ipcMain.handle('world-presentation:restart', (event) => {
+  if (!mainWindow || event.sender !== mainWindow.webContents || !worldPresentationSupervisor) return null;
+  return worldPresentationSupervisor.restartVisual();
+});
+ipcMain.handle('world-presentation:dispose', async (event) => {
+  if (!mainWindow || event.sender !== mainWindow.webContents || !worldPresentationSupervisor) return;
+  await worldPresentationSupervisor.dispose();
+});
+ipcMain.on('world-presentation:bounds', (event, value: unknown) => {
+  if (!mainWindow || event.sender !== mainWindow.webContents || !worldPresentationView || !value || typeof value !== 'object') return;
+  const bounds = value as { x?: unknown; y?: unknown; width?: unknown; height?: unknown };
+  if (![bounds.x, bounds.y, bounds.width, bounds.height].every((n) => typeof n === 'number' && Number.isFinite(n))) return;
+  worldPresentationView.setBounds({
+    x: Math.max(0, Math.round(bounds.x as number)),
+    y: Math.max(0, Math.round(bounds.y as number)),
+    width: Math.max(0, Math.min(10000, Math.round(bounds.width as number))),
+    height: Math.max(0, Math.min(10000, Math.round(bounds.height as number)))
+  });
 });
 
 // ─── IPC: config ────────────────────────────────────────────────────────────
