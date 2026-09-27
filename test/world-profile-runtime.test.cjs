@@ -3,6 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const net = require('node:net');
 const os = require('node:os');
 const path = require('node:path');
 const loadTs = require('./load-ts.cjs');
@@ -62,6 +63,32 @@ test('migration copies all known legacy state, preserves source and is idempoten
     assert.equal(fs.readFileSync(path.join(workspaceRoot, 'hive', 'agents', 'god', 'memory.md'), 'utf8'), 'remember');
     assert.equal((await Runtime.migrateLegacyMunderState(workspaceRoot, profileRoot)).status, 'already-migrated');
   } finally { cleanup(); }
+});
+
+test('migration skips live Unix sockets but copies the rest of Hive and remains idempotent', {
+  skip: process.platform === 'win32' ? 'Unix-domain sockets are not supported on Windows' : false
+}, async () => {
+  const { workspaceRoot, cleanup } = fixture();
+  const socketPath = path.join(workspaceRoot, 'hive', 'hooks.sock');
+  const server = net.createServer();
+  try {
+    fs.mkdirSync(path.dirname(socketPath), { recursive: true });
+    fs.writeFileSync(path.join(workspaceRoot, 'hive', 'agent.md'), 'keep this data');
+    await new Promise((resolve, reject) => {
+      server.once('error', reject);
+      server.listen(socketPath, resolve);
+    });
+    const { profileRoot } = Runtime.resolveWorldRuntimeRoots(workspaceRoot, 'office');
+    const first = await Runtime.migrateLegacyMunderState(workspaceRoot, profileRoot);
+    assert.equal(first.status, 'copied');
+    assert.equal(fs.readFileSync(path.join(profileRoot, 'hive', 'agent.md'), 'utf8'), 'keep this data');
+    assert.equal(fs.existsSync(socketPath), true, 'migration does not remove or disturb the live source socket');
+    assert.equal(fs.existsSync(path.join(profileRoot, 'hive', 'hooks.sock')), false, 'a process-local socket is not copied into the profile');
+    assert.equal((await Runtime.migrateLegacyMunderState(workspaceRoot, profileRoot)).status, 'already-migrated');
+  } finally {
+    if (server.listening) await new Promise((resolve) => server.close(resolve));
+    cleanup();
+  }
 });
 
 test('migration resumes an interrupted copy without replacing user data', async () => {

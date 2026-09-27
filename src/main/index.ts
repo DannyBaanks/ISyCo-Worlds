@@ -96,13 +96,15 @@ import { listLocalSkills, loadCatalog, installSkill, uninstallSkill, type LocalS
 import { loadHero } from './hero';
 import { loadModelCatalog } from './modelCatalog';
 import { readWorldProfiles } from './worldProfiles';
+import { readWorldComposition, writeWorldComposition } from './worldCompositionStore';
+import { isWorldCompositionV1 } from '../shared/worldComposition';
 import { migrateLegacyMunderState, resolveWorldRuntimeRoots } from './worldProfileRuntime';
 import type { WorldId } from '../shared/worlds';
 import { isWorldId } from '../shared/worlds';
 import { WORLD_CAPABILITIES, WORLD_PROFILES, resolveWorldProfile } from './worldCapabilityRegistry';
 import { WorldProfileLifecycle, type WorldProfileRuntimeStatus } from './worldProfileLifecycle';
 import { WorldPresentationSupervisor } from './worldPresentationSupervisor';
-import type { WorldPresentationProjection, WorldPresentationStatus } from '../shared/worldPresentationProtocol';
+import type { WorldPresentationComposition, WorldPresentationIntentMessage, WorldPresentationProjection, WorldPresentationStatus } from '../shared/worldPresentationProtocol';
 import {
   CODEX_REMOTE_SOCKET_RELATIVE,
   codexRemoteAliasPath,
@@ -2549,8 +2551,11 @@ function createWorldPresentationSupervisor(win: BrowserWindow): WorldPresentatio
     onStatus: (status) => {
       if (!win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send('world-presentation:status', status);
     },
-    onIntent: (intent) => {
-      if (!win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send('world-presentation:intent', intent);
+    onIntent: (intent, context) => {
+      if (!win.isDestroyed() && !win.webContents.isDestroyed()) {
+        const message: WorldPresentationIntentMessage = { ...context, intent };
+        win.webContents.send('world-presentation:intent', message);
+      }
     }
   });
 }
@@ -3534,10 +3539,30 @@ ipcMain.handle('world-profile:confirmActivation', (_evt, profileId: unknown) => 
   return activateWorldProfile(profileId, true);
 });
 
-ipcMain.handle('world-presentation:start', async (event, profileId: unknown, projection: unknown) => {
+// User-authored visual layout belongs to the parent app renderer and never to
+// the isolated presentation child. Keep its storage location fixed under
+// Electron userData; IPC accepts ids and validated data, never filesystem paths.
+ipcMain.handle('world-composition:get', (event, profileId: unknown, scenarioId: unknown) => {
+  if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents) {
+    return { ok: false, category: 'invalid' } as const;
+  }
+  if (profileId !== activeWorldProfileId || !isWorldId(profileId)) return { ok: false, category: 'invalid' } as const;
+  return readWorldComposition(app.getPath('userData'), profileId, scenarioId);
+});
+ipcMain.handle('world-composition:save', (event, profileId: unknown, layout: unknown) => {
+  if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents) {
+    return { ok: false, category: 'invalid' } as const;
+  }
+  if (profileId !== activeWorldProfileId || !isWorldId(profileId) || !isWorldCompositionV1(layout)) {
+    return { ok: false, category: 'invalid' } as const;
+  }
+  return writeWorldComposition(app.getPath('userData'), profileId, layout);
+});
+
+ipcMain.handle('world-presentation:start', async (event, profileId: unknown, projection: unknown, composition?: unknown) => {
   if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents || !worldPresentationSupervisor) return null;
   if (profileId !== activeWorldProfileId || !projection || typeof projection !== 'object') return worldPresentationSupervisor.getStatus();
-  return worldPresentationSupervisor.start(String(profileId), projection as WorldPresentationProjection);
+  return worldPresentationSupervisor.start(String(profileId), projection as WorldPresentationProjection, composition as WorldPresentationComposition | undefined);
 });
 ipcMain.handle('world-presentation:updateProjection', (event, projection: unknown) => {
   if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents || !worldPresentationSupervisor || !projection || typeof projection !== 'object') return false;
@@ -3546,6 +3571,12 @@ ipcMain.handle('world-presentation:updateProjection', (event, projection: unknow
 ipcMain.handle('world-presentation:restart', (event) => {
   if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents || !worldPresentationSupervisor) return null;
   return worldPresentationSupervisor.restartVisual();
+});
+ipcMain.handle('world-presentation:compositionSaveResult', (event, profileId: unknown, generation: unknown, requestId: unknown, accepted: unknown, layout: unknown) => {
+  if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents
+    || !worldPresentationSupervisor || profileId !== activeWorldProfileId || !isWorldId(profileId)
+    || !Number.isSafeInteger(generation) || typeof requestId !== 'string' || typeof accepted !== 'boolean') return false;
+  return worldPresentationSupervisor.respondCompositionSave(generation as number, requestId, accepted, layout as import('../shared/worldComposition').WorldCompositionV1 | undefined);
 });
 ipcMain.handle('world-presentation:dispose', async (event) => {
   if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents || !worldPresentationSupervisor) return;

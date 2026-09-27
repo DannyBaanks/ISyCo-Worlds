@@ -15,7 +15,7 @@ test('Monster Trainer builds the complete Starter Village scene instead of agent
   assert.match(world, /buildStarterVillageScene/);
   assert.match(scene, /STARTER_VILLAGE_SCENARIO/);
   assert.match(scene, /Assets\.get/);
-  assert.match(scene, /semanticAnchors|anchorPlacements/);
+  assert.match(scene, /resolveStarterVillageAnchor/);
   assert.match(world, /integerScaleForViewport/);
   assert.match(scene, /scaleMode\s*=\s*'nearest'/);
 });
@@ -24,7 +24,8 @@ test('MonsterTrainerWorld owns exactly one Pixi lifecycle and destroys it', () =
   const world = source('src/renderer/src/worlds/monster/MonsterTrainerWorld.tsx');
   assert.match(world, /new Application\(/);
   assert.match(world, /app\.destroy\(/, 'the Pixi app is destroyed on unmount');
-  assert.match(world, /\.slice\(0,\s*2\)/, 'at most two non-archived agents render');
+  assert.doesNotMatch(world, /\.slice\(0,\s*2\)/, 'the village renders all non-archived workers');
+  assert.match(world, /MonsterWorkerMotion/, 'agents move through a world-owned visual projection');
   assert.match(world, /archived/, 'archived agents are filtered out');
   assert.match(world, /roundPixels|roundPixels:\s*true|Math\.round/, 'nearest-pixel rendering');
   assert.match(world, /onReady\?\.\(\)/, 'first successful render marks the staged world ready');
@@ -32,6 +33,29 @@ test('MonsterTrainerWorld owns exactly one Pixi lifecycle and destroys it', () =
   assert.match(world, /catch \(cause\) \{[\s\S]*if \(!alive\) return;[\s\S]*reportFailure\(cause\)/, 'a discarded async init cannot fail a newer staged mount');
   assert.match(world, /catch \(cause\) \{[\s\S]*release\(\)[\s\S]*if \(!alive\) return;/, 'a rejected init releases its partially allocated Pixi application');
   assert.match(world, /onDisposed\?\.\(\)/, 'the old renderer acknowledges only after release');
+});
+
+test('Starter Village structures use authored layer order, footprint bounds and scene-depth sorting', () => {
+  const scene = source('src/renderer/src/worlds/monster/StarterVillageScene.ts');
+  assert.match(scene, /STARTER_VILLAGE_STRUCTURE_LAYER_ORDER\s*=\s*\[[^\]]*contact-shadow[^\]]*foundation[^\]]*side-plane[^\]]*facade[^\]]*roof/s);
+  assert.match(scene, /structureRenderBounds\(/, 'render bounds derive from logical placement footprint');
+  assert.match(scene, /footprint\.width\s*\*\s*STARTER_VILLAGE_TILE_SIZE/);
+  assert.match(scene, /footprint\.height\s*\*\s*STARTER_VILLAGE_TILE_SIZE/);
+  assert.match(scene, /sortableChildren\s*=\s*true/);
+  assert.match(scene, /const z = bounds\.depth[\s\S]*?sprite\.zIndex = z/);
+  assert.match(scene, /layer\.zIndex\s*=\s*index/);
+  assert.match(scene, /roofFrame/);
+  assert.match(scene, /sidePlane/);
+  assert.match(scene, /contactShadow/);
+  assert.doesNotMatch(scene, /(?:contactShadow|foundation|sidePlane)\.setFillStyle/, 'do not invent detached geometry over the authored building raster');
+});
+
+test('layout and selection updates redraw in the owned renderer without entering its lifecycle dependencies', () => {
+  const world = source('src/renderer/src/worlds/monster/MonsterTrainerWorld.tsx');
+  assert.match(world, /ctx\.layout, ctx\.selectedPlacementId, ctx\.buildMode/);
+  assert.match(world, /\}, \[scale\]\)/, 'roster changes stay inside the visual renderer; only integer scale recreates the Pixi application');
+  assert.match(world, /roundPixels:\s*true/);
+  assert.match(world, /app\.renderer\.render\(app\.stage\)/);
 });
 
 test('MonsterTrainerWorld receives only props and callbacks, never operational state', () => {

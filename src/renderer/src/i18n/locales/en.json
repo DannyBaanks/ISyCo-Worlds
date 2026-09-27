@@ -602,7 +602,7 @@
   "onboarding": {
     "titles": {
       "language": "CHOOSE YOUR LANGUAGE",
-      "persona": "WELCOME TO MUNDER DIFFLIN",
+      "persona": "PICK HOW YOU WANT TO BEGIN",
       "welcome": "MEET YOUR OFFICE",
       "home": "STEP 1 OF 4 · HARNESS HOME",
       "homePlain": "STEP 1 OF 4 · A HOME FOR THE APP",
@@ -623,15 +623,16 @@
         "ja": "Japanese"
       }
     },
+    "progress": "YOUR JOURNEY",
     "persona": {
-      "headline": "A CLONE OF YOU, WORKING 24/7",
-      "body": "Munder Difflin turns the CLI agent you already use into a clone of you — one that runs an office of long-running agents and keeps working while you're away. It manages everything around them: context, memory, tasks, triggers, environment, files, and integrations.",
-      "bodyLocal": " Everything runs on this machine.",
-      "ask": "FIRST — WHO ARE YOU? (we'll tailor the setup)",
-      "technicalTitle": "I'M TECHNICAL",
-      "technicalDesc": "I write code or work in a terminal. Show me CLI commands, flags, and model ids.",
-      "nonTechnicalTitle": "I'M NON-TECHNICAL",
-      "nonTechnicalDesc": "I'm in marketing, sales, ops, or just starting out. Explain things in plain language."
+      "headline": "YOUR WORKSPACE, YOUR WAY",
+      "body": "Bring your assistants, projects, and tasks together in one place.",
+      "bodyLocal": "Everything stays on this computer.",
+      "ask": "How would you like us to guide you?",
+      "technicalTitle": "Show me all the details",
+      "technicalDesc": "I'm comfortable with technical terms and want to adjust the options.",
+      "nonTechnicalTitle": "Guide me step by step",
+      "nonTechnicalDesc": "I prefer clear explanations and help choosing what to do."
     },
     "welcome": {
       "headline": "YOUR CLONE AND THE FLOOR IT RUNS",

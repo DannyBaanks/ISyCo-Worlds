@@ -4,6 +4,7 @@ import {
   isWorldPresentationEvent,
   type WorldPresentationCommand,
   type WorldPresentationError,
+  type WorldPresentationComposition,
   type WorldPresentationEvent,
   type WorldPresentationIntent,
   type WorldPresentationPhase,
@@ -11,6 +12,7 @@ import {
   type WorldPresentationStatus
 } from '../shared/worldPresentationProtocol';
 import { isWorldId, type WorldId } from '../shared/worlds';
+import { isWorldCompositionV1, type WorldCompositionV1 } from '../shared/worldComposition';
 
 export interface WorldPresentationHost {
   id: string | number;
@@ -22,7 +24,7 @@ export interface WorldPresentationHost {
 export interface WorldPresentationSupervisorOptions {
   createHost(generation: number, emit: (event: unknown) => boolean, profileId?: WorldId): Promise<WorldPresentationHost> | WorldPresentationHost;
   onStatus(status: WorldPresentationStatus): void;
-  onIntent(intent: WorldPresentationIntent): void;
+  onIntent(intent: WorldPresentationIntent, context: { profileId: WorldId; generation: number }): void;
 }
 
 export class WorldPresentationSupervisor {
@@ -30,24 +32,28 @@ export class WorldPresentationSupervisor {
   private host: WorldPresentationHost | null = null;
   private profileId: WorldId | null = null;
   private projection: WorldPresentationProjection | null = null;
+  private composition: WorldPresentationComposition | null = null;
   private generation = 0;
   private lifecycleOperation = 0;
   private destroying = new WeakSet<object>();
+  private pendingCompositionSaves = new Set<string>();
   private status: WorldPresentationStatus = { phase: 'IDLE', profileId: null, generation: 0 };
 
   constructor(options: WorldPresentationSupervisorOptions) { this.options = options; }
 
   getStatus(): WorldPresentationStatus { return { ...this.status, error: this.status.error ? { ...this.status.error, cause: { ...this.status.error.cause } } : undefined }; }
 
-  async start(profileId: string, projection: WorldPresentationProjection): Promise<WorldPresentationStatus> {
+  async start(profileId: string, projection: WorldPresentationProjection, composition?: WorldPresentationComposition): Promise<WorldPresentationStatus> {
     if (!isWorldId(profileId)) return this.fail(profileId as WorldId, 'VALIDATING', 'protocol', new Error('Invalid world profile id'));
-    const command = { type: 'bootstrap', profileId, generation: this.generation + 1, projection } as const;
+    const command = { type: 'bootstrap', profileId, generation: this.generation + 1, projection, composition } as const;
     if (!isWorldPresentationCommand(command)) return this.fail(profileId, 'VALIDATING', 'protocol', new Error('Invalid world projection'));
     const operation = ++this.lifecycleOperation;
     if (this.host) await this.destroyCurrent();
     if (operation !== this.lifecycleOperation) return this.getStatus();
     this.profileId = profileId;
     this.projection = structuredClone(projection);
+    this.composition = composition ? structuredClone(composition) : null;
+    this.pendingCompositionSaves.clear();
     return this.createAndBootstrap();
   }
 
@@ -61,10 +67,27 @@ export class WorldPresentationSupervisor {
     return true;
   }
 
+  /** A save acknowledgement is accepted only for the current READY Monster Trainer host. */
+  respondCompositionSave(generation: number, requestId: string, accepted: boolean, layout?: WorldCompositionV1): boolean {
+    if (!this.host || this.profileId !== 'monster-trainer' || this.status.phase !== 'READY'
+      || generation !== this.generation || !this.pendingCompositionSaves.has(requestId)) return false;
+    if (accepted && (!isWorldCompositionV1(layout) || layout.scenarioId !== 'starter-village')) return false;
+    const command: WorldPresentationCommand = {
+      type: 'update-composition', profileId: 'monster-trainer', generation, requestId,
+      saveStatus: accepted ? 'accepted' : 'rejected', ...(accepted && layout ? { layout: structuredClone(layout) } : {})
+    };
+    if (!isWorldPresentationCommand(command)) return false;
+    this.pendingCompositionSaves.delete(requestId);
+    if (accepted && layout) this.composition = { layout: structuredClone(layout), source: 'saved' };
+    this.host.send(command);
+    return true;
+  }
+
   async restartVisual(): Promise<WorldPresentationStatus> {
     if (!this.profileId || !this.projection) return this.getStatus();
     const operation = ++this.lifecycleOperation;
     const profileId = this.profileId;
+    this.pendingCompositionSaves.clear();
     await this.destroyCurrent();
     if (operation !== this.lifecycleOperation || this.profileId !== profileId) return this.getStatus();
     return this.createAndBootstrap();
@@ -83,6 +106,8 @@ export class WorldPresentationSupervisor {
     const destruction = this.destroyCurrent();
     this.profileId = null;
     this.projection = null;
+    this.composition = null;
+    this.pendingCompositionSaves.clear();
     this.setStatus({ phase: 'IDLE', profileId: null, generation: disposeGeneration });
     await destruction;
   }
@@ -93,11 +118,16 @@ export class WorldPresentationSupervisor {
       || !isCurrentWorldPresentationEvent(value, this.profileId, this.generation)) return false;
     const event = value as WorldPresentationEvent;
     if (event.type === 'intent') {
-      if (this.status.phase !== 'READY') return false;
-      this.options.onIntent(event.intent);
+      if (this.status.phase !== 'READY' || (event.intent.type === 'save-composition' && this.profileId !== 'monster-trainer')) return false;
+      if (event.intent.type === 'save-composition') {
+        if (this.pendingCompositionSaves.has(event.intent.requestId) || this.pendingCompositionSaves.size >= 32) return false;
+        this.pendingCompositionSaves.add(event.intent.requestId);
+      }
+      this.options.onIntent(event.intent, { profileId: event.profileId, generation: event.generation });
       return true;
     }
     if (event.type === 'failed') {
+      this.pendingCompositionSaves.clear();
       this.setStatus({ phase: 'RECOVERY', profileId: event.profileId, generation: event.generation, error: event.error });
       void this.destroyCurrent();
       return true;
@@ -129,7 +159,7 @@ export class WorldPresentationSupervisor {
         await this.destroyCurrent();
         return this.getStatus();
       }
-      host.send({ type: 'bootstrap', profileId, generation, projection });
+      host.send({ type: 'bootstrap', profileId, generation, projection, ...(this.composition ? { composition: this.composition } : {}) });
       return this.getStatus();
     } catch (error) {
       if (generation !== this.generation || this.profileId !== profileId) return this.getStatus();

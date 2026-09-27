@@ -126,6 +126,7 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
   return (
     <PixelPanel
       variant="default"
+      className="cth-world-command-panel cth-world-panel"
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -245,7 +246,7 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
                 {t('agentDetail.fullscreenDesc')}
               </EmptyTab>
             ) : (
-            <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+            <div className="cth-world-terminal" style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
               <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
                 <PtyTerminalView
                   key={terminalInstanceKey(agent.ptyId, agent.terminalGeneration)}

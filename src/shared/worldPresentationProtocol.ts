@@ -1,5 +1,6 @@
 import { isWorldId, type WorldId } from './worlds';
 import { isVisualIdentityProfileV1, type VisualIdentityProfileV1 } from './worldProfiles';
+import { isWorldCompositionV1, type WorldCompositionV1 } from './worldComposition';
 
 export type WorldPresentationPhase = 'IDLE' | 'VALIDATING' | 'BOOTSTRAPPING' | 'MOUNTING' | 'READY' | 'RECOVERY';
 export type WorldPresentationAgentState = 'idle' | 'working' | 'waiting' | 'blocked' | 'other';
@@ -11,9 +12,15 @@ export interface WorldPresentationProjection {
   visualIdentities?: Record<string, VisualIdentityProfileV1>;
 }
 
+export interface WorldPresentationComposition {
+  layout: WorldCompositionV1;
+  source: 'saved' | 'preset' | 'invalid-fallback';
+}
+
 export type WorldPresentationCommand =
-  | { type: 'bootstrap'; profileId: WorldId; generation: number; projection: WorldPresentationProjection }
+  | { type: 'bootstrap'; profileId: WorldId; generation: number; projection: WorldPresentationProjection; composition?: WorldPresentationComposition }
   | { type: 'update-projection'; profileId: WorldId; generation: number; projection: WorldPresentationProjection }
+  | { type: 'update-composition'; profileId: 'monster-trainer'; generation: number; requestId: string; saveStatus: 'accepted' | 'rejected'; layout?: WorldCompositionV1 }
   | { type: 'restart'; generation: number }
   | { type: 'dispose'; generation: number };
 
@@ -27,7 +34,14 @@ export interface WorldPresentationError {
 export type WorldPresentationIntent =
   | { type: 'select-agent'; agentId: string }
   | { type: 'open-task'; taskId: string }
+  | { type: 'save-composition'; requestId: string; layout: WorldCompositionV1 }
   | { type: 'request-recovery' };
+
+export interface WorldPresentationIntentMessage {
+  profileId: WorldId;
+  generation: number;
+  intent: WorldPresentationIntent;
+}
 
 export type WorldPresentationEvent =
   | { type: 'phase'; profileId: WorldId; generation: number; phase: Exclude<WorldPresentationPhase, 'IDLE' | 'RECOVERY'> }
@@ -61,7 +75,21 @@ export function isWorldPresentationCommand(value: unknown): value is WorldPresen
   if (!value || typeof value !== 'object') return false;
   const v = value as Record<string, unknown>;
   if (v.type === 'bootstrap' || v.type === 'update-projection') {
-    return isWorldId(v.profileId) && validGeneration(v.generation) && validProjection(v.projection);
+    if (!isWorldId(v.profileId) || !validGeneration(v.generation) || !validProjection(v.projection)) return false;
+    if (v.type === 'update-projection') return v.composition === undefined;
+    if (v.composition === undefined) return true;
+    if (v.profileId !== 'monster-trainer' || !v.composition || typeof v.composition !== 'object' || Array.isArray(v.composition)) return false;
+    const composition = v.composition as Record<string, unknown>;
+    return Object.keys(composition).every((key) => ['layout', 'source'].includes(key))
+      && isWorldCompositionV1(composition.layout)
+      && composition.layout.scenarioId === 'starter-village'
+      && ['saved', 'preset', 'invalid-fallback'].includes(String(composition.source));
+  }
+  if (v.type === 'update-composition') {
+    return v.profileId === 'monster-trainer' && validGeneration(v.generation) && validId(v.requestId)
+      && ['accepted', 'rejected'].includes(String(v.saveStatus))
+      && (v.layout === undefined || (isWorldCompositionV1(v.layout) && v.layout.scenarioId === 'starter-village'))
+      && (v.saveStatus !== 'accepted' || (isWorldCompositionV1(v.layout) && v.layout.scenarioId === 'starter-village'));
   }
   return (v.type === 'restart' || v.type === 'dispose') && validGeneration(v.generation);
 }
@@ -81,6 +109,10 @@ export function isWorldPresentationEvent(value: unknown): value is WorldPresenta
   const intent = v.intent as Record<string, unknown>;
   if (intent.type === 'select-agent') return validId(intent.agentId);
   if (intent.type === 'open-task') return validId(intent.taskId);
+  if (intent.type === 'save-composition') {
+    return v.profileId === 'monster-trainer' && Object.keys(intent).every((key) => ['type', 'requestId', 'layout'].includes(key))
+      && validId(intent.requestId) && isWorldCompositionV1(intent.layout) && intent.layout.scenarioId === 'starter-village';
+  }
   return intent.type === 'request-recovery';
 }
 

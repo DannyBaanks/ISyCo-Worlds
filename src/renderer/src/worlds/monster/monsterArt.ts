@@ -38,6 +38,23 @@ export interface CreaturePlan {
   blocks: readonly PixelBlock[];
 }
 
+export type EvolutionStage = 'baby' | 'middle' | 'final';
+export type CreatureAction = 'idle' | 'walk' | 'work' | 'blocked' | 'waiting';
+export type CreatureDirection = 'up' | 'right' | 'down' | 'left';
+export interface CreatureFrameOptions {
+  stage: EvolutionStage;
+  action: CreatureAction;
+  direction: CreatureDirection;
+  frame: 0 | 1;
+}
+export interface CreatureFramePlan extends CreaturePlan {
+  width: 24;
+  height: 24;
+  stage: EvolutionStage;
+  action: CreatureAction;
+  direction: CreatureDirection;
+}
+
 export type MonsterVisualState = 'idle' | 'working' | 'blocked' | 'awaitsHuman';
 
 export interface StateMarker {
@@ -105,6 +122,65 @@ export function creaturePlan(profile: VisualIdentityProfileV1): CreaturePlan {
     blocks.push({ x: 4, y: 12, w: 8, h: 2, color: accent });
   }
   return { variant, palette, blocks };
+}
+
+/**
+ * Authored pose plan for a village worker. Evolution changes its silhouette,
+ * never its seeded variant or palette. Every stage shares a fixed foot baseline
+ * so a swap in form does not visually jump off the ground.
+ */
+export function creatureFramePlan(profile: VisualIdentityProfileV1, pose: CreatureFrameOptions): CreatureFramePlan {
+  const identity = creaturePlan(profile);
+  const [outline, body, accent] = identity.palette;
+  const { stage, action, direction, frame } = pose;
+  const flip = direction === 'left';
+  const side = direction === 'left' || direction === 'right';
+  const bodyShape: Record<EvolutionStage, { x: number; y: number; w: number; h: number }> = {
+    baby: { x: 7, y: 12, w: 10, h: 8 },
+    middle: { x: 5, y: 9, w: 14, h: 11 },
+    final: { x: 3, y: 7, w: 18, h: 13 }
+  };
+  const shape = bodyShape[stage];
+  const bob = action === 'idle' || action === 'waiting' ? frame : 0;
+  const stride = action === 'walk' ? (frame === 0 ? -1 : 1) : 0;
+  const blocks: PixelBlock[] = [
+    // A tiny transparent-ground shadow gives the sprite a shared floor contact.
+    { x: 7, y: 21, w: 10, h: 2, color: 0x21312b },
+    { x: shape.x, y: shape.y + bob, w: shape.w, h: shape.h - 1, color: outline },
+    { x: shape.x + 1, y: shape.y + 1 + bob, w: shape.w - 2, h: shape.h - 3, color: body },
+    { x: shape.x + 3, y: shape.y + 2 + bob, w: Math.max(2, Math.floor(shape.w / 3)), h: 2, color: accent },
+    // Feet stay on the same ground line while alternating during movement.
+    { x: flip ? 7 - stride : 7 + stride, y: 19, w: 4, h: 3, color: outline },
+    { x: flip ? 13 + stride : 13 - stride, y: 19, w: 4, h: 3, color: outline }
+  ];
+
+  if (action === 'work') {
+    blocks.push({ x: 17, y: 11, w: 4, h: 2, color: accent }, { x: 19, y: 9, w: 2, h: 2, color: 0xf5f0e6 });
+  } else if (action === 'blocked') {
+    blocks.push({ x: 10, y: 4, w: 4, h: 3, color: accent });
+  } else if (action === 'waiting') {
+    blocks.push({ x: 10, y: 4, w: 4, h: 2, color: accent });
+  } else if (identity.variant === 'horn') {
+    blocks.push({ x: 10, y: shape.y - 2 + bob, w: 4, h: 3, color: accent });
+  } else if (identity.variant === 'shell') {
+    blocks.push({ x: shape.x + shape.w - 3, y: shape.y + 2 + bob, w: 5, h: Math.max(4, shape.h - 4), color: accent });
+  } else if (identity.variant === 'spike') {
+    blocks.push({ x: shape.x + 3, y: shape.y - 2 + bob, w: 3, h: 3, color: accent }, { x: shape.x + 9, y: shape.y - 3 + bob, w: 3, h: 4, color: accent });
+  } else {
+    blocks.push({ x: shape.x + 2, y: shape.y + shape.h - 3 + bob, w: shape.w - 4, h: 2, color: accent });
+  }
+
+  // Two eyes face the camera; side/back poses remain readable without changing
+  // the identity colors or inventing another creature species.
+  if (direction === 'down') {
+    blocks.push({ x: shape.x + 3, y: shape.y + 4 + bob, w: 2, h: 2, color: outline }, { x: shape.x + shape.w - 5, y: shape.y + 4 + bob, w: 2, h: 2, color: outline });
+  } else if (side) {
+    blocks.push({ x: flip ? shape.x + 2 : shape.x + shape.w - 4, y: shape.y + 4 + bob, w: 2, h: 2, color: outline });
+  } else {
+    blocks.push({ x: shape.x + 2, y: shape.y + 4 + bob, w: shape.w - 4, h: 1, color: outline });
+  }
+
+  return { ...identity, width: 24, height: 24, stage, action, direction, blocks };
 }
 
 /** Only the four supported visual states exist; everything else reads idle. */

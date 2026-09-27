@@ -1,9 +1,10 @@
 import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron';
 import type { AgentProvider } from '../shared/agentProvider';
 import type { WorldId } from '../shared/worlds';
+import type { WorldCompositionV1 } from '../shared/worldComposition';
 import type { VisualIdentityProfileV1 } from '../shared/worldProfiles';
 import type { WorldProfileLifecycleError, WorldProfileRuntimeStatus } from '../main/worldProfileLifecycle';
-import type { WorldPresentationIntent, WorldPresentationProjection, WorldPresentationStatus } from '../shared/worldPresentationProtocol';
+import type { WorldPresentationComposition, WorldPresentationIntentMessage, WorldPresentationIntent, WorldPresentationProjection, WorldPresentationStatus } from '../shared/worldPresentationProtocol';
 import type { HireManifest } from '../shared/hire';
 export type { HireManifest } from '../shared/hire';
 import type { IntegrationRecord, IntegrationTemplate } from '../shared/integrations';
@@ -691,12 +692,23 @@ const api = {
     { ok: true; activeProfileId: string } | { ok: false; error: WorldProfileLifecycleError }
   > => ipcRenderer.invoke('world-profile:confirmActivation', profileId),
 
+  /** Read the user-authored visual override for the selected world's scenario. */
+  getWorldComposition: (profileId: WorldId, scenarioId: string): Promise<
+    { ok: true; layout: WorldCompositionV1 | null } | { ok: false; category: 'invalid' | 'io' }
+  > => ipcRenderer.invoke('world-composition:get', profileId, scenarioId),
+  /** Persist only the visual layout; never changes Hive or worker state. */
+  saveWorldComposition: (profileId: WorldId, layout: WorldCompositionV1): Promise<
+    { ok: true } | { ok: false; category: 'invalid' | 'io' }
+  > => ipcRenderer.invoke('world-composition:save', profileId, layout),
+
   // ─── Isolated visual presentation process ───────────────────────────────
-  startWorldPresentation: (profileId: WorldId, projection: WorldPresentationProjection): Promise<WorldPresentationStatus> =>
-    ipcRenderer.invoke('world-presentation:start', profileId, projection),
+  startWorldPresentation: (profileId: WorldId, projection: WorldPresentationProjection, composition?: WorldPresentationComposition): Promise<WorldPresentationStatus> =>
+    ipcRenderer.invoke('world-presentation:start', profileId, projection, composition),
   updateWorldPresentation: (projection: WorldPresentationProjection): Promise<boolean> =>
     ipcRenderer.invoke('world-presentation:updateProjection', projection),
   restartWorldPresentation: (): Promise<WorldPresentationStatus> => ipcRenderer.invoke('world-presentation:restart'),
+  respondWorldCompositionSave: (profileId: WorldId, generation: number, requestId: string, accepted: boolean, layout?: WorldCompositionV1): Promise<boolean> =>
+    ipcRenderer.invoke('world-presentation:compositionSaveResult', profileId, generation, requestId, accepted, layout),
   disposeWorldPresentation: (): Promise<void> => ipcRenderer.invoke('world-presentation:dispose'),
   setWorldPresentationBounds: (bounds: { x: number; y: number; width: number; height: number }): void =>
     ipcRenderer.send('world-presentation:bounds', bounds),
@@ -705,8 +717,8 @@ const api = {
     ipcRenderer.on('world-presentation:status', listener);
     return () => ipcRenderer.removeListener('world-presentation:status', listener);
   },
-  onWorldPresentationIntent: (cb: (intent: WorldPresentationIntent) => void): (() => void) => {
-    const listener = (_event: IpcRendererEvent, intent: WorldPresentationIntent) => cb(intent);
+  onWorldPresentationIntent: (cb: (message: WorldPresentationIntentMessage) => void): (() => void) => {
+    const listener = (_event: IpcRendererEvent, message: WorldPresentationIntentMessage) => cb(message);
     ipcRenderer.on('world-presentation:intent', listener);
     return () => ipcRenderer.removeListener('world-presentation:intent', listener);
   },

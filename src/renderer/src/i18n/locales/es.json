@@ -602,7 +602,7 @@
   "onboarding": {
     "titles": {
       "language": "ELIGE TU IDIOMA",
-      "persona": "BIENVENIDO A MUNDER DIFFLIN",
+      "persona": "ELIGE CÓMO QUIERES EMPEZAR",
       "welcome": "CONOCE TU OFICINA",
       "home": "PASO 1 DE 4 · ARNÉS INICIO",
       "homePlain": "PASO 1 DE 4 · UN HOGAR PARA LA APLICACIÓN",
@@ -623,15 +623,16 @@
         "ja": "Japonés"
       }
     },
+    "progress": "TU RECORRIDO",
     "persona": {
-      "headline": "UN CLON DE TI, TRABAJANDO 24/7",
-      "body": "Munder Difflin convierte el agente CLI que ya usa en un clon suyo, uno que administra una oficina de agentes de larga data y sigue trabajando mientras usted no está. Gestiona todo lo que los rodea: contexto, memoria, tareas, desencadenantes, entorno, archivos e integraciones.",
-      "bodyLocal": "Todo funciona en esta máquina.",
-      "ask": "PRIMERO, ¿QUIÉN ERES? (adaptaremos la configuración)",
-      "technicalTitle": "SOY TÉCNICO",
-      "technicalDesc": "Escribo código o trabajo en una terminal. Muéstreme comandos, indicadores e identificadores de modelo CLI.",
-      "nonTechnicalTitle": "NO SOY TÉCNICO",
-      "nonTechnicalDesc": "Estoy en marketing, ventas, operaciones o recién comenzando. Explicar las cosas en un lenguaje sencillo."
+      "headline": "TU ESPACIO DE TRABAJO, A TU MANERA",
+      "body": "Aquí podrás organizar asistentes, proyectos y tareas desde un solo lugar.",
+      "bodyLocal": "Todo se queda en esta computadora.",
+      "ask": "¿Cómo prefieres que te acompañemos?",
+      "technicalTitle": "Quiero ver todos los detalles",
+      "technicalDesc": "Me siento cómodo con términos técnicos y quiero ajustar las opciones.",
+      "nonTechnicalTitle": "Guíame paso a paso",
+      "nonTechnicalDesc": "Prefiero explicaciones claras y ayuda para decidir qué hacer."
     },
     "welcome": {
       "headline": "TU CLON Y EL PISO QUE CORRE",
