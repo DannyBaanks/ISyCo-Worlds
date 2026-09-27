@@ -71,6 +71,13 @@ test('the app HTML no longer reaches for Google, and its CSP forbids it', () => 
   assert.doesNotMatch(csp[1], /googleapis|gstatic/);
 });
 
+test('the renderer CSP admits the self-hosted blob workers Monaco uses in development', () => {
+  const html = read('src/renderer/index.html');
+  const policy = html.match(/Content-Security-Policy"\s+content="([^"]+)"/)[1];
+  assert.match(policy, /worker-src 'self' blob:/);
+  assert.match(policy, /script-src 'self'/, 'application scripts remain restricted to the bundle');
+});
+
 // --- the token stacks -------------------------------------------------------
 
 /** Every font stack the app exposes, from BOTH files that define them. */
