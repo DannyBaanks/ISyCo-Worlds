@@ -40,6 +40,13 @@ or licensed from Pokémon, Nintendo, Game Freak, LimeZu, or any other third part
 `worlds/starter-village/starter-village-atlas.svg` is the earlier hand-authored source-pixel atlas
 and is retained as legacy artwork; it is not removed by this refresh.
 
+`worlds/starter-village/starter-village-buildings.png` is an original project atlas generated on
+2026-09-27 with OpenAI image generation from prompts for a field laboratory, training stable, and
+small village home. The three transparent sprites were cropped, reduced with nearest-neighbour
+sampling to their authored logical pixel sizes, and packed into explicit atlas frames. The prompts
+specified original architecture and excluded third-party game art; these assets are not traced,
+recolored, or derived from Pokémon, Nintendo, Game Freak, LimeZu, or another existing work.
+
 ## Tiled map
 
 `maps/office.tmj` and `maps/brooklyn99.tmj` are Tiled JSON maps built on the LimeZu tilesets

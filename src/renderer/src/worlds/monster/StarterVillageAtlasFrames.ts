@@ -32,3 +32,10 @@ export const STARTER_VILLAGE_ATLAS_FRAMES: Readonly<Record<StarterVillageTileId,
   crate: { x: 470, y: 804, width: 150, height: 156, renderWidth: 16, renderHeight: 16 },
   sign: { x: 630, y: 800, width: 140, height: 160, renderWidth: 16, renderHeight: 16 }
 };
+
+/** Original multi-tile structures, packed as separate frames in the building atlas. */
+export const STARTER_VILLAGE_BUILDING_FRAMES = {
+  laboratory: { x: 8, y: 8, width: 96, height: 80, renderWidth: 96, renderHeight: 80 },
+  'stable-building': { x: 120, y: 8, width: 96, height: 80, renderWidth: 96, renderHeight: 80 },
+  'village-home': { x: 232, y: 8, width: 64, height: 64, renderWidth: 64, renderHeight: 64 }
+} as const;
