@@ -2,7 +2,7 @@ import starterVillageAtlasUrl from '../../assets/worlds/starter-village/starter-
 
 export const STARTER_VILLAGE_TILE_SIZE = 16;
 export const STARTER_VILLAGE_COLUMNS = 24;
-export const STARTER_VILLAGE_ROWS = 16;
+export const STARTER_VILLAGE_ROWS = 24;
 
 export const STARTER_VILLAGE_ANCHOR_IDS = [
   'professor',
@@ -65,10 +65,17 @@ function rectangle(tile: StarterVillageTileId, left: number, top: number, width:
 }
 
 const trainingGrass = [
-  ...rectangle('training-grass', 3, 11, 8, 5),
+  ...rectangle('training-grass', 4, 11, 6, 8),
   ...rectangle('training-grass', 16, 10, 4, 4)
 ];
-const waterEdge = rectangle('water', 0, 10, 2, 6);
+const lakeAndRiver: ScenarioTilePlacement[] = [
+  ...rectangle('water', 12, 13, 2, 1),
+  ...rectangle('water', 11, 14, 4, 1),
+  ...rectangle('water', 10, 15, 6, 3),
+  ...rectangle('water', 11, 18, 4, 1),
+  ...rectangle('water', 12, 19, 2, 1),
+  ...rectangle('water', 12, 20, 1, 3)
+];
 
 export const STARTER_VILLAGE_SCENARIO: StarterVillageScenario = {
   id: 'starter-village',
@@ -78,7 +85,7 @@ export const STARTER_VILLAGE_SCENARIO: StarterVillageScenario = {
     rows: STARTER_VILLAGE_ROWS,
     layers: [
       { id: 'backdrop', zIndex: 0, fill: 'grass', tiles: [] },
-      { id: 'terrain', zIndex: 10, tiles: [...trainingGrass, ...waterEdge] },
+      { id: 'terrain', zIndex: 10, tiles: [...trainingGrass, ...lakeAndRiver] },
       {
         id: 'roads',
         zIndex: 20,
@@ -86,7 +93,8 @@ export const STARTER_VILLAGE_SCENARIO: StarterVillageScenario = {
           ...rectangle('dirt', 7, 7, 11, 2),
           ...rectangle('road', 17, 4, 2, 4),
           ...rectangle('road', 18, 3, 5, 2),
-          ...rectangle('road', 10, 8, 2, 4)
+          ...rectangle('road', 10, 8, 2, 6),
+          ...rectangle('dirt', 4, 20, 7, 1)
         ]
       },
       {
@@ -95,9 +103,12 @@ export const STARTER_VILLAGE_SCENARIO: StarterVillageScenario = {
         tiles: [
           { tile: 'guide-house', x: 2, y: 1 },
           { tile: 'stable', x: 16, y: 4 },
+          { tile: 'guide-house', x: 0, y: 18 },
           { tile: 'sign', x: 7, y: 6 },
           { tile: 'lantern', x: 8, y: 7 },
           { tile: 'lantern', x: 16, y: 8 },
+          { tile: 'sign', x: 6, y: 18 },
+          { tile: 'lantern', x: 9, y: 19 },
           { tile: 'crate', x: 21, y: 8 },
           ...rectangle('fence-horizontal', 16, 9, 4, 1),
           ...rectangle('fence-horizontal', 16, 14, 4, 1),
@@ -115,12 +126,16 @@ export const STARTER_VILLAGE_SCENARIO: StarterVillageScenario = {
         tiles: [
           ...rectangle('tree', 0, 0, 2, 5),
           ...rectangle('tree', 22, 0, 2, 7),
+          ...rectangle('tree', 22, 10, 2, 3),
           ...rectangle('shrub', 2, 10, 2, 1),
           ...rectangle('shrub', 11, 11, 1, 4),
           { tile: 'flowers', x: 5, y: 10 },
           { tile: 'flowers', x: 8, y: 15 },
+          { tile: 'flowers', x: 7, y: 19 },
           { tile: 'rock', x: 2, y: 15 },
-          { tile: 'rock', x: 21, y: 10 }
+          { tile: 'rock', x: 21, y: 10 },
+          { tile: 'rock', x: 10, y: 19 },
+          { tile: 'shrub', x: 15, y: 20 }
         ]
       }
     ]
