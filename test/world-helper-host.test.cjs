@@ -225,6 +225,25 @@ test('partial streamed reply followed by provider error persists no partial assi
   assert.deepEqual(Object.keys(events[0]).sort(), ['requestId', 'text', 'type']);
 });
 
+test('malformed streamed reply ends the request as invalid-response instead of leaving GUS busy', async () => {
+  const { host, state } = setup({ providers: {
+    testConnection: async () => ({ ok: true }), complete: async () => ({ ok: false, category: 'unavailable' }),
+    stream: async (_provider, _key, _model, _system, _user, onDelta, signal) => {
+      onDelta('{"reply":"bad\\q"');
+      assert.equal(signal.aborted, true, 'the host should stop reading malformed reply content');
+      return { ok: false, category: 'offline' };
+    }
+  } });
+  await host.configure({ provider: 'openai', model: 'gpt-5-mini', apiKey: 'secret' });
+  const events = [];
+  assert.deepEqual(await host.chat('Try malformed output.', (event) => events.push(event)), { ok: false, category: 'invalid-response' });
+  assert.equal(events.at(-1).type, 'failed');
+  assert.equal(events.at(-1).category, 'invalid-response');
+  assert.equal(host.getSnapshot().lifecycle, 'ERROR');
+  assert.equal(state.transcript.some((item) => item.role === 'assistant'), false);
+  assert.equal(host.cancelChat(), false, 'the failed request must no longer be active');
+});
+
 test('cancelChat aborts only the active request and replacement ignores stale chunks', async () => {
   const seen = [];
   let firstStarted;
