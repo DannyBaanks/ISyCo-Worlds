@@ -65,7 +65,9 @@ test('migration copies all known legacy state, preserves source and is idempoten
   } finally { cleanup(); }
 });
 
-test('migration skips live Unix sockets but copies the rest of Hive and remains idempotent', async () => {
+test('migration skips live Unix sockets but copies the rest of Hive and remains idempotent', {
+  skip: process.platform === 'win32' ? 'Unix-domain sockets are not supported on Windows' : false
+}, async () => {
   const { workspaceRoot, cleanup } = fixture();
   const socketPath = path.join(workspaceRoot, 'hive', 'hooks.sock');
   const server = net.createServer();
