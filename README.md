@@ -4,7 +4,7 @@
 
 # Munder Difflin — Fork ISyCo
 
-### Tu oficina de agentes de IA: en tu computadora, en la de al lado y en tu celular
+### Tu oficina de agentes de IA: en tu computadora, en la compuutadora de al lado y en tu celular
 
 [![CI](https://github.com/DannyBaanks/munder-difflin/actions/workflows/ci.yml/badge.svg)](https://github.com/DannyBaanks/munder-difflin/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/DannyBaanks/munder-difflin?include_prereleases&label=release)](https://github.com/DannyBaanks/munder-difflin/releases)
