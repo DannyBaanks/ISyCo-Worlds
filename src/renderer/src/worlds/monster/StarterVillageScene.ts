@@ -3,8 +3,9 @@ import type { IdentityForAgent } from '../identityResolver';
 import type { WorldAgent, WorldTask } from '../worldProjection';
 import { creatureFramePlan, stateMarker, visualStateFor, type EvolutionStage } from './monsterArt';
 import type { WorkerMotionSnapshot } from './monsterMovement';
+import { locationReactionFrame, type LocationReactionBurst } from './locationReactions';
 import {
-  resolveStarterVillageAnchor, STARTER_VILLAGE_ATLAS_URL, STARTER_VILLAGE_BUILDINGS_ATLAS_URL,
+  resolveStarterVillageAnchor, STARTER_VILLAGE_ANCHOR_IDS, STARTER_VILLAGE_ATLAS_URL, STARTER_VILLAGE_BUILDINGS_ATLAS_URL,
   STARTER_VILLAGE_COMPOSITION_DEFINITION, STARTER_VILLAGE_PRESET, STARTER_VILLAGE_SCENARIO,
   STARTER_VILLAGE_TILE_SIZE, type StarterVillageTileId
 } from './StarterVillageScenario';
@@ -42,9 +43,11 @@ export interface StarterVillageSceneOptions {
   onPlacementSelect?: (placementId: string) => void;
   workerMotions?: readonly WorkerMotionSnapshot[];
   growthStageForAgent?: (agentId: string) => EvolutionStage;
+  locationReactions?: readonly LocationReactionBurst[];
 }
 export interface AnimatedStarterVillageScene extends Container {
   updateWorkers(motions: readonly WorkerMotionSnapshot[]): void;
+  updateLocationReactions(reactions: readonly LocationReactionBurst[]): void;
 }
 function markerFor(state: ReturnType<typeof visualStateFor>, x: number, y: number): Graphics { const marker = stateMarker(state); const graphics = new Graphics().setFillStyle({ color: marker.color }); if (marker.shape === 'circle') graphics.circle(x + 4, y + 4, 4).fill(); else if (marker.shape === 'bar') graphics.rect(x, y + 2, 8, 4).fill(); else if (marker.shape === 'triangle') graphics.poly([x + 4, y, x + 8, y + 8, x, y + 8]).fill(); else graphics.poly([x + 4, y, x + 8, y + 4, x + 4, y + 8, x, y + 4]).fill(); return graphics; }
 function drawGuide(root: Container, composition: WorldCompositionV1): void {
@@ -128,6 +131,10 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
   const buildingsAtlas = Assets.get<Texture>(STARTER_VILLAGE_BUILDINGS_ATLAS_URL); if (!buildingsAtlas) throw new Error('Starter Village buildings atlas was not bootstrapped'); buildingsAtlas.source.scaleMode = 'nearest';
   const composition = options.composition ?? STARTER_VILLAGE_PRESET;
   const root = new Container({ sortableChildren: true }) as AnimatedStarterVillageScene; root.sortableChildren = true;
+  const reactionOverlay = new Graphics();
+  reactionOverlay.label = 'location-reactions';
+  reactionOverlay.zIndex = Number.MAX_SAFE_INTEGER;
+  root.addChild(reactionOverlay);
   const groundFrame = STARTER_VILLAGE_ATLAS_FRAMES.grass;
   const groundTexture = new Texture({ source: atlas.source, frame: FRAMES.grass });
   const terrainLayer = new Container();
@@ -211,6 +218,22 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
       visual.marker.zIndex = footY + 1;
     }
   };
+  root.updateLocationReactions = (reactions) => {
+    reactionOverlay.clear();
+    for (const reaction of reactions) {
+      if (!STARTER_VILLAGE_ANCHOR_IDS.includes(reaction.locationId as typeof STARTER_VILLAGE_ANCHOR_IDS[number])) continue;
+      const anchor = resolveStarterVillageAnchor(composition, reaction.locationId as typeof STARTER_VILLAGE_ANCHOR_IDS[number]);
+      const centerX = anchor.x * STARTER_VILLAGE_TILE_SIZE + STARTER_VILLAGE_TILE_SIZE / 2;
+      const centerY = anchor.y * STARTER_VILLAGE_TILE_SIZE + STARTER_VILLAGE_TILE_SIZE / 2;
+      const frame = locationReactionFrame(reaction.elapsedMs);
+      reactionOverlay.setFillStyle({ color: 0xffdf70, alpha: frame.alpha * 0.52 })
+        .rect(centerX - 4, centerY - 4, 8, 8).fill();
+      reactionOverlay.setFillStyle({ color: 0xfff2bb, alpha: frame.alpha });
+      for (const sparkle of frame.sparkles) {
+        reactionOverlay.rect(centerX + sparkle.x, centerY + sparkle.y, 2, 2).fill();
+      }
+    }
+  };
   options.agents.forEach((agent) => {
     const task = options.tasks.find((candidate) => candidate.assignee === agent.id);
     const body = new Graphics();
@@ -224,5 +247,6 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
     actorVisuals.set(agent.id, { body, marker, stage: 'baby', action: '', direction: '', frame: -1, visualState: '' });
   });
   root.updateWorkers(options.workerMotions ?? []);
+  root.updateLocationReactions(options.locationReactions ?? []);
   const title = new Text({ text: STARTER_VILLAGE_SCENARIO.ambient.title, style: { fill: 0xf1db9d, fontSize: 7, fontFamily: 'monospace' } }); title.x = 8; title.y = 236; title.zIndex = STARTER_VILLAGE_HEIGHT + 20; root.addChild(title); return root;
 }
