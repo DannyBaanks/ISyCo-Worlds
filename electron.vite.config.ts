@@ -73,7 +73,8 @@ export default defineConfig({
       rollupOptions: {
         input: {
           index: resolve(__dirname, 'src/preload/index.ts'),
-          worldHost: resolve(__dirname, 'src/preload/worldHost.ts')
+          worldHost: resolve(__dirname, 'src/preload/worldHost.ts'),
+          worldHelperOverlay: resolve(__dirname, 'src/preload/worldHelperOverlay.ts')
         }
       }
     }
@@ -85,7 +86,8 @@ export default defineConfig({
       rollupOptions: {
         input: {
           index: resolve(__dirname, 'src/renderer/index.html'),
-          worldHost: resolve(__dirname, 'src/renderer/world-host.html')
+          worldHost: resolve(__dirname, 'src/renderer/world-host.html'),
+          worldHelperOverlay: resolve(__dirname, 'src/renderer/world-helper-overlay.html')
         }
       }
     },
