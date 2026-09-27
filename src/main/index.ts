@@ -18,7 +18,7 @@ import {
   readConfig, writeConfig, setAgentTokenCap, resetConfig, onConfigWritten, ensureHarnessHome, ensureClaudePermissionsAccepted,
   modelForRole, OPS_STANDUP_MISSION, HEARTBEAT_MISSION, COMPACT_MAINTENANCE_MISSION, type HarnessConfig, type ScheduledMission
 } from './config';
-import { listDir, readFileText, readFileBinary, writeFileText, statAbs, expandTilde, isValidHarnessFolderName, validateHomeSwitch } from './fs';
+import { listDir, readFileText, readFileBinary, writeFileText, statAbs, expandTilde, isValidHarnessFolderName, validateHomeSwitch, ensureHarnessGitignore } from './fs';
 import { normalizeWeekly, weeklyDelayMs } from '../shared/weeklySchedule';
 import {
   getBranch, getStatus, getLog, getBranches, getAheadBehind, isRepo, getDiff, mainRepoRoot,
@@ -96,6 +96,8 @@ import { listLocalSkills, loadCatalog, installSkill, uninstallSkill, type LocalS
 import { loadHero } from './hero';
 import { loadModelCatalog } from './modelCatalog';
 import { readWorldProfiles } from './worldProfiles';
+import { migrateLegacyMunderState, resolveWorldRuntimeRoots } from './worldProfileRuntime';
+import type { WorldId } from '../shared/worlds';
 import {
   CODEX_REMOTE_SOCKET_RELATIVE,
   codexRemoteAliasPath,
@@ -259,8 +261,15 @@ const ptyToAgent = new Map<string, string>();
  *  install disabled) so the freshly-installed CLI launches in the SAME pty/window —
  *  no user click. Cleared the moment it's consumed, so it can never loop installs. */
 const pendingInstallRelaunch = new Map<string, { opts: AgentSpawnOptions; owner: Electron.WebContents | null; bin: string; rung: string }>();
+let activeWorldProfileId: WorldId = 'office';
+function activeProfileHome(): string | null {
+  const workspaceRoot = readConfig().harnessHome;
+  if (!workspaceRoot) return null;
+  try { return resolveWorldRuntimeRoots(workspaceRoot, activeWorldProfileId).profileRoot; }
+  catch { return null; }
+}
 const hive = new HiveManager(
-  () => readConfig().harnessHome,
+  activeProfileHome,
   (channel, payload) => {
     const wc = liveWebContents();
     if (!wc) return false;
@@ -303,7 +312,7 @@ let breakerBeatTimer: ReturnType<typeof setInterval> | null = null;
 telemetry.onApiError((agentId) => breaker.recordError(agentId));
 // Shared roster on disk — created early so HookServer can re-read standing goals
 // on every UserPromptSubmit (Edit Agent saves land here via persistAgents).
-const roster = new RosterStore(() => readConfig().harnessHome);
+const roster = new RosterStore(activeProfileHome);
 function standingGoalFromRoster(agentId: string): string | null {
   const snap = roster.read();
   if (!snap || !Array.isArray(snap.agents)) return null;
@@ -332,7 +341,7 @@ const hookServer = new HookServer(
   (agentId, event, message) => workerWake.noteHook(agentId, event, message)
 );
 const memory = new MemoryManager(
-  () => readConfig().harnessHome,
+  activeProfileHome,
   () => { const c = readConfig(); return { enabled: c.semanticMemory !== false, model: c.embeddingModel ?? 'minilm' }; }
 );
 // Enterprise Knowledge Graph — file-backed store + agent CLI (default OFF).
@@ -389,7 +398,7 @@ function reflectSettings(): ReflectSettings {
 // Finishes the janitor's missing condense half: bounds each agent's memory.md
 // (Haiku tail-summary, backup→verify→atomic-swap) so it never grows unbounded.
 const reflector = new MemoryReflector(
-  () => readConfig().harnessHome,
+  activeProfileHome,
   () => readConfig().defaultCommand ?? 'claude',
   () => memory.env(),
   reflectSettings,
@@ -3420,7 +3429,7 @@ ipcMain.handle('worlds:getProfiles', () => readWorldProfiles());
 
 // ─── IPC: config ────────────────────────────────────────────────────────────
 ipcMain.handle('config:get', (): HarnessConfig => readConfig());
-ipcMain.handle('config:update', (_evt, patch: Partial<HarnessConfig>) => {
+ipcMain.handle('config:update', async (_evt, patch: Partial<HarnessConfig>) => {
   // FIRST RUN: every hive-bound service is started by bootstrapHiveServices(),
   // which runs once at app-ready and early-returns on `!hive.enabled()` — i.e.
   // whenever harnessHome is still null, which is exactly the state a fresh
@@ -3454,7 +3463,7 @@ ipcMain.handle('config:update', (_evt, patch: Partial<HarnessConfig>) => {
   if (typeof patch?.orchestratorMaySpawn === 'boolean') hive.setOrchestratorMaySpawn(patch.orchestratorMaySpawn);
   if (!hiveWasEnabled && hive.enabled()) {
     console.log('[hive] harnessHome configured — bootstrapping hive services');
-    try { bootstrapHiveServices(); } catch (e) { console.error('[hive] bootstrap after onboarding:', e); }
+    try { await bootstrapHiveServices(); } catch (e) { console.error('[hive] bootstrap after onboarding:', e); }
   }
   return next;
 });
@@ -3526,7 +3535,7 @@ ipcMain.handle('config:changeHome', async (_evt, payload: unknown) => {
     } catch (e) {
       // Copy failed: recover IN PLACE against the unchanged old home (config never
       // repointed) so the user loses nothing, and surface the error — no relaunch.
-      bootstrapHiveServices();
+      await bootstrapHiveServices();
       const cfg = readConfig();
       if (cfg.slackEnabled && cfg.slackSigningSecret) void startSlackServer();
       reconcileWebhookServer();
@@ -5369,8 +5378,25 @@ ipcMain.handle('workers:stop', (_evt, workerId: string): { ok: boolean; error?: 
 /** Start every hive-bound background service against the current harnessHome.
  *  Called on boot, and again to recover in place if a folder-change copy fails
  *  (config:changeHome tears these down before copying). No-op without a home. */
-function bootstrapHiveServices(): void {
+async function bootstrapHiveServices(): Promise<void> {
+  const config = readConfig();
+  activeWorldProfileId = config.preferredWorldProfile ?? 'office';
   if (!hive.enabled()) return;
+  const workspaceRoot = config.harnessHome;
+  if (workspaceRoot) {
+    // Keep app-owned runtime state out of project/harness git status without
+    // replacing or rewriting any existing user ignore rules.
+    ensureHarnessGitignore(workspaceRoot);
+    const officeRoot = resolveWorldRuntimeRoots(workspaceRoot, 'office').profileRoot;
+    try {
+      await migrateLegacyMunderState(workspaceRoot, officeRoot);
+    } catch (error) {
+      // Do not start services against the legacy shared root after an incomplete
+      // copy. The harness remains stopped and the GUI can report/retry recovery.
+      console.error('[world-profile] legacy Munder migration failed; runtime remains stopped:', error);
+      throw error;
+    }
+  }
   hive.ensureHive();
   // The generated docs (PROTOCOL.md, COMMANDS.md) are refreshed HERE and only
   // here: app start is the one moment a protocol change can reach an existing
@@ -5605,7 +5631,7 @@ function onSystemResume(reason: string): void {
   }, 15_000);
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // Realtime Michael mic-gate hygiene (rt-8 / Pam rt-10 nit): the voice session
   // opens the mic permission gate by persisting realtimeVoiceEnabled=true and
   // closes it on disconnect — but a hard crash/reload mid-session skips that
@@ -5648,7 +5674,8 @@ app.whenReady().then(() => {
   // check where native updating isn't possible (win-portable, dev-ish builds).
   initAutoUpdater(() => liveWebContents());
   // Bootstrap the hive (if harnessHome is configured) and start the message router.
-  bootstrapHiveServices();
+  try { await bootstrapHiveServices(); }
+  catch (error) { console.error('[world-profile] startup blocked until profile data can be recovered:', error); }
   // Survive sleep/lock. macOS freezes libuv timers during true system sleep, so a
   // locked/idle/slept Mac stops firing schedules and can wedge PTYs. On wake we
   // re-arm the scheduler (catching up missed missions ONCE) + beats + keep-awake,

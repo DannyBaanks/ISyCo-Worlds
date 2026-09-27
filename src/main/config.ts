@@ -328,6 +328,8 @@ export interface HarnessConfig {
   officeTheme?: 'office' | 'friends' | 'brooklyn99' | 'siliconvalley' | 'got' | 'hogwarts';
   /** Experimental visual-world renderer switch. Default false preserves Office. */
   worldsEnabled?: boolean;
+  /** Preferred semantic harness profile; activation is reported separately at runtime. */
+  preferredWorldProfile?: WorldId;
   /** The selected visual renderer. Invalid persisted values fall back to Office. */
   selectedWorld?: WorldId;
   /** Last global visual route. This only changes the projection, never runtime data. */
@@ -465,6 +467,7 @@ const DEFAULTS: HarnessConfig = {
   tvShowOffices: false,
   officeTheme: 'office',
   worldsEnabled: false,
+  preferredWorldProfile: 'office',
   selectedWorld: 'office',
   lastGlobalView: 'office',
   slackEnabled: false,
@@ -622,6 +625,7 @@ function normalizeWorldPreferences(cfg: HarnessConfig): HarnessConfig {
   return {
     ...cfg,
     worldsEnabled,
+    preferredWorldProfile: isWorldId(cfg.preferredWorldProfile) ? cfg.preferredWorldProfile : 'office',
     selectedWorld: isWorldId(cfg.selectedWorld) ? cfg.selectedWorld : 'office',
     lastGlobalView: isGlobalVisualView(cfg.lastGlobalView)
       && (cfg.lastGlobalView !== 'worlds' || worldsEnabled)
@@ -699,6 +703,7 @@ export function writeConfig(patch: Partial<HarnessConfig>): HarnessConfig {
   const current = readConfig();
   const next: HarnessConfig = { ...current, ...patch };
   next.worldsEnabled = next.worldsEnabled === true;
+  next.preferredWorldProfile = isWorldId(next.preferredWorldProfile) ? next.preferredWorldProfile : 'office';
   next.selectedWorld = isWorldId(next.selectedWorld) ? next.selectedWorld : 'office';
   next.lastGlobalView = isGlobalVisualView(next.lastGlobalView)
     && (next.lastGlobalView !== 'worlds' || next.worldsEnabled)

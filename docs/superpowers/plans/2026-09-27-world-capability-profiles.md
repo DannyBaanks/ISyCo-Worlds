@@ -60,7 +60,7 @@
 - [x] **Step 3: Implement serializable descriptors and `resolveWorldProfile`** with stable topological ordering and structured validation errors. Keep descriptors free of Electron and filesystem imports.
 - [x] **Step 4: Register initial profiles and built-in capability descriptors through one explicit registry entry point.** Both main profiles may declare broad independent baseline access; shared entries require explicit profile inclusion.
 - [x] **Step 5: Run the focused registry tests and `npm run typecheck`**; confirm all graph/identity cases pass without world-specific conditionals in resolver code.
-- [ ] **Step 6: Commit** as `feat(worlds): add capability profile registry`.
+- [x] **Step 6: Commit** as `feat(worlds): add capability profile registry`.
 
 ### Task 2: Per-world roots and recoverable Munder migration
 
@@ -78,12 +78,12 @@
 - `resolveWorldRuntimeRoots(workspaceRoot, profileId)` resolves a profile path under `.munder/worlds/<profileId>` and rejects traversal/overlap escapes.
 - `migrateLegacyMunderState(workspaceRoot, profileRoot)` returns `{ status: 'not-needed' | 'copied' | 'already-migrated'; copied: string[] }` or a structured error; it never deletes legacy inputs.
 
-- [ ] **Step 1: Add failing root tests** asserting Office and Monster roots differ, workspace cwd is identical, path traversal ids are rejected, and profile folders do not overlap.
-- [ ] **Step 2: Add failing migration tests** for absent legacy data, successful copy of `hive/`, `palace/`, `roster.json`, and `roster-backups`, interrupted-copy recovery, conflict refusal, and idempotent rerun.
-- [ ] **Step 3: Run `npm run test:focused -- test/world-profile-runtime.test.cjs`** and confirm the new tests fail before implementation.
-- [ ] **Step 4: Implement root resolution and journaled copy/validation.** Preserve source files; switch the profile's active root only after validation succeeds. Safely add `.munder/` to the app-managed harness gitignore without replacing user content.
-- [ ] **Step 5: Route Hive, memory, roster, action configuration, and profile-owned services to `profileRoot`; keep agent cwd and workspace-scoped filesystem/git MCP arguments on `workspaceRoot`.** Use one runtime-root provider instead of new per-world branches.
-- [ ] **Step 6: Run runtime tests, existing Hive/config tests, `npm run typecheck`, and `npm run test:focused`.** Confirm legacy root reads remain compatible until migration completes.
+- [x] **Step 1: Add failing root tests** asserting Office and Monster roots differ, workspace cwd is identical, path traversal ids are rejected, and profile folders do not overlap.
+- [x] **Step 2: Add failing migration tests** for absent legacy data, successful copy of `hive/`, `palace/`, `roster.json`, and `roster-backups`, interrupted-copy recovery, conflict refusal, and idempotent rerun.
+- [x] **Step 3: Run `npm run test:focused -- test/world-profile-runtime.test.cjs`** and confirm the new tests fail before implementation.
+- [x] **Step 4: Implement root resolution and journaled copy/validation.** Preserve source files; switch the profile's active root only after validation succeeds. Safely add `.munder/` to the app-managed harness gitignore without replacing user content.
+- [x] **Step 5: Route Hive, memory, roster, action configuration, and profile-owned services to `profileRoot`; keep agent cwd and workspace-scoped filesystem/git MCP arguments on `workspaceRoot`.** Use one runtime-root provider instead of new per-world branches.
+- [x] **Step 6: Run runtime tests, existing Hive/config tests, `npm run typecheck`, and `npm run test:focused`.** Confirm legacy root reads remain compatible until migration completes.
 - [ ] **Step 7: Commit** as `feat(worlds): isolate per-profile runtime data`.
 
 ### Task 3: Harness profile lifecycle without application relaunch

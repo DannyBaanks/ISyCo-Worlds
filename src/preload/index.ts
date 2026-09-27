@@ -328,6 +328,7 @@ export interface HarnessConfig {
   /** Active office map/cast theme (honored only when tvShowOffices is on). */
   officeTheme?: 'office' | 'friends' | 'brooklyn99' | 'siliconvalley' | 'got' | 'hogwarts';
   worldsEnabled?: boolean;
+  preferredWorldProfile?: WorldId;
   selectedWorld?: WorldId;
   lastGlobalView?: 'office' | 'marketplace' | 'worlds';
   /** Per-CLI-provider local/self-hosted base URL (Ollama/LM Studio/vLLM, …) for the
