@@ -12,7 +12,10 @@ const electron = require('electron');
 
 test('Electron visual WebContents owns a separately restartable OS renderer process', { timeout: 30_000 }, () => {
   assert.ok(fs.existsSync(fixture), `fixture exists: ${fixture}`);
-  const electronArgs = ['--no-sandbox', fixture];
+  // This witness measures renderer-process ownership, not GPU acceleration.
+  // Hosted Linux runners can fail Chromium GPU initialization and then never
+  // deliver the renderer-crash event used by the lifecycle assertion.
+  const electronArgs = ['--no-sandbox', '--disable-gpu', fixture];
   let command = electron;
   let args = electronArgs;
   if (process.platform === 'linux' && !process.env.DISPLAY && process.env.WAYLAND_DISPLAY) {
