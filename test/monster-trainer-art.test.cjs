@@ -65,3 +65,33 @@ test('awaiting a human beats the underlying agent state', () => {
   assert.equal(art.visualStateFor(agent, tasks), 'awaitsHuman');
   assert.equal(art.visualStateFor(agent, []), 'working');
 });
+
+test('creature frames change pose without changing the worker identity or palette', () => {
+  assert.equal(typeof art.creatureFramePlan, 'function', 'the renderer needs authored animation poses');
+  const identity = profile('agent-willow');
+  const idle = art.creatureFramePlan(identity, { stage: 'baby', action: 'idle', direction: 'down', frame: 0 });
+  const walk = art.creatureFramePlan(identity, { stage: 'baby', action: 'walk', direction: 'right', frame: 1 });
+  const work = art.creatureFramePlan(identity, { stage: 'baby', action: 'work', direction: 'down', frame: 0 });
+  assert.equal(idle.variant, walk.variant);
+  assert.deepEqual(idle.palette, walk.palette);
+  assert.notDeepEqual(idle.blocks, walk.blocks, 'walking changes the silhouette pose');
+  assert.notDeepEqual(idle.blocks, work.blocks, 'working has its own readable pose');
+  for (const frame of [idle, walk, work]) {
+    for (const block of frame.blocks) {
+      assert.ok(block.x >= 0 && block.y >= 0 && block.x + block.w <= frame.width && block.y + block.h <= frame.height);
+    }
+  }
+});
+
+test('all three evolution stages keep the same identity while changing the creature silhouette', () => {
+  assert.equal(typeof art.creatureFramePlan, 'function', 'evolution needs an explicit visual stage input');
+  const identity = profile('agent-evolution');
+  const baby = art.creatureFramePlan(identity, { stage: 'baby', action: 'idle', direction: 'down', frame: 0 });
+  const middle = art.creatureFramePlan(identity, { stage: 'middle', action: 'idle', direction: 'down', frame: 0 });
+  const final = art.creatureFramePlan(identity, { stage: 'final', action: 'idle', direction: 'down', frame: 0 });
+  assert.deepEqual([baby.variant, baby.palette], [middle.variant, middle.palette]);
+  assert.deepEqual([baby.variant, baby.palette], [final.variant, final.palette]);
+  assert.notDeepEqual(baby.blocks, middle.blocks);
+  assert.notDeepEqual(middle.blocks, final.blocks);
+  assert.notDeepEqual(baby.blocks, final.blocks);
+});

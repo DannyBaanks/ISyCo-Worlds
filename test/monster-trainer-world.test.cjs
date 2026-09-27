@@ -15,7 +15,7 @@ test('Monster Trainer builds the complete Starter Village scene instead of agent
   assert.match(world, /buildStarterVillageScene/);
   assert.match(scene, /STARTER_VILLAGE_SCENARIO/);
   assert.match(scene, /Assets\.get/);
-  assert.match(scene, /semanticAnchors|anchorPlacements/);
+  assert.match(scene, /resolveStarterVillageAnchor/);
   assert.match(world, /integerScaleForViewport/);
   assert.match(scene, /scaleMode\s*=\s*'nearest'/);
 });
@@ -24,7 +24,8 @@ test('MonsterTrainerWorld owns exactly one Pixi lifecycle and destroys it', () =
   const world = source('src/renderer/src/worlds/monster/MonsterTrainerWorld.tsx');
   assert.match(world, /new Application\(/);
   assert.match(world, /app\.destroy\(/, 'the Pixi app is destroyed on unmount');
-  assert.match(world, /\.slice\(0,\s*2\)/, 'at most two non-archived agents render');
+  assert.doesNotMatch(world, /\.slice\(0,\s*2\)/, 'the village renders all non-archived workers');
+  assert.match(world, /MonsterWorkerMotion/, 'agents move through a world-owned visual projection');
   assert.match(world, /archived/, 'archived agents are filtered out');
   assert.match(world, /roundPixels|roundPixels:\s*true|Math\.round/, 'nearest-pixel rendering');
   assert.match(world, /onReady\?\.\(\)/, 'first successful render marks the staged world ready');

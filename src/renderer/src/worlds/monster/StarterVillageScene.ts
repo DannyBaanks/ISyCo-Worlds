@@ -1,11 +1,12 @@
 import { Assets, Container, Graphics, Rectangle, Sprite, Text, Texture, TilingSprite } from 'pixi.js';
 import type { IdentityForAgent } from '../identityResolver';
 import type { WorldAgent, WorldTask } from '../worldProjection';
-import { creaturePlan, stateMarker, visualStateFor } from './monsterArt';
+import { creatureFramePlan, stateMarker, visualStateFor, type EvolutionStage } from './monsterArt';
+import type { WorkerMotionSnapshot } from './monsterMovement';
 import {
   resolveStarterVillageAnchor, STARTER_VILLAGE_ATLAS_URL, STARTER_VILLAGE_BUILDINGS_ATLAS_URL,
   STARTER_VILLAGE_COMPOSITION_DEFINITION, STARTER_VILLAGE_PRESET, STARTER_VILLAGE_SCENARIO,
-  STARTER_VILLAGE_TILE_SIZE, type ScenarioAnchorId, type StarterVillageTileId
+  STARTER_VILLAGE_TILE_SIZE, type StarterVillageTileId
 } from './StarterVillageScenario';
 import { STARTER_VILLAGE_ATLAS_FRAMES, STARTER_VILLAGE_BUILDING_FRAMES } from './StarterVillageAtlasFrames';
 import type { WorldCompositionV1 } from '@shared/worldComposition';
@@ -39,8 +40,12 @@ export interface StarterVillageSceneOptions {
   selectedPlacementId?: string | null;
   buildMode?: boolean;
   onPlacementSelect?: (placementId: string) => void;
+  workerMotions?: readonly WorkerMotionSnapshot[];
+  growthStageForAgent?: (agentId: string) => EvolutionStage;
 }
-function anchor(id: ScenarioAnchorId, composition: WorldCompositionV1) { return STARTER_VILLAGE_SCENARIO.anchorPlacements[id]; }
+export interface AnimatedStarterVillageScene extends Container {
+  updateWorkers(motions: readonly WorkerMotionSnapshot[]): void;
+}
 function markerFor(state: ReturnType<typeof visualStateFor>, x: number, y: number): Graphics { const marker = stateMarker(state); const graphics = new Graphics().setFillStyle({ color: marker.color }); if (marker.shape === 'circle') graphics.circle(x + 4, y + 4, 4).fill(); else if (marker.shape === 'bar') graphics.rect(x, y + 2, 8, 4).fill(); else if (marker.shape === 'triangle') graphics.poly([x + 4, y, x + 8, y + 8, x, y + 8]).fill(); else graphics.poly([x + 4, y, x + 8, y + 4, x + 4, y + 8, x, y + 4]).fill(); return graphics; }
 function drawGuide(root: Container, composition: WorldCompositionV1): void {
   const position = resolveStarterVillageAnchor(composition, 'professor');
@@ -118,11 +123,11 @@ function buildStructureLayers(atlas: Texture, frame: typeof STARTER_VILLAGE_BUIL
 }
 
 /** Builds a scene from semantic layout data; the caller owns the Pixi application lifecycle. */
-export function buildStarterVillageScene(options: StarterVillageSceneOptions): Container {
+export function buildStarterVillageScene(options: StarterVillageSceneOptions): AnimatedStarterVillageScene {
   const atlas = Assets.get<Texture>(STARTER_VILLAGE_ATLAS_URL); if (!atlas) throw new Error('Starter Village atlas was not bootstrapped'); atlas.source.scaleMode = 'nearest';
   const buildingsAtlas = Assets.get<Texture>(STARTER_VILLAGE_BUILDINGS_ATLAS_URL); if (!buildingsAtlas) throw new Error('Starter Village buildings atlas was not bootstrapped'); buildingsAtlas.source.scaleMode = 'nearest';
   const composition = options.composition ?? STARTER_VILLAGE_PRESET;
-  const root = new Container({ sortableChildren: true }); root.sortableChildren = true;
+  const root = new Container({ sortableChildren: true }) as AnimatedStarterVillageScene; root.sortableChildren = true;
   const groundFrame = STARTER_VILLAGE_ATLAS_FRAMES.grass;
   const groundTexture = new Texture({ source: atlas.source, frame: FRAMES.grass });
   const terrainLayer = new Container();
@@ -175,19 +180,49 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): C
   }
 
   drawGuide(root, composition);
-  const workerAnchors: readonly ScenarioAnchorId[] = ['stable', 'village-idle'];
-  options.agents.forEach((agent, index) => {
-    const anchorId = workerAnchors[index % workerAnchors.length];
-    const point = anchorId === 'stable' ? resolveStarterVillageAnchor(composition, anchorId) : anchor(anchorId, composition);
+  const agentById = new Map(options.agents.map((agent) => [agent.id, agent]));
+  const actorVisuals = new Map<string, { body: Graphics; marker: Graphics; stage: EvolutionStage; action: string; direction: string; frame: number; visualState: string }>();
+  root.updateWorkers = (motions) => {
+    for (const motion of motions) {
+      const agent = agentById.get(motion.id);
+      const visual = actorVisuals.get(motion.id);
+      if (!agent || !visual) continue;
+      const stage = options.growthStageForAgent?.(motion.id) ?? 'baby';
+      const plan = creatureFramePlan(options.identityFor(motion.id), { stage, action: motion.action, direction: motion.direction, frame: motion.frame as 0 | 1 });
+      if (visual.stage !== stage || visual.action !== motion.action || visual.direction !== motion.direction || visual.frame !== motion.frame || visual.visualState !== motion.visualState) {
+        visual.body.clear();
+        for (const block of plan.blocks) visual.body.setFillStyle({ color: block.color }).rect(block.x, block.y, block.w, block.h).fill();
+        visual.marker.clear();
+        const marker = stateMarker(motion.visualState);
+        visual.marker.setFillStyle({ color: marker.color });
+        if (marker.shape === 'circle') visual.marker.circle(12, 1, 3).fill();
+        else if (marker.shape === 'bar') visual.marker.rect(8, 0, 8, 3).fill();
+        else if (marker.shape === 'triangle') visual.marker.poly([12, -3, 16, 4, 8, 4]).fill();
+        else visual.marker.poly([12, -3, 16, 1, 12, 5, 8, 1]).fill();
+        visual.stage = stage; visual.action = motion.action; visual.direction = motion.direction; visual.frame = motion.frame; visual.visualState = motion.visualState;
+      }
+      const footX = motion.x + STARTER_VILLAGE_TILE_SIZE / 2;
+      const footY = motion.y + STARTER_VILLAGE_TILE_SIZE;
+      visual.body.x = Math.round(footX - plan.width / 2);
+      visual.body.y = Math.round(footY - plan.height);
+      visual.marker.x = visual.body.x;
+      visual.marker.y = visual.body.y;
+      visual.body.zIndex = footY;
+      visual.marker.zIndex = footY + 1;
+    }
+  };
+  options.agents.forEach((agent) => {
     const task = options.tasks.find((candidate) => candidate.assignee === agent.id);
-    const creature = new Graphics();
-    for (const block of creaturePlan(options.identityFor(agent.id)).blocks) creature.setFillStyle({ color: block.color }).rect(block.x, block.y, block.w, block.h).fill();
-    creature.x = point.x * STARTER_VILLAGE_TILE_SIZE; creature.y = point.y * STARTER_VILLAGE_TILE_SIZE;
-    creature.zIndex = creature.y + STARTER_VILLAGE_TILE_SIZE; creature.eventMode = 'static'; creature.cursor = 'pointer';
-    creature.on('pointertap', () => options.onAgentSelect(agent.id)); root.addChild(creature);
-    const marker = markerFor(visualStateFor(agent, options.tasks), creature.x + 4, creature.y - 5);
-    marker.zIndex = creature.zIndex + 1; marker.eventMode = 'static'; marker.cursor = 'pointer';
-    marker.on('pointertap', () => task ? options.onTaskOpen(task.id) : options.onAgentSelect(agent.id)); root.addChild(marker);
+    const body = new Graphics();
+    const marker = new Graphics();
+    body.hitArea = new Rectangle(0, 0, 24, 24);
+    body.eventMode = 'static'; body.cursor = 'pointer';
+    body.on('pointertap', () => options.onAgentSelect(agent.id));
+    marker.eventMode = 'static'; marker.cursor = 'pointer';
+    marker.on('pointertap', () => task ? options.onTaskOpen(task.id) : options.onAgentSelect(agent.id));
+    root.addChild(body, marker);
+    actorVisuals.set(agent.id, { body, marker, stage: 'baby', action: '', direction: '', frame: -1, visualState: '' });
   });
+  root.updateWorkers(options.workerMotions ?? []);
   const title = new Text({ text: STARTER_VILLAGE_SCENARIO.ambient.title, style: { fill: 0xf1db9d, fontSize: 7, fontFamily: 'monospace' } }); title.x = 8; title.y = 236; title.zIndex = STARTER_VILLAGE_HEIGHT + 20; root.addChild(title); return root;
 }
