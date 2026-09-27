@@ -242,9 +242,10 @@ export class WorldHelperHost {
     const publish = (event: WorldHelperStreamEvent) => { try { onStreamEvent?.(event); } catch { /* UI listeners are isolated */ } };
     const activeRequest = { id: requestId, controller, publish };
     this.activeChat = activeRequest;
+    const ownsRequest = () => this.activeChat === activeRequest;
     const isActive = () => this.activeChat === activeRequest && !controller.signal.aborted;
     const fail = async (category: ProviderFailureCategory | 'invalid-proposal' | 'unavailable-provider' | 'unavailable-role'): Promise<WorldHelperHostResult> => {
-      if (!isActive()) return { ok: false, category: 'unavailable' };
+      if (!ownsRequest()) return { ok: false, category: 'unavailable' };
       publish({ requestId, type: 'failed', category: category === 'invalid-proposal' || category === 'unavailable-provider' || category === 'unavailable-role' ? 'invalid-response' : category });
       this.lifecycle = category === 'offline' || category === 'quota' ? 'DEGRADED' : category === 'unavailable' ? 'DEGRADED' : 'ERROR';
       this.deps.state.errorCategory = category === 'invalid-proposal' || category === 'unavailable-provider' || category === 'unavailable-role' ? 'invalid-response' : category;
@@ -303,6 +304,7 @@ export class WorldHelperHost {
         : await this.deps.providers.complete(provider, key, model, systemPrompt, prompt);
       if (!this.deps.providers.stream && answer.ok) onProviderDelta(answer.text);
     } catch { answer = { ok: false, category: 'offline' }; }
+    if (decodeFailed && ownsRequest()) return fail('invalid-response');
     if (!isActive()) return { ok: false, category: 'unavailable' };
     if (!answer.ok) return fail(decodeFailed ? 'invalid-response' : answer.category);
     if (decodeFailed) return fail('invalid-response');
