@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { isWorldPresentationCommand, type WorldPresentationCommand, type WorldPresentationProjection, type WorldPresentationStatus } from '@shared/worldPresentationProtocol';
+import { isWorldPresentationCommand, type WorldPresentationCommand, type WorldPresentationComposition, type WorldPresentationProjection, type WorldPresentationStatus } from '@shared/worldPresentationProtocol';
 import { WorldSceneHost } from './WorldHost';
 
 interface Session {
   profileId: 'office' | 'monster-trainer';
   generation: number;
   projection: WorldPresentationProjection;
+  composition?: WorldPresentationComposition;
+  compositionSaveResult?: Extract<WorldPresentationCommand, { type: 'update-composition' }>;
 }
 
 /** Child-renderer root. It receives only typed presentation commands/projection. */
@@ -18,13 +20,24 @@ export function WorldPresentationHost() {
     if (command.type === 'bootstrap') {
       if (command.generation <= currentGeneration.current) return;
       currentGeneration.current = command.generation;
-      setSession({ profileId: command.profileId, generation: command.generation, projection: command.projection });
+      setSession({ profileId: command.profileId, generation: command.generation, projection: command.projection, composition: command.composition });
       return;
     }
     if (command.type === 'update-projection') {
       if (command.generation !== currentGeneration.current) return;
       setSession((current) => current?.profileId === command.profileId && current.generation === command.generation
         ? { ...current, projection: command.projection }
+        : current);
+      return;
+    }
+    if (command.type === 'update-composition') {
+      if (command.generation !== currentGeneration.current) return;
+      setSession((current) => current?.profileId === command.profileId && current.generation === command.generation
+        ? {
+            ...current,
+            ...(command.saveStatus === 'accepted' && command.layout ? { composition: { layout: command.layout, source: 'saved' } } : {}),
+            compositionSaveResult: command
+          }
         : current);
       return;
     }

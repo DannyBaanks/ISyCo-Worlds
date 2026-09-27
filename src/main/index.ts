@@ -104,7 +104,7 @@ import { isWorldId } from '../shared/worlds';
 import { WORLD_CAPABILITIES, WORLD_PROFILES, resolveWorldProfile } from './worldCapabilityRegistry';
 import { WorldProfileLifecycle, type WorldProfileRuntimeStatus } from './worldProfileLifecycle';
 import { WorldPresentationSupervisor } from './worldPresentationSupervisor';
-import type { WorldPresentationProjection, WorldPresentationStatus } from '../shared/worldPresentationProtocol';
+import type { WorldPresentationComposition, WorldPresentationIntentMessage, WorldPresentationProjection, WorldPresentationStatus } from '../shared/worldPresentationProtocol';
 import {
   CODEX_REMOTE_SOCKET_RELATIVE,
   codexRemoteAliasPath,
@@ -2551,8 +2551,11 @@ function createWorldPresentationSupervisor(win: BrowserWindow): WorldPresentatio
     onStatus: (status) => {
       if (!win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send('world-presentation:status', status);
     },
-    onIntent: (intent) => {
-      if (!win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send('world-presentation:intent', intent);
+    onIntent: (intent, context) => {
+      if (!win.isDestroyed() && !win.webContents.isDestroyed()) {
+        const message: WorldPresentationIntentMessage = { ...context, intent };
+        win.webContents.send('world-presentation:intent', message);
+      }
     }
   });
 }
@@ -3556,10 +3559,10 @@ ipcMain.handle('world-composition:save', (event, profileId: unknown, layout: unk
   return writeWorldComposition(app.getPath('userData'), profileId, layout);
 });
 
-ipcMain.handle('world-presentation:start', async (event, profileId: unknown, projection: unknown) => {
+ipcMain.handle('world-presentation:start', async (event, profileId: unknown, projection: unknown, composition?: unknown) => {
   if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents || !worldPresentationSupervisor) return null;
   if (profileId !== activeWorldProfileId || !projection || typeof projection !== 'object') return worldPresentationSupervisor.getStatus();
-  return worldPresentationSupervisor.start(String(profileId), projection as WorldPresentationProjection);
+  return worldPresentationSupervisor.start(String(profileId), projection as WorldPresentationProjection, composition as WorldPresentationComposition | undefined);
 });
 ipcMain.handle('world-presentation:updateProjection', (event, projection: unknown) => {
   if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents || !worldPresentationSupervisor || !projection || typeof projection !== 'object') return false;
@@ -3568,6 +3571,12 @@ ipcMain.handle('world-presentation:updateProjection', (event, projection: unknow
 ipcMain.handle('world-presentation:restart', (event) => {
   if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents || !worldPresentationSupervisor) return null;
   return worldPresentationSupervisor.restartVisual();
+});
+ipcMain.handle('world-presentation:compositionSaveResult', (event, profileId: unknown, generation: unknown, requestId: unknown, accepted: unknown, layout: unknown) => {
+  if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents
+    || !worldPresentationSupervisor || profileId !== activeWorldProfileId || !isWorldId(profileId)
+    || !Number.isSafeInteger(generation) || typeof requestId !== 'string' || typeof accepted !== 'boolean') return false;
+  return worldPresentationSupervisor.respondCompositionSave(generation as number, requestId, accepted, layout as import('../shared/worldComposition').WorldCompositionV1 | undefined);
 });
 ipcMain.handle('world-presentation:dispose', async (event) => {
   if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents || !worldPresentationSupervisor) return;

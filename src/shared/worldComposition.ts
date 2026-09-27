@@ -134,15 +134,18 @@ function validObjectDefinition(value: unknown, key: string): value is Compositio
 export function isWorldCompositionV1(value: unknown): value is WorldCompositionV1 {
   if (!isRecord(value) || value.version !== 1 || !isId(value.scenarioId)
     || !Array.isArray(value.placements) || !Array.isArray(value.terrain)) return false;
+  if (Object.keys(value).some((key) => !['version', 'scenarioId', 'placements', 'terrain'].includes(key))) return false;
   const placementIds = new Set<string>();
   for (const placement of value.placements) {
     if (!isRecord(placement) || !isId(placement.id) || !isId(placement.definitionId)
       || !isGridCoordinate(placement.x) || !isGridCoordinate(placement.y) || placementIds.has(placement.id)) return false;
+    if (Object.keys(placement).some((key) => !['id', 'definitionId', 'x', 'y'].includes(key))) return false;
     placementIds.add(placement.id);
   }
   const cells = new Set<string>();
   for (const cell of value.terrain) {
     if (!isRecord(cell) || !isGridCoordinate(cell.x) || !isGridCoordinate(cell.y) || !isId(cell.terrainId)) return false;
+    if (Object.keys(cell).some((key) => !['x', 'y', 'terrainId'].includes(key))) return false;
     const key = `${cell.x},${cell.y}`;
     if (cells.has(key)) return false;
     cells.add(key);

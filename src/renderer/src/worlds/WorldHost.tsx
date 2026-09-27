@@ -3,9 +3,11 @@ import type { HarnessConfig } from '@/store/config';
 import { WorldEngine, type WorldEngineState, type WorldMount } from './WorldEngine';
 import { FALLBACK_WORLD_ID, WORLD_REGISTRY } from './worldRegistry';
 import { createBrowserResourceResolver, WorldRecoverySurface, WorldRuntimeSurface } from './WorldRuntimeSurface';
-import type { WorldPresentationIntent, WorldPresentationProjection, WorldPresentationStatus } from '@shared/worldPresentationProtocol';
+import type { WorldPresentationComposition, WorldPresentationIntent, WorldPresentationIntentMessage, WorldPresentationProjection, WorldPresentationStatus } from '@shared/worldPresentationProtocol';
 import { useWorldProjection } from './useWorldProjection';
 import { useStore } from '@/store/store';
+import { validateComposition, type WorldCompositionV1 } from '@shared/worldComposition';
+import { STARTER_VILLAGE_COMPOSITION_DEFINITION, STARTER_VILLAGE_PRESET } from './monster/StarterVillageScenario';
 
 const IDLE: WorldEngineState = { phase: 'IDLE', pendingDisposals: [] };
 
@@ -23,7 +25,7 @@ export function WorldSceneHost({
 }: {
   config?: HarnessConfig;
   profileId?: 'office' | 'monster-trainer';
-  presentation?: { profileId: 'office' | 'monster-trainer'; generation: number; projection: WorldPresentationProjection; onIntent: (intent: WorldPresentationIntent) => void };
+  presentation?: { profileId: 'office' | 'monster-trainer'; generation: number; projection: WorldPresentationProjection; composition?: WorldPresentationComposition; compositionSaveResult?: Extract<import('@shared/worldPresentationProtocol').WorldPresentationCommand, { type: 'update-composition' }>; onIntent: (intent: WorldPresentationIntent) => void };
   onPresentationState?: (status: WorldPresentationStatus) => void;
 }) {
   const [state, setState] = useState<WorldEngineState>(IDLE);
@@ -95,6 +97,8 @@ export function WorldSceneHost({
           key={mount.token}
           mount={mount}
           presentationProjection={presentation?.projection}
+          presentationComposition={presentation?.composition}
+          compositionSaveResult={presentation?.compositionSaveResult}
           onIntent={presentation?.onIntent}
           onReady={(token) => engine.markReady(token)}
           onRenderFailure={(token, cause) => { void engine.markFailed(token, cause); }}
@@ -129,6 +133,8 @@ function IsolatedWorldViewport({ profileId }: { profileId: 'monster-trainer' }) 
     tasks: snapshot.tasks.map((task) => ({ ...task })),
     visualIdentities
   }), [snapshot, visualIdentities]);
+  const projectionRef = useRef(projection);
+  projectionRef.current = projection;
   const [status, setStatus] = useState<WorldPresentationStatus>({ phase: 'BOOTSTRAPPING', profileId, generation: 0 });
   const started = useRef(false);
   const acceptStatus = (next: WorldPresentationStatus): void => setStatus((current) => {
@@ -140,12 +146,40 @@ function IsolatedWorldViewport({ profileId }: { profileId: 'monster-trainer' }) 
   useEffect(() => {
     let live = true;
     const unsubscribeStatus = window.cth.onWorldPresentationStatus((next) => { if (live) acceptStatus(next); });
-    const unsubscribeIntent = window.cth.onWorldPresentationIntent((intent) => {
+    const unsubscribeIntent = window.cth.onWorldPresentationIntent((message: WorldPresentationIntentMessage) => {
+      const { intent } = message;
       if (intent.type === 'select-agent') useStore.getState().select(intent.agentId);
       else if (intent.type === 'open-task') useStore.getState().openTaskDetail(intent.taskId);
+      else if (intent.type === 'save-composition' && message.profileId === profileId) {
+        const validation = validateComposition(intent.layout, STARTER_VILLAGE_COMPOSITION_DEFINITION);
+        void (async () => {
+          const result = validation.ok
+            ? await window.cth.saveWorldComposition(profileId, intent.layout)
+            : { ok: false as const, category: 'invalid' as const };
+          if (!live) return;
+          await window.cth.respondWorldCompositionSave(
+            profileId, message.generation, intent.requestId, result.ok,
+            result.ok ? intent.layout : undefined
+          );
+        })();
+      }
     });
-    started.current = true;
-    void window.cth.startWorldPresentation(profileId, projection).then((next) => { if (live && next) acceptStatus(next); });
+    void (async () => {
+      let composition: WorldPresentationComposition = { layout: STARTER_VILLAGE_PRESET, source: 'preset' };
+      try {
+        const saved = await window.cth.getWorldComposition(profileId, 'starter-village');
+        if (!saved.ok && saved.category === 'invalid') composition = { layout: STARTER_VILLAGE_PRESET, source: 'invalid-fallback' };
+        else if (saved.ok && saved.layout) {
+          composition = validateComposition(saved.layout, STARTER_VILLAGE_COMPOSITION_DEFINITION).ok
+            ? { layout: saved.layout, source: 'saved' }
+            : { layout: STARTER_VILLAGE_PRESET, source: 'invalid-fallback' };
+        }
+      } catch { /* local persistence can be unavailable; the immutable preset remains usable */ }
+      if (!live) return;
+      started.current = true;
+      const next = await window.cth.startWorldPresentation(profileId, projectionRef.current, composition);
+      if (live && next) acceptStatus(next);
+    })();
     return () => {
       live = false;
       started.current = false;
