@@ -14,7 +14,7 @@
 
 /** Which global surface fills the main area. Switching is visual only: the
  *  floor, the terminals and every agent process stay mounted underneath. */
-export type GlobalView = 'office' | 'marketplace';
+export type GlobalView = 'office' | 'marketplace' | 'worlds';
 
 export type SettingsSection =
   | 'General' | 'Prerequisites' | 'Agents & Models' | 'Autonomy & Budgets'

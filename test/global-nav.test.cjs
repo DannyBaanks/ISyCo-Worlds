@@ -53,6 +53,14 @@ test('Marketplace paints over the office, it never unmounts it', () => {
   assert.match(app, /<AgentStrip config=\{config\} \/>/);
 });
 
+test('Worlds is a gated global destination, not an office-local control', () => {
+  assert.match(src('src/renderer/src/components/globalNavModel.ts'), /GlobalView = 'office' \| 'marketplace' \| 'worlds'/);
+  assert.match(nav, /worldsEnabled: boolean/);
+  assert.match(nav, /\{worldsEnabled && \(/);
+  assert.match(nav, /onClick=\{\(\) => onView\('worlds'\)\}/);
+  assert.match(nav, /shell\.nav\.worlds/);
+});
+
 test('Marketplace does not pretend: no catalog, nothing installs, the prepare button is disabled', () => {
   assert.equal(N.MARKETPLACE_CATALOG_CONNECTED, false);
   const mv = src('src/renderer/src/components/MarketplaceView.tsx');
@@ -109,8 +117,9 @@ test('every locale carries the shell strings', () => {
   const dir = path.join(__dirname, '..', 'src/renderer/src/i18n/locales');
   const keys = (o, p = '') => Object.entries(o).flatMap(([k, v]) => (v && typeof v === 'object' ? keys(v, `${p}${k}.`) : [`${p}${k}`]));
   const en = keys(JSON.parse(fs.readFileSync(path.join(dir, 'en.json'), 'utf8')).shell);
-  for (const code of ['es', 'zh-CN', 'ar']) {
+  for (const code of ['es', 'zh-CN', 'ar', 'ja']) {
     assert.deepEqual(keys(JSON.parse(fs.readFileSync(path.join(dir, `${code}.json`), 'utf8')).shell), en, code);
   }
+  assert.ok(en.includes('nav.worlds'));
   for (const c of N.MARKETPLACE_CATEGORIES) assert.ok(en.includes(`marketplace.category.${c}`), c);
 });

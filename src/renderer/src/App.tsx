@@ -348,6 +348,7 @@ export function App() {
           onOpenSettings={(section) => { setSettingsSection(section); setSettingsOpen(true); }}
           settingsOpen={settingsOpen}
           density={density}
+          worldsEnabled={config.worldsEnabled === true}
         />
         <WorldSelector config={config} />
         {/* v0.3.4: theme + fullscreen live HERE (top right), not buried in the

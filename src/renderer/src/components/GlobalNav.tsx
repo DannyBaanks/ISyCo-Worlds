@@ -18,13 +18,14 @@ import {
  * state of its own.
  */
 export function GlobalNav({
-  view, onView, onOpenSettings, settingsOpen, density
+  view, onView, onOpenSettings, settingsOpen, density, worldsEnabled
 }: {
   view: GlobalView;
   onView: (v: GlobalView) => void;
   onOpenSettings: (section?: SettingsSection) => void;
   settingsOpen: boolean;
   density: NavDensity;
+  worldsEnabled: boolean;
 }) {
   const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -184,6 +185,17 @@ export function GlobalNav({
       >
         {t('shell.nav.marketplace')}
       </button>
+      {worldsEnabled && (
+        <button
+          type="button"
+          className="cth-globalnav-tab"
+          aria-current={view === 'worlds' ? 'page' : undefined}
+          onClick={() => onView('worlds')}
+          style={tabStyle(view === 'worlds')}
+        >
+          {t('shell.nav.worlds')}
+        </button>
+      )}
     </nav>
   );
 }

@@ -1643,7 +1643,8 @@
       "office": "Office",
       "settings": "Settings",
       "settingsShort": "Config",
-      "marketplace": "Marketplace"
+      "marketplace": "Marketplace",
+      "worlds": "Worlds"
     },
     "marketplace": {
       "title": "MARKETPLACE",
