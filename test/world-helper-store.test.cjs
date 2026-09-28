@@ -25,7 +25,13 @@ test('GUS state is atomically stored under app userData and corrupt data is igno
   });
   writeWorldHelperState(userData, state);
   assert.deepEqual(readWorldHelperState(userData), state);
-  assert.equal(fs.statSync(worldHelperStatePath(userData)).mode & 0o777, 0o600);
+  const storedPath = worldHelperStatePath(userData);
+  assert.equal(fs.statSync(storedPath).isFile(), true);
+  // Node's mode option maps to POSIX permission bits; Windows exposes the
+  // inherited profile ACL as 0666 here and does not implement chmod semantics.
+  if (process.platform !== 'win32') {
+    assert.equal(fs.statSync(storedPath).mode & 0o777, 0o600);
+  }
 
   fs.writeFileSync(worldHelperStatePath(userData), '{broken');
   assert.equal(readWorldHelperState(userData).enabled, false);
