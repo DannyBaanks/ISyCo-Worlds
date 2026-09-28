@@ -4,7 +4,9 @@ import { startMockLoop, stopMockLoop } from '@/store/mockEvents';
 import type { HarnessConfig } from '@/store/config';
 import { DEFAULT_ORG_TRIGGER } from '@shared/triggers';
 import { WorldHost } from '@/worlds/WorldHost';
-import { WorldsView } from '@/worlds/WorldsView';
+import { shouldSuspendWorldPresentation } from '@/worlds/worldPresentationVisibility';
+import { WorldStartScreen } from '@/startup/WorldStartScreen';
+import { shouldShowWorldStartScreen } from '@/startup/startScreenRoute';
 import { useHive } from '@/hooks/useHive';
 import { useResolvedGodName } from '@/hooks/useResolvedGodName';
 import { useGodNameSync } from '@/i18n/useGodNameSync';
@@ -15,8 +17,6 @@ import { AgentDetailPanel } from '@/components/AgentDetailPanel';
 import { AgentStrip } from '@/components/AgentStrip';
 import { AddAgentModal } from '@/components/AddAgentModal';
 import { MichaelBooting } from '@/components/MichaelBooting';
-import { OnboardingWizard } from '@/components/OnboardingWizard';
-import { HivePicker } from '@/components/HivePicker';
 import { QuitWarningModal, type ClosingTimeState } from '@/components/QuitWarningModal';
 import { CompletionToast } from '@/realtime/CompletionToast';
 import { UpdateToast } from '@/components/UpdateToast';
@@ -61,6 +61,7 @@ export function App() {
   const setSidebarWidth = useStore(s => s.setSidebarWidth);
   const ideOpen = useStore(s => s.ideOpen);
   const setIdeOpen = useStore(s => s.setIdeOpen);
+  const taskDetailOpen = useStore(s => s.taskDetailId !== null);
 
   const [config, setConfig] = useState<HarnessConfig | null>(null);
   // Whether the user has passed the launch-time hive picker this session. Starts
@@ -77,6 +78,9 @@ export function App() {
     return false;
   });
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsMenuOpen, setSettingsMenuOpen] = useState(false);
+  const [memoryPanelOpen, setMemoryPanelOpen] = useState(false);
+  const [agentStripOverlayOpen, setAgentStripOverlayOpen] = useState(false);
   /** Which tab Settings opens on. Set by a `cth:open-settings` deep link, reset
    *  to undefined (→ General) whenever the modal is opened the normal way. */
   const [settingsSection, setSettingsSection] = useState<SettingsSection | undefined>(undefined);
@@ -92,6 +96,18 @@ export function App() {
   const [vpWidth, setVpWidth] = useState<number>(window.innerWidth);
   const density = navDensity(vpWidth);
   const worldSkin = worldProfileStatus?.activeProfileId === 'monster-trainer' ? 'monster-trainer' : undefined;
+  const worldPresentationSuspended = shouldSuspendWorldPresentation({
+    globalView: globalView,
+    settingsMenuOpen,
+    settingsOpen,
+    addAgentOpen,
+    quitWarningOpen: quitWarn !== null,
+    fullscreenOpen: fullscreenAgentId !== null,
+    ideOpen,
+    taskDetailOpen,
+    memoryPanelOpen,
+    agentStripOverlayOpen
+  });
 
   // Deep link into Settings from anywhere in the tree. Settings' open state is
   // local to App, so a nested control (e.g. "set it now" beside a disabled Talk
@@ -293,22 +309,18 @@ export function App() {
     return <div style={{ width: '100vw', height: '100vh', background: 'var(--cth-cream-100)' }} />;
   }
 
-  if (!config.onboardingComplete) {
-    // Just-onboarded users go straight into the hive they set up — skip the picker.
-    return <OnboardingWizard onComplete={(next) => { setConfig(next); setHiveOpened(true); }} />;
-  }
-
-  // Launch-time hive picker: on reopen, let the user open their current hive,
-  // switch to a recent one, or open/create another. Skipped right after onboarding
-  // and right after a switch-relaunch (see hiveOpened init).
-  if (!hiveOpened) {
-    return <HivePicker config={config} onOpenCurrent={() => setHiveOpened(true)} />;
-  }
-
-  // A failed/blocked profile bootstrap has no active scene to display. Let the
-  // operator choose a profile explicitly; the action starts the harness runtime.
-  if (worldProfileStatus && !worldProfileStatus.activeProfileId) {
-    return <WorldsView config={config} onActivated={setWorldProfileStatus} />;
+  if (shouldShowWorldStartScreen({
+    onboardingComplete: config.onboardingComplete,
+    hiveOpened,
+    activeProfileId: worldProfileStatus?.activeProfileId
+  })) {
+    return <WorldStartScreen
+      config={config}
+      worldProfileStatus={worldProfileStatus}
+      onConfigSaved={setConfig}
+      onProfileActivated={setWorldProfileStatus}
+      onEnter={() => setHiveOpened(true)}
+    />;
   }
 
   // Office and Marketplace always request the fallback projection. This object
@@ -385,6 +397,7 @@ export function App() {
           onView={onGlobalViewChange}
           onOpenSettings={(section) => { setSettingsSection(section); setSettingsOpen(true); }}
           settingsOpen={settingsOpen}
+          onMenuOpenChange={setSettingsMenuOpen}
           density={density}
         />
         {/* v0.3.4: theme + fullscreen live HERE (top right), not buried in the
@@ -460,8 +473,8 @@ export function App() {
       }}>
         {globalView === 'marketplace' && <MarketplaceView />}
         <div style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative' }}>
-          <WorldHost config={officeWorldConfig} profileId={worldProfileStatus?.activeProfileId === 'monster-trainer' ? 'monster-trainer' : 'office'} />
-          <MemoryPanel />
+          <WorldHost config={officeWorldConfig} profileId={worldProfileStatus?.activeProfileId === 'monster-trainer' ? 'monster-trainer' : 'office'} suspended={worldPresentationSuspended} />
+          <MemoryPanel onOpenChange={setMemoryPanelOpen} />
           {agentCount === 0 && godStatus === 'booting' && <MichaelBooting />}
           {agentCount === 0 && godStatus !== 'booting' && (
             <div style={{
@@ -538,7 +551,7 @@ export function App() {
         </div>
       </div>
 
-      <AgentStrip config={config} />
+      <AgentStrip config={config} onOverlayVisibilityChange={setAgentStripOverlayOpen} />
 
       {addAgentOpen && (
         <AddAgentModal

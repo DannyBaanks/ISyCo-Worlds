@@ -18,12 +18,13 @@ import {
  * state of its own.
  */
 export function GlobalNav({
-  view, onView, onOpenSettings, settingsOpen, density
+  view, onView, onOpenSettings, settingsOpen, onMenuOpenChange, density
 }: {
   view: GlobalView;
   onView: (v: GlobalView) => void;
   onOpenSettings: (section?: SettingsSection) => void;
   settingsOpen: boolean;
+  onMenuOpenChange?: (open: boolean) => void;
   density: NavDensity;
 }) {
   const { t } = useTranslation();
@@ -33,6 +34,8 @@ export function GlobalNav({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const count = SETTINGS_SECTIONS.length;
+
+  useEffect(() => { onMenuOpenChange?.(menuOpen); }, [menuOpen, onMenuOpenChange]);
 
   // Click outside closes. mousedown, so a click that lands on the floor canvas
   // (which stops propagation of click in places) still closes the menu.
