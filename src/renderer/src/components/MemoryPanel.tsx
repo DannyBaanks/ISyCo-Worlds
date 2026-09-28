@@ -29,7 +29,7 @@ const MODELS: { id: ModelId; titleKey: string; detailKey: string }[] = [
  * it on/off, and pick how it searches. Agents read/write it directly; this is
  * the human-facing window into the same memory.
  */
-export function MemoryPanel() {
+export function MemoryPanel({ onOpenChange }: { onOpenChange?: (open: boolean) => void } = {}) {
   const { t } = useTranslation();
   const rtl = useRtl();
   const [open, setOpen] = useState(false);
@@ -37,6 +37,8 @@ export function MemoryPanel() {
   const [query, setQuery] = useState('');
   const [result, setResult] = useState<string>('');
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => { onOpenChange?.(open); }, [open, onOpenChange]);
 
   const refreshStatus = async () => {
     try { setStatus(await window.cth.memoryStatus()); } catch { /* ignore */ }

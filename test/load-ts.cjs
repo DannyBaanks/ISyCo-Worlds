@@ -33,6 +33,11 @@ function loadFile(filename) {
     cache.set(filename, asset);
     return asset.exports;
   }
+  if (filename.endsWith('.md')) {
+    const markdown = { exports: fs.readFileSync(filename, 'utf8') };
+    cache.set(filename, markdown);
+    return markdown.exports;
+  }
   const source = fs.readFileSync(filename, 'utf8');
   const output = ts.transpileModule(source, {
     compilerOptions: {

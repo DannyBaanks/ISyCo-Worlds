@@ -110,3 +110,16 @@ test('three consecutive child restarts return renderer ownership to one live hos
   assert.deepEqual(hosts.map((host) => host.destroyed), [1, 1, 1, 1]);
   assert.equal(supervisor.getStatus().phase, 'IDLE');
 });
+
+test('GUS overlay is one persistent sibling above restarted world views and hides without disposing the world', () => {
+  const main = source('src/main/index.ts');
+  assert.match(main, /createWorldHelperOverlayView\(win\);[\s\S]*?createWorldPresentationSupervisor\(win\)/);
+  assert.match(main, /win\.contentView\.addChildView\(view\);[\s\S]*?raiseWorldHelperOverlay\(win\)/);
+  assert.match(main, /function raiseWorldHelperOverlay\(win: BrowserWindow\)[\s\S]*?win\.contentView\.addChildView\(overlay\)/);
+  const hideHandler = main.slice(main.indexOf("ipcMain.handle('world-helper:overlay-hide'"), main.indexOf("ipcMain.handle('world-helper:overlay-visible'"));
+  assert.match(hideHandler, /setWorldHelperOverlayVisible\(worldPresentationOwner, false\)/);
+  assert.doesNotMatch(hideHandler, /worldPresentationSupervisor\.dispose|worldPresentationView.*close/);
+  const closeHandler = main.slice(main.indexOf("win.on('closed'"), main.indexOf('return win;', main.indexOf("win.on('closed'")));
+  assert.match(closeHandler, /worldPresentationSupervisor\?\.dispose\(\)/);
+  assert.match(closeHandler, /overlay\.webContents\.close\(\{ waitForBeforeUnload: false \}\)/);
+});

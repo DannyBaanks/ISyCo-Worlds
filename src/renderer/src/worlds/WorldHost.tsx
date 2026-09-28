@@ -6,12 +6,13 @@ import { createBrowserResourceResolver, WorldRecoverySurface, WorldRuntimeSurfac
 import type { WorldPresentationIntent, WorldPresentationProjection, WorldPresentationStatus } from '@shared/worldPresentationProtocol';
 import { useWorldProjection } from './useWorldProjection';
 import { useStore } from '@/store/store';
+import { resolveWorldPresentationBounds } from './worldPresentationVisibility';
 
 const IDLE: WorldEngineState = { phase: 'IDLE', pendingDisposals: [] };
 
 /** React adapter for the serialized engine. Exactly one Pixi surface may render. */
-export function WorldHost({ config, profileId = 'office' }: { config: HarnessConfig; profileId?: 'office' | 'monster-trainer' }) {
-  if (profileId === 'monster-trainer') return <IsolatedWorldViewport profileId={profileId} />;
+export function WorldHost({ config, profileId = 'office', suspended = false }: { config: HarnessConfig; profileId?: 'office' | 'monster-trainer'; suspended?: boolean }) {
+  if (profileId === 'monster-trainer') return <IsolatedWorldViewport profileId={profileId} suspended={suspended} />;
   return <WorldSceneHost config={config} profileId="office" />;
 }
 
@@ -121,7 +122,7 @@ function visibleMounts(state: WorldEngineState): readonly WorldMount[] {
   return mount ? [mount] : [];
 }
 
-function IsolatedWorldViewport({ profileId }: { profileId: 'monster-trainer' }) {
+function IsolatedWorldViewport({ profileId, suspended }: { profileId: 'monster-trainer'; suspended: boolean }) {
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const { snapshot, visualIdentities } = useWorldProjection();
   const projection = useMemo<WorldPresentationProjection>(() => ({
@@ -164,19 +165,20 @@ function IsolatedWorldViewport({ profileId }: { profileId: 'monster-trainer' }) 
     const viewport = viewportRef.current;
     if (!viewport) return;
     const update = () => {
-      if (status.phase !== 'READY') {
-        window.cth.setWorldPresentationBounds({ x: 0, y: 0, width: 0, height: 0 });
-        return;
-      }
       const bounds = viewport.getBoundingClientRect();
-      window.cth.setWorldPresentationBounds({ x: bounds.left, y: bounds.top, width: bounds.width, height: bounds.height });
+      // Unlike an ordinary canvas, Electron's child WebContentsView cannot be
+      // covered by React z-index. Keep its renderer alive but yield its native
+      // rectangle while another app surface needs to paint over the floor.
+      window.cth.setWorldPresentationBounds(resolveWorldPresentationBounds(
+        bounds, status.phase === 'READY', suspended
+      ));
     };
     update();
     const observer = new ResizeObserver(update);
     observer.observe(viewport);
     window.addEventListener('resize', update);
     return () => { observer.disconnect(); window.removeEventListener('resize', update); };
-  }, [status.phase]);
+  }, [status.phase, suspended]);
 
   const config = { worldsEnabled: false } as HarnessConfig;
   return (

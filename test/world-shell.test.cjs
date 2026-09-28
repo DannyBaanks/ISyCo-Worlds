@@ -8,12 +8,14 @@ const path = require('node:path');
 const root = process.cwd();
 const source = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('App keeps the Office projection mounted and uses Worlds only for a missing runtime', () => {
+test('App keeps the Office projection mounted and routes pre-runtime states through the unified start screen', () => {
   const app = source('src/renderer/src/App.tsx');
-  assert.match(app, /if \(worldProfileStatus && !worldProfileStatus\.activeProfileId\)/);
-  assert.match(app, /<WorldHost config=\{officeWorldConfig\} profileId=\{worldProfileStatus\?\.activeProfileId === 'monster-trainer' \? 'monster-trainer' : 'office'\} \/>/);
-  assert.match(app, /<MemoryPanel\s*\/>/);
-  assert.match(app, /<AgentStrip\s+config=\{config\}\s*\/>/);
+  assert.match(app, /shouldShowWorldStartScreen\(/);
+  assert.match(app, /<WorldStartScreen/);
+  assert.doesNotMatch(app, /return <WorldsView/);
+  assert.match(app, /<WorldHost config=\{officeWorldConfig\} profileId=\{worldProfileStatus\?\.activeProfileId === 'monster-trainer' \? 'monster-trainer' : 'office'\} suspended=\{worldPresentationSuspended\} \/>/);
+  assert.match(app, /<MemoryPanel onOpenChange=\{setMemoryPanelOpen\} \/>/);
+  assert.match(app, /<AgentStrip\s+config=\{config\}\s+onOverlayVisibilityChange=\{setAgentStripOverlayOpen\}\s*\/>/);
   assert.doesNotMatch(app, /<OfficeFloor\s*\/>/);
 });
 

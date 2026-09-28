@@ -130,6 +130,14 @@ export interface HiveTask {
   webhook?: { tokenHash: string };
 }
 
+export interface HiveTaskStatusEvent {
+  id: string;
+  taskId: string;
+  title: string;
+  status: 'blocked' | 'done';
+  ts: number;
+}
+
 export interface AgentMeta {
   id: string;
   name: string;
@@ -363,6 +371,7 @@ export class HiveManager {
   ) {}
 
   private routerTimer: NodeJS.Timeout | null = null;
+  private taskStatusObservers: Array<(event: HiveTaskStatusEvent) => void> = [];
   /** Wall-clock ms of the last completed routeOnce() scan (0 = never). The
    *  router supervisor reads this to distinguish a live loop from a timer that
    *  was stopped without re-arm — the silent-stall class behind the ~2h Pam
@@ -1968,9 +1977,38 @@ export class HiveManager {
     const path = join(root, 'tasks.json');
     const current = this.readJson<{ tasks?: unknown }>(path, { tasks: [] });
     const merged = mergeTaskLedger(current?.tasks, tasks);
-    this.writeJson(path, { tasks: merged });
-    this.appendLog({ kind: 'tasks', count: merged.length });
-    this.commit(`hive: tasks (${merged.length})`);
+    const mergedTasks = merged as HiveTask[];
+    this.writeJson(path, { tasks: mergedTasks });
+    this.appendLog({ kind: 'tasks', count: mergedTasks.length });
+    this.commit(`hive: tasks (${mergedTasks.length})`);
+
+    const previousById = new Map((Array.isArray(current?.tasks) ? current.tasks : [])
+      .filter((task): task is HiveTask => !!task && typeof task === 'object' && typeof (task as HiveTask).id === 'string')
+      .map((task) => [task.id, task]));
+    for (const task of mergedTasks) {
+      const previous = previousById.get(task.id);
+      if (!previous || previous.status === task.status || (task.status !== 'done' && task.status !== 'blocked')) continue;
+      const event: HiveTaskStatusEvent = {
+        id: `task-status:${task.id}:${task.status}:${Date.now()}`,
+        taskId: task.id,
+        title: task.title,
+        status: task.status,
+        ts: Date.now()
+      };
+      for (const observer of [...this.taskStatusObservers]) {
+        try { observer(event); } catch { /* observer failure must not affect Hive writes */ }
+      }
+    }
+  }
+
+  /** Register observers for durable task transitions; callbacks are isolated
+   * from task writes and may unsubscribe themselves safely. */
+  addTaskStatusObserver(observer: (event: HiveTaskStatusEvent) => void): () => void {
+    this.taskStatusObservers.push(observer);
+    return () => {
+      const index = this.taskStatusObservers.indexOf(observer);
+      if (index >= 0) this.taskStatusObservers.splice(index, 1);
+    };
   }
 
   /** Append one card against the latest on-disk ledger. Renderer callers must
