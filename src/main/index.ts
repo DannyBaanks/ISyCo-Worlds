@@ -82,6 +82,7 @@ import { parseHireDeepLink, type HireManifest } from '../shared/hire';
 import { ClosingTimeController } from './closingTime';
 import {
   argsWithAutoModeFlag,
+  AGENT_PROVIDER_PRESETS,
   inferAgentProvider,
   isClaudeProvider,
   nonInteractiveEnvForProvider,
@@ -98,13 +99,18 @@ import { loadModelCatalog } from './modelCatalog';
 import { readWorldProfiles } from './worldProfiles';
 import { readWorldComposition, writeWorldComposition } from './worldCompositionStore';
 import { isWorldCompositionV1 } from '../shared/worldComposition';
-import { migrateLegacyMunderState, resolveWorldRuntimeRoots } from './worldProfileRuntime';
+import { migrateLegacyMunderState, migrateLegacyOfficeStateForProfile, resolveWorldRuntimeRoots } from './worldProfileRuntime';
 import type { WorldId } from '../shared/worlds';
 import { isWorldId } from '../shared/worlds';
 import { WORLD_CAPABILITIES, WORLD_PROFILES, resolveWorldProfile } from './worldCapabilityRegistry';
 import { WorldProfileLifecycle, type WorldProfileRuntimeStatus } from './worldProfileLifecycle';
 import { WorldPresentationSupervisor } from './worldPresentationSupervisor';
 import type { WorldPresentationComposition, WorldPresentationIntentMessage, WorldPresentationProjection, WorldPresentationStatus } from '../shared/worldPresentationProtocol';
+import { WorldHelperHost } from './worldHelperHost';
+import type { WorldHelperContext, WorldHelperLaunchRequest } from './worldHelperHost';
+import { createWorldHelperProviderRegistry } from './worldHelperProviders';
+import { readWorldHelperState, writeWorldHelperState } from './worldHelperStore';
+import { worldHelperProviders, type WorldHelperNotice, type WorldHelperProviderId, type WorldHelperStreamEvent } from '../shared/worldHelper';
 import {
   CODEX_REMOTE_SOCKET_RELATIVE,
   codexRemoteAliasPath,
@@ -272,6 +278,7 @@ let activeWorldProfileId: WorldId | null = 'office';
 let worldProfileLifecycle: WorldProfileLifecycle | null = null;
 let worldPresentationSupervisor: WorldPresentationSupervisor | null = null;
 let worldPresentationOwner: BrowserWindow | null = null;
+let worldHelperOverlayView: WebContentsView | null = null;
 let initialProfileRuntimeReady = false;
 function activeProfileHome(): string | null {
   const workspaceRoot = readConfig().harnessHome;
@@ -287,6 +294,142 @@ const hive = new HiveManager(
     try { wc.send(channel, payload); return true; } catch { return false; }
   }
 );
+
+let worldHelperHost: WorldHelperHost | null = null;
+const worldHelperProviderRegistry = createWorldHelperProviderRegistry();
+
+function currentWorldHelperContext(): WorldHelperContext {
+  const config = readConfig();
+  const registry = hive.registry();
+  const ptys = ptyManager.list();
+  const liveIds = new Set(ptys.map((pty) => pty.id));
+  const workers = Object.values(registry.agents ?? {}).filter((agent) => !agent.archived && liveIds.has(agent.id)).map((agent) => ({
+    id: agent.id,
+    name: agent.name,
+    role: agent.role,
+    provider: agent.provider,
+    status: agent.status
+  }));
+  const tasksLedger = hive.tasks() as { tasks?: Array<{ id: string; title?: string; status: string }> };
+  const tasks = Array.isArray(tasksLedger?.tasks) ? tasksLedger.tasks.map((task) => ({ id: task.id, title: task.title, status: task.status })) : [];
+  const candidatePaths = [...(config.registeredRepos ?? []), ...(config.harnessHome ? [config.harnessHome] : [])];
+  const workspace = candidatePaths.find((candidate) => {
+    try { return existsSync(candidate) && statSync(candidate).isDirectory(); } catch { return false; }
+  });
+  const availableRoles = [...new Set(Object.values(registry.agents ?? {})
+    .filter((agent) => !agent.archived && agent.role?.trim())
+    .map((agent) => agent.role!.trim()))];
+  const installedProviders = AGENT_PROVIDER_PRESETS
+    .filter((preset) => preset.id !== 'custom' && ptyManager.isCommandAvailable(preset.defaultCommand))
+    .map((preset) => preset.id);
+  return {
+    world: activeWorldProfileId ?? 'office',
+    workspaceAvailable: !!workspace,
+    ...(workspace ? { workspace } : {}),
+    workers,
+    tasks,
+    installedProviders,
+    availableRoles,
+    pendingApprovals: tasks.filter((task) => task.status === 'blocked').length
+  };
+}
+
+function worldHelperCurrentEvent(event: Pick<WorldHelperNotice, 'workerId' | 'taskId'>): boolean {
+  if (event.workerId) return !!hive.registry().agents[event.workerId];
+  if (event.taskId) {
+    const tasks = hive.tasks() as { tasks?: Array<{ id: string }> };
+    return !!tasks.tasks?.some((task) => task.id === event.taskId);
+  }
+  return true;
+}
+
+function ensureWorldHelperHost(): WorldHelperHost {
+  if (worldHelperHost) return worldHelperHost;
+  const userDataPath = app.getPath('userData');
+  const state = readWorldHelperState(userDataPath);
+  worldHelperHost = new WorldHelperHost({
+    state,
+    providers: worldHelperProviderRegistry,
+    secrets: {
+      set: async (provider, key) => integrations.setSecret(`world-helper:${provider}`, key),
+      has: async (provider) => integrations.hasSecret(`world-helper:${provider}`),
+      get: async (provider) => integrations.getSecret(`world-helper:${provider}`),
+      remove: async (provider) => { integrations.deleteSecret(`world-helper:${provider}`); }
+    },
+    context: async () => currentWorldHelperContext(),
+    launch: async (worker: WorldHelperLaunchRequest) => {
+      const config = readConfig();
+      const context = currentWorldHelperContext();
+      const provider = worker.provider as AgentProvider;
+      const preset = providerPreset(provider);
+      if (provider === 'custom' || !context.installedProviders?.includes(provider) || !context.workspace) {
+        return { ok: false, error: 'worker engine or workspace is no longer available' };
+      }
+      const requestCommand = provider === 'claude' ? config.defaultCommand || preset.defaultCommand : preset.defaultCommand;
+      const launch = buildWorkerLaunch({
+        requestCommand,
+        requestProvider: provider,
+        requestModel: config.providerDefaultModels?.[provider] ?? config.defaultModel,
+        autoMode: config.autoMode
+      });
+      const safeId = `gus-${randomBytes(6).toString('hex')}`;
+      const result = await spawnAgentCore({
+        id: safeId,
+        cwd: context.workspace,
+        command: launch.bin,
+        args: launch.args,
+        provider,
+        hive: { id: safeId, name: worker.name, provider, cwd: context.workspace, role: worker.role, capabilities: [] }
+      }, liveWebContents());
+      if (result.ok) {
+        try {
+          hive.send({
+            to: safeId,
+            act: 'inform',
+            subject: `GUS assignment · ${worker.role}`,
+            body: `${worker.purpose.trim()}\n\nFollow your assigned role (${worker.role}) and use only your existing Munder capabilities. Ask the user through the normal Hive approval path before any restricted action.`
+          }, 'human');
+        } catch { /* spawn remains valid; normal Munder routing can retry the assignment */ }
+        try { liveWebContents()?.send('hive:agentSpawned', { id: safeId, name: worker.name, provider, cwd: result.worktreePath ?? context.workspace, command: launch.command, role: worker.role, worktreePath: result.worktreePath }); } catch { /* UI can resync from Hive */ }
+      }
+      return { ok: result.ok, ...(result.error ? { error: result.error } : {}), ...(result.ok ? { id: safeId } : {}) };
+    },
+    persist: () => writeWorldHelperState(userDataPath, state),
+    createId: () => `gus-${randomBytes(10).toString('hex')}`,
+    isCurrentEvent: worldHelperCurrentEvent
+  });
+  hive.addTaskStatusObserver((event) => {
+    if (!worldHelperHost?.getSnapshot().enabled) return;
+    if (event.status !== 'done' && event.status !== 'blocked') return;
+    worldHelperHost.observe({
+      id: event.id,
+      kind: event.status === 'done' ? 'task-finished' : 'task-blocked',
+      taskId: event.taskId,
+      title: event.status === 'done' ? `Task finished: ${event.title}` : `Task blocked: ${event.title}`,
+      createdAt: event.ts
+    });
+  });
+  hive.addRoutedObserver((message, targets) => {
+    if (!worldHelperHost?.getSnapshot().enabled) return;
+    if (message.to !== 'human' && !targets.includes('human')) return;
+    worldHelperHost.observe({
+      id: `approval:${message.id}`,
+      kind: 'approval-requested',
+      workerId: message.from,
+      title: 'A worker needs your decision.',
+      createdAt: Date.now()
+    });
+  });
+  worldHelperHost.subscribe((snapshot) => {
+    try { liveWebContents()?.send('world-helper:state', snapshot); } catch { /* renderer may be reloading */ }
+    try {
+      const overlayContents = worldHelperOverlayView?.webContents;
+      if (overlayContents && !overlayContents.isDestroyed()) overlayContents.send('world-helper:overlay-state', snapshot);
+    } catch { /* overlay may be reloading or closing */ }
+  });
+  void worldHelperHost.restore().catch(() => { /* corrupt/unavailable GUS persistence cannot affect Munder */ });
+  return worldHelperHost;
+}
 // #7C — operator control state (pause/gate/steer/halt), read by the HookServer
 // when deciding hook returns.
 const control = new ControlRegistry();
@@ -681,6 +824,20 @@ ptyManager.setExitHandler((id, exitCode, info) => {
       });
     }
   } catch (e) { console.error('[pty] recordAgentExit failed:', e); }
+
+  try {
+    const agentId = ptyToAgent.get(id);
+    const agent = agentId ? hive.registry().agents[agentId] : undefined;
+    if (agent) worldHelperHost?.observe({
+      id: `worker-exit:${id}:${Date.now()}`,
+      kind: typeof info?.signal === 'number' && info.signal !== 0 || typeof exitCode === 'number' && exitCode !== 0 ? 'worker-error' : 'worker-finished',
+      workerId: agentId!,
+      title: typeof info?.signal === 'number' && info.signal !== 0 || typeof exitCode === 'number' && exitCode !== 0
+        ? `${agent.name} stopped unexpectedly.`
+        : `${agent.name} session ended.`,
+      createdAt: Date.now()
+    });
+  } catch { /* helper event delivery never affects PTY teardown */ }
 
   const pending = pendingInstallRelaunch.get(id);
   if (pending) {
@@ -2499,6 +2656,7 @@ function createWorldPresentationSupervisor(win: BrowserWindow): WorldPresentatio
         }
       });
       win.contentView.addChildView(view);
+      raiseWorldHelperOverlay(win);
       view.setBounds({ x: 0, y: 0, width: 0, height: 0 });
       worldPresentationView = view;
       let renderProcessGone = false;
@@ -2560,6 +2718,67 @@ function createWorldPresentationSupervisor(win: BrowserWindow): WorldPresentatio
   });
 }
 
+function layoutWorldHelperOverlay(win: BrowserWindow, view: WebContentsView): void {
+  if (view.webContents.isDestroyed() || win.isDestroyed()) return;
+  const { width, height } = win.getContentBounds();
+  const overlayWidth = Math.min(460, Math.max(320, width - 24));
+  const overlayHeight = Math.min(760, Math.max(360, height - 24));
+  view.setBounds({ x: Math.max(0, width - overlayWidth - 12), y: Math.max(12, height - overlayHeight - 12), width: overlayWidth, height: overlayHeight });
+}
+
+function raiseWorldHelperOverlay(win: BrowserWindow): void {
+  const overlay = worldHelperOverlayView;
+  if (!overlay || overlay.webContents.isDestroyed() || win.isDestroyed()) return;
+  win.contentView.addChildView(overlay);
+}
+
+function createWorldHelperOverlayView(win: BrowserWindow): WebContentsView {
+  const view = new WebContentsView({
+    webPreferences: {
+      preload: join(__dirname, '../preload/worldHelperOverlay.js'),
+      sandbox: true,
+      contextIsolation: true,
+      nodeIntegration: false,
+      backgroundThrottling: false
+    }
+  });
+  worldHelperOverlayView = view;
+  win.contentView.addChildView(view);
+  view.setBounds({ x: 0, y: 0, width: 0, height: 0 });
+  view.setVisible(false);
+  view.setBackgroundColor('#00000000');
+  const layout = () => layoutWorldHelperOverlay(win, view);
+  win.on('resize', layout);
+  win.on('maximize', layout);
+  win.on('unmaximize', layout);
+  view.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https:\/\//i.test(url)) shell.openExternal(url);
+    return { action: 'deny' };
+  });
+  const loading = isDev && process.env.ELECTRON_RENDERER_URL
+    ? view.webContents.loadURL(new URL('/world-helper-overlay.html', process.env.ELECTRON_RENDERER_URL).toString())
+    : view.webContents.loadFile(join(__dirname, '../renderer/world-helper-overlay.html'));
+  void loading.catch(() => { /* GUS overlay failure must not affect the world */ });
+  view.webContents.once('destroyed', () => {
+    win.removeListener('resize', layout);
+    win.removeListener('maximize', layout);
+    win.removeListener('unmaximize', layout);
+    if (worldHelperOverlayView === view) worldHelperOverlayView = null;
+  });
+  return view;
+}
+
+function setWorldHelperOverlayVisible(win: BrowserWindow, visible: boolean): boolean {
+  const view = worldHelperOverlayView;
+  if (!view || view.webContents.isDestroyed() || win.isDestroyed()) return false;
+  if (visible) {
+    layoutWorldHelperOverlay(win, view);
+    raiseWorldHelperOverlay(win);
+  }
+  view.setVisible(visible);
+  return true;
+}
+
 function createWindow(opts: { floor?: boolean } = {}): BrowserWindow {
   const isFloor = opts.floor === true;
 
@@ -2609,6 +2828,7 @@ function createWindow(opts: { floor?: boolean } = {}): BrowserWindow {
   if (!isFloor) mainWindow = win;
   if (!isFloor) {
     worldPresentationOwner = win;
+    createWorldHelperOverlayView(win);
     worldPresentationSupervisor = createWorldPresentationSupervisor(win);
   }
 
@@ -2724,6 +2944,12 @@ function createWindow(opts: { floor?: boolean } = {}): BrowserWindow {
       worldPresentationSupervisor = null;
       if (worldPresentationOwner === win) worldPresentationOwner = null;
       worldPresentationView = null;
+      const overlay = worldHelperOverlayView;
+      worldHelperOverlayView = null;
+      if (overlay) {
+        try { win.contentView.removeChildView(overlay); } catch { /* window already gone */ }
+        if (!overlay.webContents.isDestroyed()) overlay.webContents.close({ waitForBeforeUnload: false });
+      }
     }
     allWindows.delete(win);
     // A closed floor must not leave its terminals running headless. (Natural
@@ -3317,6 +3543,13 @@ async function spawnAgentCore(opts: AgentSpawnOptions, owner: Electron.WebConten
   const res = ptyManager.spawn(opts, owner);
   if (res.ok) analytics.track('agent_spawned', { provider });
   else analytics.track('agent_spawn_failed', { provider, reason: spawnFailReason(res.error) });
+  if (res.ok && opts.hive && !opts.hive.isGod) worldHelperHost?.observe({
+    id: `worker-start:${opts.id}`,
+    kind: 'worker-started',
+    workerId: opts.id,
+    title: `${opts.hive.name} started`,
+    createdAt: Date.now()
+  });
   syncKeepAwake(); // arm the power-save blocker while ≥1 agent PTY is alive (#18)
   // Hand the resolved worktree path back to the renderer so it can persist it on
   // the agent (only set when isolation actually provisioned a worktree above).
@@ -3457,6 +3690,97 @@ ipcMain.handle('providerKey:clear', (_evt, backend: unknown) => {
   try { integrations.deleteSecret(providerKeyRef(backend)); return { ok: true }; }
   catch (e) { return { ok: false, error: e instanceof Error ? e.message : String(e) }; }
 });
+// GUS receives only safe metadata over this bridge; provider secrets are
+// encrypted/main-only and model output never reaches spawn without approval.
+ipcMain.handle('world-helper:providers', () => worldHelperProviders());
+ipcMain.handle('world-helper:snapshot', async () => { const host = ensureWorldHelperHost(); await host.restore(); return host.getSnapshot(); });
+ipcMain.handle('world-helper:configure', async (_evt, payload: unknown) => {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return { ok: false, category: 'invalid-config' };
+  return ensureWorldHelperHost().configure(payload as { provider: unknown; model: unknown; apiKey?: unknown });
+});
+ipcMain.handle('world-helper:replaceKey', async (_evt, apiKey: unknown) => ensureWorldHelperHost().replaceKey(apiKey));
+ipcMain.handle('world-helper:removeKey', async () => { await ensureWorldHelperHost().removeCurrentKey(); return { ok: true }; });
+ipcMain.handle('world-helper:remove', async () => { await ensureWorldHelperHost().removeProviderKey(); return { ok: true }; });
+ipcMain.handle('world-helper:chat', async (_evt, message: unknown) => ensureWorldHelperHost().chat(message));
+ipcMain.handle('world-helper:approve', async (_evt, proposalId: unknown, selectedNames: unknown) =>
+  ensureWorldHelperHost().approveProposal(proposalId, selectedNames));
+ipcMain.handle('world-helper:stop', async () => { await ensureWorldHelperHost().stop(); return { ok: true }; });
+ipcMain.handle('world-helper:dismissSetup', async () => { await ensureWorldHelperHost().dismissSetup(); return { ok: true }; });
+ipcMain.handle('world-helper:providerKeyPresent', async (_evt, provider: unknown) => {
+  if (typeof provider !== 'string' || !worldHelperProviders().some((item) => item.id === provider)) return false;
+  return integrations.hasSecret(`world-helper:${provider}`);
+});
+
+// The isolated helper overlay gets a narrow duplicate IPC surface. Every call
+// is bound to the single helper WebContents; the world child cannot impersonate it.
+function isWorldHelperOverlaySender(evt: Electron.IpcMainInvokeEvent): boolean {
+  const contents = worldHelperOverlayView?.webContents;
+  return !!contents && !contents.isDestroyed() && evt.sender.id === contents.id;
+}
+function currentWorldHelperOverlayContents(): Electron.WebContents | null {
+  return worldHelperOverlayView ? worldHelperOverlayView.webContents : null;
+}
+ipcMain.handle('world-helper:overlay-providers', (evt) => isWorldHelperOverlaySender(evt) ? worldHelperProviders() : []);
+ipcMain.handle('world-helper:overlay-snapshot', async (evt) => {
+  if (!isWorldHelperOverlaySender(evt)) return null;
+  const host = ensureWorldHelperHost();
+  await host.restore();
+  return host.getSnapshot();
+});
+ipcMain.handle('world-helper:overlay-configure', async (evt, payload: unknown) => {
+  if (!isWorldHelperOverlaySender(evt) || !payload || typeof payload !== 'object' || Array.isArray(payload)) return { ok: false, category: 'unavailable' };
+  return ensureWorldHelperHost().configure(payload as { provider: unknown; model: unknown; apiKey?: unknown });
+});
+ipcMain.handle('world-helper:overlay-removeKey', async (evt) => {
+  if (!isWorldHelperOverlaySender(evt)) return { ok: false };
+  await ensureWorldHelperHost().removeCurrentKey();
+  return { ok: true };
+});
+ipcMain.handle('world-helper:overlay-remove', async (evt) => {
+  if (!isWorldHelperOverlaySender(evt)) return { ok: false };
+  await ensureWorldHelperHost().removeProviderKey();
+  return { ok: true };
+});
+ipcMain.handle('world-helper:overlay-openProviderHelp', (evt, provider: unknown) => {
+  if (!isWorldHelperOverlaySender(evt)) return false;
+  const metadata = worldHelperProviders().find((item) => item.id === provider);
+  if (!metadata) return false;
+  void shell.openExternal(metadata.apiKeyHelpUrl);
+  return true;
+});
+ipcMain.handle('world-helper:overlay-chat', async (evt, message: unknown) => {
+  if (!isWorldHelperOverlaySender(evt)) return { ok: false, category: 'unavailable' };
+  const owner = currentWorldHelperOverlayContents();
+  return ensureWorldHelperHost().chat(message, (event: WorldHelperStreamEvent) => {
+    if (owner && owner === currentWorldHelperOverlayContents() && !owner.isDestroyed()) owner.send('world-helper:stream', event);
+  });
+});
+ipcMain.handle('world-helper:overlay-cancel', (evt, requestId: unknown) => {
+  if (!isWorldHelperOverlaySender(evt)) return false;
+  return ensureWorldHelperHost().cancelChat(typeof requestId === 'string' ? requestId : undefined);
+});
+ipcMain.handle('world-helper:overlay-approve', async (evt, proposalId: unknown, selectedNames: unknown) =>
+  isWorldHelperOverlaySender(evt) ? ensureWorldHelperHost().approveProposal(proposalId, selectedNames) : { ok: false, category: 'unavailable' });
+ipcMain.handle('world-helper:overlay-stop', async (evt) => {
+  if (!isWorldHelperOverlaySender(evt)) return { ok: false };
+  await ensureWorldHelperHost().stop();
+  return { ok: true };
+});
+ipcMain.handle('world-helper:overlay-dismissSetup', async (evt) => {
+  if (!isWorldHelperOverlaySender(evt)) return { ok: false };
+  await ensureWorldHelperHost().dismissSetup();
+  return { ok: true };
+});
+ipcMain.handle('world-helper:overlay-hide', (evt) => {
+  if (!isWorldHelperOverlaySender(evt) || !worldPresentationOwner) return false;
+  return setWorldHelperOverlayVisible(worldPresentationOwner, false);
+});
+ipcMain.handle('world-helper:overlay-visible', (evt, visible: unknown) => {
+  const owner = worldPresentationOwner;
+  if (!owner || owner.isDestroyed() || evt.sender !== owner.webContents) return false;
+  return setWorldHelperOverlayVisible(owner, visible === true);
+});
+
 // Probe an integration's reachability through the broker's own auth path (admin-only;
 // runs in main, so the secret is used but never returned — only the upstream status).
 ipcMain.handle('integrations:test', async (_evt, payload: unknown) => {
@@ -5553,9 +5877,8 @@ async function bootstrapHiveServices(): Promise<void> {
     // Keep app-owned runtime state out of project/harness git status without
     // replacing or rewriting any existing user ignore rules.
     ensureHarnessGitignore(workspaceRoot);
-    const officeRoot = resolveWorldRuntimeRoots(workspaceRoot, 'office').profileRoot;
     try {
-      await migrateLegacyMunderState(workspaceRoot, officeRoot);
+      await migrateLegacyOfficeStateForProfile(workspaceRoot, activeWorldProfileId);
     } catch (error) {
       // Do not start services against the legacy shared root after an incomplete
       // copy. The harness remains stopped and the GUI can report/retry recovery.
@@ -5644,7 +5967,7 @@ function createWorldProfileLifecycle(initialProfileId: WorldId | null): WorldPro
       mkdirSync(roots.profileRoot, { recursive: true });
       // Legacy Munder state belongs to Office only. Keep the preflight before
       // stopping the current profile, and never move or remove the source.
-      if (profile.id === 'office') await migrateLegacyMunderState(workspaceRoot, roots.profileRoot);
+      if (profile.id === 'office') await migrateLegacyOfficeStateForProfile(workspaceRoot, profile.id);
     },
     stop: async () => {
       clearMissionTimers();

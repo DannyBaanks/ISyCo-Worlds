@@ -76,6 +76,23 @@ test('atomic add is idempotent and delete removes only the named card', (t) => {
   assert.equal(tasks(hive)[0].title, 'new');
 });
 
+test('task status observers receive only durable transitions into done or blocked', (t) => {
+  const hive = floor(t);
+  const events = [];
+  const unsubscribe = hive.addTaskStatusObserver((event) => events.push(event));
+  t.after(unsubscribe);
+  hive.writeTasks([card('work')]);
+  hive.patchTask('work', { status: 'doing' });
+  hive.patchTask('work', { status: 'done' });
+  hive.patchTask('work', { status: 'blocked' });
+
+  assert.deepEqual(events.map(({ taskId, status }) => ({ taskId, status })), [
+    { taskId: 'work', status: 'done' },
+    { taskId: 'work', status: 'blocked' }
+  ]);
+  assert.ok(events.every((event) => event.title === 'work' && Number.isFinite(event.ts)));
+});
+
 test('patch refuses an unknown card without rewriting the ledger', (t) => {
   const hive = floor(t);
   hive.writeTasks([card('existing')]);
