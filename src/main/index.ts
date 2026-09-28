@@ -5967,7 +5967,7 @@ function createWorldProfileLifecycle(initialProfileId: WorldId | null): WorldPro
       mkdirSync(roots.profileRoot, { recursive: true });
       // Legacy Munder state belongs to Office only. Keep the preflight before
       // stopping the current profile, and never move or remove the source.
-      if (isLegacyOfficeMigrationTarget(profile.id)) await migrateLegacyMunderState(workspaceRoot, roots.profileRoot);
+      if (profile.id === 'office') await migrateLegacyOfficeStateForProfile(workspaceRoot, profile.id);
     },
     stop: async () => {
       clearMissionTimers();
