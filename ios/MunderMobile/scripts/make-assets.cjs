@@ -227,6 +227,8 @@ async function panelFixture() {
   ];
   state.gpt = { available: false, on: false, running: false, profile: 'full', public_url: null, grants: 0, pending: [] };
   state.launcher = 'dev';
+  // paired_at is the day the generator ran: pinned, or --check goes stale at midnight.
+  for (const p of state.link.phones) p.since = '2026-09-26';
   const bytes = Buffer.from(JSON.stringify(state, null, 2) + '\n');
   // Also in the demo bundle, next to overview and demo-peers: that is what lets the
   // CI screenshots job photograph the Panel tab without a host behind it.

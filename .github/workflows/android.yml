@@ -99,6 +99,70 @@ jobs:
           path: android/MunderMobile/app/build/outputs/apk/debug/*.apk
           retention-days: 30
 
+  release-signing:
+    # Testigo de la firma de release SIN los secretos reales: una llave
+    # desechable generada aquí mismo en RUNNER_TEMP (nunca en el repo) pasa
+    # por el MISMO script que usa release.yml. Demuestra el cableado
+    # (Gradle firma con lo que llega por entorno, apksigner lee la huella) y
+    # que el script es fail-closed. NO demuestra la llave real de producción:
+    # esa solo existe en Secrets y se comprueba en cada release.
+    name: Release signing (throwaway key)
+    needs: assets
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Throwaway keystore (runner only)
+        run: |
+          ks="$RUNNER_TEMP/throwaway.jks"
+          pass="$(openssl rand -hex 16)"
+          echo "::add-mask::$pass"
+          keytool -genkeypair -keystore "$ks" -storetype PKCS12 -storepass "$pass" -keypass "$pass" \
+            -alias witness -keyalg RSA -keysize 2048 -validity 2 -dname "CN=Munder CI throwaway" >/dev/null
+          fp=$(keytool -list -v -keystore "$ks" -storepass "$pass" -alias witness | sed -n 's/^\s*SHA256: //p')
+          test -n "$fp" || { echo "::error::no se pudo leer la huella"; exit 1; }
+          {
+            echo "WITNESS_PASS=$pass"
+            echo "WITNESS_FP=$fp"
+            echo "WITNESS_B64=$(base64 -w 76 "$ks" | tr '\n' ' ')"
+          } >> "$GITHUB_ENV"
+          rm -f "$ks"
+      - name: Missing secrets fail closed
+        working-directory: android/MunderMobile
+        run: |
+          if bash scripts/release-apk.sh > out.txt 2>&1; then cat out.txt; echo "::error::debió fallar sin secretos"; exit 1; fi
+          grep -q "Firma de Android sin configurar" out.txt
+          test ! -e MunderMobile-release.apk
+      - name: Right key signs, and apksigner confirms the fingerprint
+        working-directory: android/MunderMobile
+        env:
+          MUNDER_ANDROID_KEYSTORE_PASSWORD: ${{ env.WITNESS_PASS }}
+          MUNDER_ANDROID_KEY_ALIAS: witness
+          # Un secreto opcional sin configurar llega como "": debe caer a la del keystore.
+          MUNDER_ANDROID_KEY_PASSWORD: ''
+          EXPECTED_CERT_SHA256: ${{ env.WITNESS_FP }}
+        run: |
+          # Con saltos de línea, como sale de `base64` de GNU.
+          export KS_B64="$(printf '%s' "$WITNESS_B64" | tr ' ' '\n')"
+          bash scripts/release-apk.sh
+          test -s MunderMobile-release.apk
+      - name: A different expected fingerprint refuses to publish
+        working-directory: android/MunderMobile
+        env:
+          MUNDER_ANDROID_KEYSTORE_PASSWORD: ${{ env.WITNESS_PASS }}
+          MUNDER_ANDROID_KEY_ALIAS: witness
+          EXPECTED_CERT_SHA256: '00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF'
+        run: |
+          export KS_B64="$WITNESS_B64"
+          if bash scripts/release-apk.sh > out.txt 2>&1; then cat out.txt; echo "::error::debió rechazar otra huella"; exit 1; fi
+          grep -q "Llave de Android distinta" out.txt
+          test ! -e MunderMobile-release.apk
+
   screenshots:
     # Las pantallas reales con la oficina de ejemplo incluida (sin red): lo que
     # el job `screenshots` de ios.yml fotografía en el simulador, pero en JVM
