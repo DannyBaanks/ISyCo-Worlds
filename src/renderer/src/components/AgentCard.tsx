@@ -9,10 +9,16 @@ import { CostHud } from '@/realtime/CostHud';
 import { AccentColorName } from '@/design/tokens';
 import { OfficeCharacterName } from '@/scene/office/cast';
 import { AgentNameEditor } from './AgentNameEditor';
+import { WorldCharacterPortrait } from './WorldCharacterPortrait';
+import type { MonsterRosterCharacter } from '@/worlds/monster/rosterCharacters';
 
 export interface AgentCardProps {
   name: string;
   character: OfficeCharacterName;
+  monsterCharacter?: MonsterRosterCharacter;
+  worldProfileId?: 'office' | 'monster-trainer';
+  /** Profile-specific name shown on the card without renaming the live agent. */
+  presentationName?: string;
   accent: AccentColorName;
   status: StatusKind;
   /** This agent's pty, if it has one. Only used to notice that the USER has
@@ -55,7 +61,8 @@ const fmtK = (n: number): string => `${Math.round(n / 1000)}k`;
  * and a slim gauge pinned to the bottom edge. Nothing overlaps anything.
  */
 export function AgentCard({
-  name, character, accent, status, ptyId, project, action, progress = 0,
+  name, character, monsterCharacter, worldProfileId = 'office', presentationName,
+  accent, status, ptyId, project, action, progress = 0,
   contextTokens, contextLimit, selected, isGod, onClick, onRename,
   doingCount = 0, onTaskNoteClick, draggable, note, onEditNote
 }: AgentCardProps) {
@@ -149,6 +156,7 @@ export function AgentCard({
       // The ring is the visual answer to "which terminal is open"; this is the
       // same answer for a screen reader. Matches SidebarRow in fullscreen.
       aria-current={selected ? 'true' : undefined}
+      aria-label={presentationName ? `${presentationName} — ${name}` : undefined}
       style={{
         width, minWidth: width, height,
         padding: 0, border: 'none', background: 'transparent', cursor: 'pointer', textAlign: 'left',
@@ -189,7 +197,8 @@ export function AgentCard({
         <div style={{ display: 'flex', gap: 8, height: '100%' }}>
           {/* Portrait tile — vertically centred so the card reads calm and even. */}
           <div style={{
-            width: 36, height: isGod ? 50 : 46, alignSelf: 'center',
+            width: worldProfileId === 'monster-trainer' ? 44 : 36,
+            height: isGod ? 50 : 46, alignSelf: 'center',
             // God's CARD is now accent-light, so the tile cannot be — it would
             // vanish into its own background. Paper reads as an inset frame
             // against the tint, which is what the tile is meant to look like.
@@ -200,14 +209,16 @@ export function AgentCard({
             display: 'flex', alignItems: 'flex-start', justifyContent: 'center', overflow: 'hidden',
             flexShrink: 0
           }}>
-            <SpritePortrait character={character} scale={2} />
+            {worldProfileId === 'monster-trainer'
+              ? <WorldCharacterPortrait character={isGod ? 'professor' : monsterCharacter ?? 'leaf'} width={44} height={isGod ? 50 : 46} />
+              : <SpritePortrait character={character} scale={2} />}
           </div>
 
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
             {/* Identity row: name (+ BOSS tag) + status. */}
             <div className="worlds-worker-identity" style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'space-between', minWidth: 0 }}>
               <span className="worlds-worker-name" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, minWidth: 0, flex: 1 }}>
-                {onRename ? (
+                {onRename && !presentationName ? (
                   <AgentNameEditor name={name} onCommit={onRename} uppercase />
                 ) : (
                   <span style={{
@@ -217,7 +228,9 @@ export function AgentCard({
                     color: 'var(--cth-ink-900)',
                     flex: 1, minWidth: 0,
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                  }}>{name.toUpperCase()}</span>
+                  }} title={presentationName ? `${presentationName} · ${name}` : name}>
+                    {(presentationName ?? name).toUpperCase()}
+                  </span>
                 )}
               </span>
               {isGod && <span className="worlds-worker-role">{t('worldsVisual.coordinator')}</span>}

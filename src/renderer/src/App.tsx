@@ -103,6 +103,7 @@ export function App() {
   const [vpWidth, setVpWidth] = useState<number>(window.innerWidth);
   const density = navDensity(vpWidth);
   const worldSkin = worldProfileStatus?.activeProfileId === 'monster-trainer' ? 'monster-trainer' : undefined;
+  const activeWorldProfileId = worldProfileStatus?.activeProfileId === 'monster-trainer' ? 'monster-trainer' : 'office';
   const worldPresentationSuspended = shouldSuspendWorldPresentation({
     globalView,
     settingsMenuOpen,
@@ -510,10 +511,12 @@ export function App() {
       }}>
         {globalView === 'marketplace' && <MarketplaceView />}
         <WoodFrame className="worlds-world-column">
-          <HangingSign className="worlds-world-sign">{t('shell.nav.office')}</HangingSign>
+          <HangingSign className="worlds-world-sign">
+            {t(activeWorldProfileId === 'monster-trainer' ? 'startScreen.isycoWorld' : 'startScreen.munderDifflin')}
+          </HangingSign>
           <VineCorner /><VineCorner flipped />
           <div className="worlds-stage" style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative' }}>
-            <WorldHost config={officeWorldConfig} profileId={worldProfileStatus?.activeProfileId === 'monster-trainer' ? 'monster-trainer' : 'office'} suspended={worldPresentationSuspended} />
+            <WorldHost config={officeWorldConfig} profileId={activeWorldProfileId} suspended={worldPresentationSuspended} />
             <MemoryPanel onOpenChange={setMemoryPanelOpen} />
           {agentCount === 0 && godStatus === 'booting' && <MichaelBooting />}
           {agentCount === 0 && godStatus !== 'booting' && (
@@ -541,7 +544,7 @@ export function App() {
         </div>
 
           <HangingSign className="worlds-crew-sign">{t('worldsVisual.crew')}</HangingSign>
-          <AgentStrip config={config} onOverlayVisibilityChange={setAgentStripOverlayOpen} />
+          <AgentStrip config={config} profileId={activeWorldProfileId} onOverlayVisibilityChange={setAgentStripOverlayOpen} />
         </WoodFrame>
 
         <SidebarSplitter
@@ -556,7 +559,7 @@ export function App() {
         }}>
           <div className="worlds-command-slot">
           {agent ? (
-            <AgentDetailPanel agent={agent} />
+            <AgentDetailPanel agent={agent} profileId={activeWorldProfileId} />
           ) : godStatus === 'booting' ? (
             <PixelPanel variant="default" noPadding style={{
               padding: 16, height: '100%',
@@ -603,6 +606,7 @@ export function App() {
         <AddAgentModal
           onClose={closeAddAgentReview}
           config={config}
+          profileId={activeWorldProfileId}
           onConfigChange={setConfig}
         />
       )}
@@ -629,7 +633,7 @@ export function App() {
         />
       )}
 
-      {fullscreenAgentId && <FullscreenTerminal config={config} />}
+      {fullscreenAgentId && <FullscreenTerminal config={config} profileId={activeWorldProfileId} />}
       {ideOpen && <IdePanel />}
       <TaskDetailOverlay />
     </div>

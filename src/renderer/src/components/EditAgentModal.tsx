@@ -7,6 +7,15 @@ import { ProviderLogo } from './ProviderLogo';
 import { useStore, type Agent } from '@/store/store';
 import { OFFICE_CAST, type OfficeCharacterName } from '@/scene/office/cast';
 import { type AccentColorName } from '@/design/tokens';
+import { WorldCharacterPortrait } from './WorldCharacterPortrait';
+import {
+  MONSTER_ROSTER_CHARACTERS,
+  MONSTER_ROSTER_LABEL_KEYS,
+  isMonsterRosterCharacter,
+  monsterCharacterForAgent,
+  type MonsterRosterCharacter
+} from '@/worlds/monster/rosterCharacters';
+import type { WorldId } from '@shared/worlds';
 import {
   type AgentProvider,
   type HarnessConfig,
@@ -23,6 +32,7 @@ const ACCENTS: AccentColorName[] = ['coral', 'mint', 'sky', 'lemon', 'lilac', 'p
 export interface EditAgentModalProps {
   agent: Agent;
   onClose: () => void;
+  profileId?: WorldId;
 }
 
 /**
@@ -30,13 +40,16 @@ export interface EditAgentModalProps {
  * Agent fields that matter after spawn; save only patches the durable roster
  * via updateAgent (engine changes apply on the next restart).
  */
-export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
+export function EditAgentModal({ agent, onClose, profileId = 'office' }: EditAgentModalProps) {
   const { t } = useTranslation();
   const updateAgent = useStore((s) => s.updateAgent);
   const [config, setConfig] = useState<HarnessConfig | null>(null);
 
   const [name, setName] = useState(agent.name);
   const [character, setCharacter] = useState<OfficeCharacterName>(agent.character);
+  const [monsterCharacter, setMonsterCharacter] = useState<MonsterRosterCharacter>(
+    isMonsterRosterCharacter(agent.monsterCharacter) ? agent.monsterCharacter : monsterCharacterForAgent(agent.id)
+  );
   const [accent, setAccent] = useState<AccentColorName>(agent.accent);
   const [provider, setProvider] = useState<AgentProvider>(
     inferAgentProvider(agent.command, agent.provider)
@@ -53,6 +66,9 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
   useEffect(() => {
     setName(agent.name);
     setCharacter(agent.character);
+    setMonsterCharacter(isMonsterRosterCharacter(agent.monsterCharacter)
+      ? agent.monsterCharacter
+      : monsterCharacterForAgent(agent.id));
     setAccent(agent.accent);
     setProvider(inferAgentProvider(agent.command, agent.provider));
     setModel(agent.model);
@@ -80,7 +96,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
       ? buildSpawnCommand(config, model, provider)
       : agent.command;
 
-    updateAgent(agent.id, {
+    const patch: Partial<Agent> = {
       name: trimmedName,
       character,
       accent,
@@ -89,7 +105,9 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
       command,
       description: trimmedDescription,
       goal: trimmedGoal || undefined
-    });
+    };
+    if (profileId === 'monster-trainer') patch.monsterCharacter = monsterCharacter;
+    updateAgent(agent.id, patch);
     onClose();
   };
 
@@ -134,35 +152,61 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
 
               <Row label={t('editAgent.rowCharacter')}>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {OFFICE_CAST.map((c) => {
-                    const active = character === c.name;
-                    return (
-                      <button
-                        key={c.name}
-                        type="button"
-                        onClick={() => { setCharacter(c.name); setName(c.displayName); }}
-                        title={c.blurb}
-                        style={{
-                          padding: 4,
-                          background: active ? `var(--cth-${accent}-light)` : 'var(--cth-cream-100)',
-                          boxShadow: active
-                            ? 'inset 0 0 0 1.5px var(--cth-ink-500)'
-                            : 'inset 0 0 0 1px var(--cth-ink-100)',
-                          cursor: 'pointer', border: 'none', width: 52,
-                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2
-                        }}
-                      >
-                        <div style={{
-                          width: 40, height: 48,
-                          display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-                          overflow: 'hidden'
-                        }}>
-                          <SpritePortrait character={c.name} scale={1.5} />
-                        </div>
-                        <span style={{ fontSize: 10, color: 'var(--cth-ink-700)' }}>{c.displayName}</span>
-                      </button>
-                    );
-                  })}
+                  {profileId === 'monster-trainer'
+                    ? MONSTER_ROSTER_CHARACTERS.map((c) => {
+                      const active = monsterCharacter === c;
+                      return (
+                        <button
+                          key={c}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => setMonsterCharacter(c)}
+                          title={t(MONSTER_ROSTER_LABEL_KEYS[c])}
+                          style={{
+                            padding: 4,
+                            background: active ? `var(--cth-${accent}-light)` : 'var(--cth-cream-100)',
+                            boxShadow: active
+                              ? 'inset 0 0 0 1.5px var(--cth-ink-500)'
+                              : 'inset 0 0 0 1px var(--cth-ink-100)',
+                            cursor: 'pointer', border: 'none', width: 52,
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2
+                          }}
+                        >
+                          <WorldCharacterPortrait character={c} width={40} height={48} />
+                          <span style={{ fontSize: 10, color: 'var(--cth-ink-700)' }}>{t(MONSTER_ROSTER_LABEL_KEYS[c])}</span>
+                        </button>
+                      );
+                    })
+                    : OFFICE_CAST.map((c) => {
+                      const active = character === c.name;
+                      return (
+                        <button
+                          key={c.name}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => { setCharacter(c.name); setName(c.displayName); }}
+                          title={c.blurb}
+                          style={{
+                            padding: 4,
+                            background: active ? `var(--cth-${accent}-light)` : 'var(--cth-cream-100)',
+                            boxShadow: active
+                              ? 'inset 0 0 0 1.5px var(--cth-ink-500)'
+                              : 'inset 0 0 0 1px var(--cth-ink-100)',
+                            cursor: 'pointer', border: 'none', width: 52,
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2
+                          }}
+                        >
+                          <div style={{
+                            width: 40, height: 48,
+                            display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+                            overflow: 'hidden'
+                          }}>
+                            <SpritePortrait character={c.name} scale={1.5} />
+                          </div>
+                          <span style={{ fontSize: 10, color: 'var(--cth-ink-700)' }}>{c.displayName}</span>
+                        </button>
+                      );
+                    })}
                 </div>
               </Row>
 

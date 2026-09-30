@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { AccentColorName } from '@/design/tokens';
 import type { OfficeCharacterName } from '@/scene/office/cast';
+import type { MonsterRosterCharacter } from '@/worlds/monster/rosterCharacters';
 import type { ThemeId } from '@/scene/office/themeRegistry';
 import type { StatusKind } from '@/components/PixelBadge';
 import type { AgentProvider } from '@shared/agentProvider';
@@ -43,6 +44,9 @@ export interface Agent {
   name: string;
   /** which Office character represents this agent on the floor */
   character: OfficeCharacterName;
+  /** ISyCo World's separate, persistent roster identity. `character` remains
+   *  the Munder Difflin / Office cast choice for the other profile. */
+  monsterCharacter?: MonsterRosterCharacter;
   accent: AccentColorName;
   /** persistent job / hire one-liner — same string as hive registry `role`.
    *  Live status belongs on `status` / `action`, never here. */
