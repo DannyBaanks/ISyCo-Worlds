@@ -30,6 +30,13 @@ import {
   isClaudeProvider
 } from '@/store/config';
 import { useRtl } from '@/i18n/useDirection';
+import { WorldCharacterPortrait } from './WorldCharacterPortrait';
+import {
+  MONSTER_ROSTER_CHARACTERS,
+  MONSTER_ROSTER_LABEL_KEYS,
+  type MonsterRosterCharacter
+} from '@/worlds/monster/rosterCharacters';
+import type { WorldId } from '@shared/worlds';
 
 const ACCENTS: AccentColorName[] = ['coral', 'mint', 'sky', 'lemon', 'lilac', 'peach'];
 
@@ -137,12 +144,13 @@ function uniqueId(name: string): string {
 export interface AddAgentModalProps {
   onClose: () => void;
   config: HarnessConfig;
+  profileId?: WorldId;
   /** Lift config changes (e.g. a project registered from this modal) back up to
    *  App so the rest of the UI — and the next time this modal opens — sees them. */
   onConfigChange?: (config: HarnessConfig) => void;
 }
 
-export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModalProps) {
+export function AddAgentModal({ onClose, config, onConfigChange, profileId = 'office' }: AddAgentModalProps) {
   const { t: tr } = useTranslation();
   const rtl = useRtl();
   const addAgent = useStore(s => s.addAgent);
@@ -190,6 +198,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
 
   const [name, setName] = useState(pendingHire?.name ?? 'Jim');
   const [character, setCharacter] = useState<OfficeCharacterName>(knownCharacter(pendingHire?.character));
+  const [monsterCharacter, setMonsterCharacter] = useState<MonsterRosterCharacter>('leaf');
   const [accent, setAccent] = useState<AccentColorName>(knownAccent(pendingHire?.accent));
   const [cwd, setCwd] = useState<string>(config.registeredRepos[0] ?? '');
   // Local mirror of the registered projects so one added from here shows as a
@@ -454,6 +463,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
       id,
       name: name.trim(),
       character,
+      monsterCharacter: profileId === 'monster-trainer' ? monsterCharacter : undefined,
       accent,
       description: description.trim() || 'a fresh harness',
       project: basename(projectCwd),
@@ -675,8 +685,10 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                         onChange={(e) => {
                           const next = e.target.value;
                           setName(next);
-                          const match = characterForName(next);
-                          if (match) setCharacter(match);
+                          if (profileId === 'office') {
+                            const match = characterForName(next);
+                            if (match) setCharacter(match);
+                          }
                         }}
                         placeholder={tr('addAgent.namePlaceholder')}
                         style={inputStyle}
@@ -685,28 +697,53 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
 
                     <Row label={tr('addAgent.character')}>
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {OFFICE_CAST.map(c => (
-                          <button
-                            key={c.name}
-                            onClick={() => { setCharacter(c.name); setName(c.displayName); }}
-                            title={c.blurb}
-                            style={{
-                              padding: 4,
-                              background: character === c.name ? `var(--cth-${accent}-light)` : 'var(--cth-cream-100)',
-                              boxShadow: character === c.name
-                                ? 'inset 0 0 0 1.5px var(--cth-ink-500)'
-                                : 'inset 0 0 0 1px var(--cth-ink-100)',
-                              cursor: 'pointer',
-                              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-                              border: 'none', width: 56
-                            }}
-                          >
-                            <div style={{ width: 44, height: 56, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden' }}>
-                              <SpritePortrait character={c.name} scale={2} />
-                            </div>
-                            <span style={{ fontSize: 11, color: 'var(--cth-ink-700)' }}>{c.displayName}</span>
-                          </button>
-                        ))}
+                        {profileId === 'monster-trainer'
+                          ? MONSTER_ROSTER_CHARACTERS.map((c) => (
+                            <button
+                              key={c}
+                              type="button"
+                              aria-pressed={monsterCharacter === c}
+                              onClick={() => setMonsterCharacter(c)}
+                              title={tr(MONSTER_ROSTER_LABEL_KEYS[c])}
+                              style={{
+                                padding: 4,
+                                background: monsterCharacter === c ? `var(--cth-${accent}-light)` : 'var(--cth-cream-100)',
+                                boxShadow: monsterCharacter === c
+                                  ? 'inset 0 0 0 1.5px var(--cth-ink-500)'
+                                  : 'inset 0 0 0 1px var(--cth-ink-100)',
+                                cursor: 'pointer',
+                                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+                                border: 'none', width: 56
+                              }}
+                            >
+                              <WorldCharacterPortrait character={c} width={44} height={56} />
+                              <span style={{ fontSize: 11, color: 'var(--cth-ink-700)' }}>{tr(MONSTER_ROSTER_LABEL_KEYS[c])}</span>
+                            </button>
+                          ))
+                          : OFFICE_CAST.map(c => (
+                            <button
+                              key={c.name}
+                              type="button"
+                              aria-pressed={character === c.name}
+                              onClick={() => { setCharacter(c.name); setName(c.displayName); }}
+                              title={c.blurb}
+                              style={{
+                                padding: 4,
+                                background: character === c.name ? `var(--cth-${accent}-light)` : 'var(--cth-cream-100)',
+                                boxShadow: character === c.name
+                                  ? 'inset 0 0 0 1.5px var(--cth-ink-500)'
+                                  : 'inset 0 0 0 1px var(--cth-ink-100)',
+                                cursor: 'pointer',
+                                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+                                border: 'none', width: 56
+                              }}
+                            >
+                              <div style={{ width: 44, height: 56, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden' }}>
+                                <SpritePortrait character={c.name} scale={2} />
+                              </div>
+                              <span style={{ fontSize: 11, color: 'var(--cth-ink-700)' }}>{c.displayName}</span>
+                            </button>
+                          ))}
                       </div>
                     </Row>
 

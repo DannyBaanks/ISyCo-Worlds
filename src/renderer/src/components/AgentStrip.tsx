@@ -7,14 +7,20 @@ import { useStore, type Agent } from '@/store/store';
 import { type HarnessConfig } from '@/store/config';
 import { useRestoreTeam } from '@/hooks/useRestoreTeam';
 import { useRtl } from '@/i18n/useDirection';
+import type { WorldId } from '@shared/worlds';
+import { resolveMonsterCharacter } from '@/worlds/monster/rosterCharacters';
 
 export interface AgentStripProps {
+  /** Selects the roster's visual identity set without changing agent runtime data. */
+  profileId?: WorldId;
   /** Needed to rebuild a spawn command when a restorable agent predates the
    *  persisted `command` field. Optional so the strip renders without config. */
   config?: HarnessConfig | null;
+  /** Notifies the isolated native world view when a strip popover overlays it. */
+  onOverlayVisibilityChange?: (open: boolean) => void;
 }
 
-export function AgentStrip({ config }: AgentStripProps) {
+export function AgentStrip({ config, onOverlayVisibilityChange, profileId = 'office' }: AgentStripProps) {
   const { t } = useTranslation();
   const rtl = useRtl();
   const agents = useStore(s => s.agents);
@@ -57,6 +63,9 @@ export function AgentStrip({ config }: AgentStripProps) {
   // The editor is a fixed popover ABOVE the card (anchored off its rect): the
   // strip clips overflow and the compact cards have no room for an inline box.
   const [noteEditId, setNoteEditId] = useState<string | null>(null);
+  useEffect(() => {
+    onOverlayVisibilityChange?.(restoreMenuOpen || noteEditId !== null);
+  }, [restoreMenuOpen, noteEditId, onOverlayVisibilityChange]);
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   // Each worker's actively-DOING ledger tasks, polled from hive/tasks.json —
   // rendered as a sticky note on the avatar card (click → task detail).
@@ -135,6 +144,11 @@ export function AgentStrip({ config }: AgentStripProps) {
             draggable
             name={a.name}
             character={a.character}
+            monsterCharacter={resolveMonsterCharacter(a.monsterCharacter, a.id)}
+            worldProfileId={profileId}
+            presentationName={profileId === 'monster-trainer'
+              ? t(a.isGod ? 'worldCharacters.professor' : `worldCharacters.${resolveMonsterCharacter(a.monsterCharacter, a.id)}`)
+              : undefined}
             accent={a.accent}
             status={a.status}
             ptyId={a.ptyId}
@@ -146,7 +160,7 @@ export function AgentStrip({ config }: AgentStripProps) {
             selected={a.id === selectedId}
             isGod={a.isGod}
             onClick={() => select(a.id)}
-            onRename={(name) => renameAgent(a.id, name)}
+            onRename={profileId === 'office' ? (name) => renameAgent(a.id, name) : undefined}
             doingCount={doingByAgent[a.id]?.length ?? 0}
             onTaskNoteClick={() => {
               const first = doingByAgent[a.id]?.[0];

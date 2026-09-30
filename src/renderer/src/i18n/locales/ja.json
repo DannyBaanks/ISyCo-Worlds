@@ -254,9 +254,9 @@
         "enable": "ビジュアルワールドを有効化",
         "description": "同じライブエージェントの実験的なビューを試します。オフィスはデフォルトのまま、いつでも戻れます。",
         "selector": "ワールド",
-        "office": "オフィス",
-        "monsterTrainer": "モンスタートレーナー (実験的)",
-        "returnToOffice": "オフィスに戻る",
+        "office": "Munder Difflin",
+        "monsterTrainer": "ISyCo World",
+        "returnToOffice": "Munder Difflin に戻る",
         "startupTitle": "ワールドプロフィールを選択",
         "activeProfile": "現在のランタイム",
         "preferredProfile": "次回起動時の設定",
@@ -1444,8 +1444,8 @@
   "startScreen": {
     "title": "開始する場所を選択",
     "intro": "ワールドとワークスペースを選びます。入る前に詳細をここで調整できます。",
-    "isycoWorld": "ISyCo ワールド",
-    "monsterTrainer": "モンスタートレーナー",
+    "isycoWorld": "ISyCo World",
+    "monsterTrainer": "ISyCo World",
     "world": "ワールド",
     "workspace": "ワークスペース",
     "workspaceTitle": "どこで作業しますか？",
@@ -1470,7 +1470,8 @@
     "browseWorkspace": "フォルダーを参照",
     "addProject": "プロジェクトフォルダーを追加",
     "noProjects": "プロジェクトはまだありません。後で追加できます。",
-    "errorStatus": "使用中のワールドを確認できません。ここから再試行できます。"
+    "errorStatus": "使用中のワールドを確認できません。ここから再試行できます。",
+    "munderDifflin": "Munder Difflin"
   },
   "hivePicker": {
     "title": "ハーネス設定を選ぶ",
@@ -1712,5 +1713,18 @@
       "noCatalog": "カタログはまだ接続されていません。ここにあるものは何もインストールも実行もしません。"
     }
   },
-  "worldsVisual": {"coordinator": "コーディネーター", "crew": "仲間", "worldStatus": "ワールド記録", "working": "作業中", "waiting": "確認が必要", "about": "ISyCo Worldsについて"}
+  "worldsVisual": {
+    "coordinator": "コーディネーター",
+    "crew": "仲間",
+    "worldStatus": "ワールド記録",
+    "working": "作業中",
+    "waiting": "確認が必要",
+    "about": "ISyCo Worldsについて"
+  },
+  "worldCharacters": {
+    "leaf": "芽",
+    "fire": "炎",
+    "water": "波",
+    "professor": "教授"
+  }
 }

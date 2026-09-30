@@ -254,9 +254,9 @@
         "enable": "تفعيل العوالم المرئية",
         "description": "جرّب عروضًا تجريبية لنفس الوكلاء النشطين. يبقى المكتب هو الافتراضي ويمكنك العودة في أي وقت.",
         "selector": "العالم",
-        "office": "المكتب",
-        "monsterTrainer": "مدرّب الوحوش (تجريبي)",
-        "returnToOffice": "العودة إلى المكتب",
+        "office": "Munder Difflin",
+        "monsterTrainer": "ISyCo World",
+        "returnToOffice": "العودة إلى Munder Difflin",
         "startupTitle": "اختر ملف عالم",
         "activeProfile": "وقت التشغيل النشط",
         "preferredProfile": "تفضيل بدء التشغيل التالي",
@@ -1444,8 +1444,8 @@
   "startScreen": {
     "title": "اختر من أين تبدأ",
     "intro": "اختر عالمًا ومساحة عمل. يمكنك ضبط التفاصيل هنا قبل الدخول.",
-    "isycoWorld": "عالم ISyCo",
-    "monsterTrainer": "مدرب الوحوش",
+    "isycoWorld": "ISyCo World",
+    "monsterTrainer": "ISyCo World",
     "world": "عالمك",
     "workspace": "مساحة عملك",
     "workspaceTitle": "أين تريد أن تعمل؟",
@@ -1470,7 +1470,8 @@
     "browseWorkspace": "استعراض المجلدات",
     "addProject": "إضافة مجلد مشروع",
     "noProjects": "لا توجد مشاريع بعد؛ يمكنك إضافتها لاحقًا.",
-    "errorStatus": "تعذر التحقق من العالم النشط. يمكنك إعادة المحاولة هنا."
+    "errorStatus": "تعذر التحقق من العالم النشط. يمكنك إعادة المحاولة هنا.",
+    "munderDifflin": "Munder Difflin"
   },
   "hivePicker": {
     "title": "اختر تهيئة المنصّة",
@@ -1712,5 +1713,18 @@
       "noCatalog": "لا يوجد كتالوج متصل بعد. لا شيء هنا يثبّت أو يشغّل أي شيء."
     }
   },
-  "worldsVisual": {"coordinator": "المنسق", "crew": "الرفاق", "worldStatus": "سجل العالم", "working": "يعملون", "waiting": "بحاجة إلى الانتباه", "about": "حول ISyCo Worlds"}
+  "worldsVisual": {
+    "coordinator": "المنسق",
+    "crew": "الرفاق",
+    "worldStatus": "سجل العالم",
+    "working": "يعملون",
+    "waiting": "بحاجة إلى الانتباه",
+    "about": "حول ISyCo Worlds"
+  },
+  "worldCharacters": {
+    "leaf": "برعم",
+    "fire": "جمرة",
+    "water": "مدّ",
+    "professor": "الأستاذ"
+  }
 }

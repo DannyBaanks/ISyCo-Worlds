@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useStore, selectedAgent } from '@/store/store';
 import { startMockLoop, stopMockLoop } from '@/store/mockEvents';
 import type { HarnessConfig } from '@/store/config';
 import { DEFAULT_ORG_TRIGGER } from '@shared/triggers';
-import { OfficeFloor } from '@/scene/office/OfficeFloor';
 import { WorldHost } from '@/worlds/WorldHost';
-import { WorldSelector } from '@/components/WorldSelector';
+import { shouldSuspendWorldPresentation } from '@/worlds/worldPresentationVisibility';
+import { WorldStartScreen } from '@/startup/WorldStartScreen';
+import { shouldShowWorldStartScreen } from '@/startup/startScreenRoute';
 import { useHive } from '@/hooks/useHive';
 import { useResolvedGodName } from '@/hooks/useResolvedGodName';
 import { useGodNameSync } from '@/i18n/useGodNameSync';
@@ -16,8 +17,6 @@ import { AgentDetailPanel } from '@/components/AgentDetailPanel';
 import { AgentStrip } from '@/components/AgentStrip';
 import { AddAgentModal } from '@/components/AddAgentModal';
 import { MichaelBooting } from '@/components/MichaelBooting';
-import { OnboardingWizard } from '@/components/OnboardingWizard';
-import { HivePicker } from '@/components/HivePicker';
 import { QuitWarningModal, type ClosingTimeState } from '@/components/QuitWarningModal';
 import { CompletionToast } from '@/realtime/CompletionToast';
 import { UpdateToast } from '@/components/UpdateToast';
@@ -38,8 +37,9 @@ import { IdePanel } from '@/ide/IdePanel';
 import { useHoldOptionToTalk } from '@/freeflow/holdOption';
 import { HangingSign, WoodFrame, VineCorner } from '@/components/worlds/WorldMaterials';
 import { WorldStatusLedger } from '@/components/worlds/WorldStatusLedger';
-import { useTranslation } from 'react-i18next';
 import { WorldBrand } from '@/components/WorldBrand';
+import type { WorldHelperSafeSnapshot } from '@shared/worldHelper';
+import { useTranslation } from 'react-i18next';
 
 // Injected at build time from package.json (see electron.vite.config.ts).
 declare const __APP_VERSION__: string;
@@ -66,6 +66,7 @@ export function App() {
   const setSidebarWidth = useStore(s => s.setSidebarWidth);
   const ideOpen = useStore(s => s.ideOpen);
   const setIdeOpen = useStore(s => s.setIdeOpen);
+  const taskDetailOpen = useStore(s => s.taskDetailId !== null);
 
   const [config, setConfig] = useState<HarnessConfig | null>(null);
   // Whether the user has passed the launch-time hive picker this session. Starts
@@ -82,16 +83,39 @@ export function App() {
     return false;
   });
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsMenuOpen, setSettingsMenuOpen] = useState(false);
+  const [memoryPanelOpen, setMemoryPanelOpen] = useState(false);
+  const [agentStripOverlayOpen, setAgentStripOverlayOpen] = useState(false);
   /** Which tab Settings opens on. Set by a `cth:open-settings` deep link, reset
    *  to undefined (→ General) whenever the modal is opened the normal way. */
   const [settingsSection, setSettingsSection] = useState<SettingsSection | undefined>(undefined);
   /** Which global surface fills the main area (title-bar tabs). Visual only:
    *  the floor, terminals and agents stay mounted while Marketplace is up. */
   const [globalView, setGlobalView] = useState<GlobalView>('office');
+  const [worldProfileStatus, setWorldProfileStatus] = useState<Awaited<ReturnType<typeof window.cth.getWorldProfileStatus>> | null>(null);
+  const [worldHelperSnapshot, setWorldHelperSnapshot] = useState<WorldHelperSafeSnapshot | null>(null);
+  const setupOverlayOpened = useRef(false);
+  // Route hydration is deliberately one-shot. `config` arrives asynchronously;
+  // rendering its temporary default must never write over a saved visual route.
+  const globalViewHydrated = useRef(false);
   const [quitWarn, setQuitWarn] = useState<{ ptyCount: number } | null>(null);
   const [closing, setClosing] = useState<ClosingTimeState | null>(null);
   const [vpWidth, setVpWidth] = useState<number>(window.innerWidth);
   const density = navDensity(vpWidth);
+  const worldSkin = worldProfileStatus?.activeProfileId === 'monster-trainer' ? 'monster-trainer' : undefined;
+  const activeWorldProfileId = worldProfileStatus?.activeProfileId === 'monster-trainer' ? 'monster-trainer' : 'office';
+  const worldPresentationSuspended = shouldSuspendWorldPresentation({
+    globalView,
+    settingsMenuOpen,
+    settingsOpen,
+    addAgentOpen,
+    quitWarningOpen: quitWarn !== null,
+    fullscreenOpen: fullscreenAgentId !== null,
+    ideOpen,
+    taskDetailOpen,
+    memoryPanelOpen,
+    agentStripOverlayOpen
+  });
 
   // Deep link into Settings from anywhere in the tree. Settings' open state is
   // local to App, so a nested control (e.g. "set it now" beside a disabled Talk
@@ -152,6 +176,50 @@ export function App() {
   // Config subscription — the copy loaded above would otherwise go stale the
   // moment anything saves a setting.
   useEffect(() => window.cth.onConfigChanged(setConfig), []);
+
+  useEffect(() => {
+    if (!config) return;
+    let cancelled = false;
+    void window.cth.getWorldProfileStatus().then((status) => {
+      if (!cancelled) setWorldProfileStatus(status);
+    }).catch(() => { /* renderer remains usable; Settings can retry the query */ });
+    return () => { cancelled = true; };
+  }, [config?.preferredWorldProfile, hiveOpened]);
+
+  // GUS host is main-owned and survives renderer reloads. Hydrate its redacted
+  // snapshot only after the user has entered a Hive; subscribe for state/events.
+  useEffect(() => {
+    if (!hiveOpened) return;
+    let cancelled = false;
+    const unsubscribe = window.cth.onWorldHelperState(setWorldHelperSnapshot);
+    void window.cth.worldHelperSnapshot().then((snapshot) => {
+      if (!cancelled) setWorldHelperSnapshot(snapshot);
+    }).catch(() => { /* GUS is optional; the floor stays usable */ });
+    return () => { cancelled = true; unsubscribe(); };
+  }, [hiveOpened]);
+
+  useEffect(() => {
+    if (!hiveOpened || !worldHelperSnapshot || setupOverlayOpened.current) return;
+    if (!worldHelperSnapshot.onboardingComplete && !worldHelperSnapshot.setupDismissed) {
+      setupOverlayOpened.current = true;
+      void window.cth.worldHelperOverlayVisible(true);
+    }
+  }, [hiveOpened, worldHelperSnapshot]);
+
+  // Restore a persisted visual preference only after the real async config is
+  // available. Later config broadcasts are inputs, not a request to persist
+  // again, so config → state → updateConfig cannot form a loop.
+  useEffect(() => {
+    if (!config || globalViewHydrated.current) return;
+    globalViewHydrated.current = true;
+    setGlobalView(config.lastGlobalView === 'marketplace' ? 'marketplace' : 'office');
+  }, [config]);
+
+  const onGlobalViewChange = (nextView: GlobalView): void => {
+    if (nextView === globalView) return;
+    setGlobalView(nextView);
+    if (globalViewHydrated.current) void window.cth.updateConfig({ lastGlobalView: nextView });
+  };
 
   // Quit warning subscription
   useEffect(() => window.cth.onCloseRequested((info) => setQuitWarn(info)), []);
@@ -269,20 +337,26 @@ export function App() {
     return <div style={{ width: '100vw', height: '100vh', background: 'var(--cth-cream-100)' }} />;
   }
 
-  if (!config.onboardingComplete) {
-    // Just-onboarded users go straight into the hive they set up — skip the picker.
-    return <OnboardingWizard onComplete={(next) => { setConfig(next); setHiveOpened(true); }} />;
+  if (shouldShowWorldStartScreen({
+    onboardingComplete: config.onboardingComplete,
+    hiveOpened,
+    activeProfileId: worldProfileStatus?.activeProfileId
+  })) {
+    return <WorldStartScreen
+      config={config}
+      worldProfileStatus={worldProfileStatus}
+      onConfigSaved={setConfig}
+      onProfileActivated={setWorldProfileStatus}
+      onEnter={() => setHiveOpened(true)}
+    />;
   }
 
-  // Launch-time hive picker: on reopen, let the user open their current hive,
-  // switch to a recent one, or open/create another. Skipped right after onboarding
-  // and right after a switch-relaunch (see hiveOpened init).
-  if (!hiveOpened) {
-    return <HivePicker config={config} onOpenCurrent={() => setHiveOpened(true)} />;
-  }
+  // Office and Marketplace always request the fallback projection. This object
+  // only changes which renderer is mounted; it does not alter persisted config.
+  const officeWorldConfig: HarnessConfig = { ...config, worldsEnabled: false };
 
   return (
-    <div className="worlds-shell" style={{
+    <div className="worlds-shell" data-world-skin={worldSkin} style={{
       display: 'flex', flexDirection: 'column',
       width: '100vw', height: '100vh',
       overflow: 'hidden'
@@ -344,12 +418,26 @@ export function App() {
         <div style={{ width: 1, alignSelf: 'stretch', margin: '6px 2px', background: 'var(--cth-ink-300)' }} />
         <GlobalNav
           view={globalView}
-          onView={setGlobalView}
+          onView={onGlobalViewChange}
           onOpenSettings={(section) => { setSettingsSection(section); setSettingsOpen(true); }}
           settingsOpen={settingsOpen}
+          onMenuOpenChange={setSettingsMenuOpen}
           density={density}
         />
-        <WorldSelector config={config} />
+        {worldHelperSnapshot && <button
+          className="cth-titlebar-nodrag cth-tip"
+          aria-label="Open GUS World Helper"
+          data-tip="GUS World Helper"
+          onClick={() => { void window.cth.worldHelperOverlayVisible(true); }}
+          style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+            height: 28, padding: '0 8px', marginLeft: 5,
+            background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+            border: 'none', borderRadius: 2, cursor: 'pointer', color: 'var(--cth-ink-900)', fontSize: 12
+          }}
+        >
+          ✦ GUS{worldHelperSnapshot.notices.some((notice) => notice.severity === 'requires_action') ? ' •' : ''}
+        </button>}
         {/* v0.3.4: theme + fullscreen live HERE (top right), not buried in the
             terminal header — and the theme darkens the whole app, terminals
             included (design/theme.ts + tokens.css dark block). */}
@@ -423,11 +511,13 @@ export function App() {
       }}>
         {globalView === 'marketplace' && <MarketplaceView />}
         <WoodFrame className="worlds-world-column">
-          <HangingSign className="worlds-world-sign">{t('shell.nav.office')}</HangingSign>
+          <HangingSign className="worlds-world-sign">
+            {t(activeWorldProfileId === 'monster-trainer' ? 'startScreen.isycoWorld' : 'startScreen.munderDifflin')}
+          </HangingSign>
           <VineCorner /><VineCorner flipped />
-        <div className="worlds-stage" style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative' }}>
-          <WorldHost config={config} />
-          <MemoryPanel />
+          <div className="worlds-stage" style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative' }}>
+            <WorldHost config={officeWorldConfig} profileId={activeWorldProfileId} suspended={worldPresentationSuspended} />
+            <MemoryPanel onOpenChange={setMemoryPanelOpen} />
           {agentCount === 0 && godStatus === 'booting' && <MichaelBooting />}
           {agentCount === 0 && godStatus !== 'booting' && (
             <div style={{
@@ -454,7 +544,7 @@ export function App() {
         </div>
 
           <HangingSign className="worlds-crew-sign">{t('worldsVisual.crew')}</HangingSign>
-          <AgentStrip config={config} />
+          <AgentStrip config={config} profileId={activeWorldProfileId} onOverlayVisibilityChange={setAgentStripOverlayOpen} />
         </WoodFrame>
 
         <SidebarSplitter
@@ -469,7 +559,7 @@ export function App() {
         }}>
           <div className="worlds-command-slot">
           {agent ? (
-            <AgentDetailPanel agent={agent} />
+            <AgentDetailPanel agent={agent} profileId={activeWorldProfileId} />
           ) : godStatus === 'booting' ? (
             <PixelPanel variant="default" noPadding style={{
               padding: 16, height: '100%',
@@ -511,10 +601,12 @@ export function App() {
         </div>
       </div>
 
+
       {addAgentOpen && (
         <AddAgentModal
           onClose={closeAddAgentReview}
           config={config}
+          profileId={activeWorldProfileId}
           onConfigChange={setConfig}
         />
       )}
@@ -541,7 +633,7 @@ export function App() {
         />
       )}
 
-      {fullscreenAgentId && <FullscreenTerminal config={config} />}
+      {fullscreenAgentId && <FullscreenTerminal config={config} profileId={activeWorldProfileId} />}
       {ideOpen && <IdePanel />}
       <TaskDetailOverlay />
     </div>

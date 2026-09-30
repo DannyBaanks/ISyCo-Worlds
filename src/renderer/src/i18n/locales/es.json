@@ -254,9 +254,9 @@
         "enable": "Activar mundos visuales",
         "description": "Cada mundo tiene su propia Hive, acciones y capacidades. Cambiar un perfil activo reinicia el runtime del harness; el espacio de trabajo del proyecto sigue compartido.",
         "selector": "MUNDO",
-        "office": "Oficina",
-        "monsterTrainer": "Monster Trainer (experimental)",
-        "returnToOffice": "Volver a la Oficina",
+        "office": "Munder Difflin",
+        "monsterTrainer": "ISyCo World",
+        "returnToOffice": "Volver a Munder Difflin",
         "startupTitle": "Elige un perfil de mundo",
         "activeProfile": "Runtime activo",
         "preferredProfile": "Preferencia para el próximo inicio",
@@ -1445,7 +1445,7 @@
     "title": "Elige por dónde empezar",
     "intro": "Elige un mundo y un espacio de trabajo. Puedes ajustar los detalles aquí antes de entrar.",
     "isycoWorld": "ISyCo World",
-    "monsterTrainer": "Monster Trainer",
+    "monsterTrainer": "ISyCo World",
     "world": "Tu mundo",
     "workspace": "Tu espacio de trabajo",
     "workspaceTitle": "¿Dónde quieres trabajar?",
@@ -1470,7 +1470,8 @@
     "browseWorkspace": "Explorar carpetas",
     "addProject": "Agregar carpeta de proyecto",
     "noProjects": "Aún no hay proyectos; puedes agregar uno después.",
-    "errorStatus": "No se pudo comprobar el mundo activo. Puedes volver a intentarlo aquí."
+    "errorStatus": "No se pudo comprobar el mundo activo. Puedes volver a intentarlo aquí.",
+    "munderDifflin": "Munder Difflin"
   },
   "hivePicker": {
     "title": "ELIGE UNA CONFIGURACIÓN DEL ARNÉS",
@@ -1712,5 +1713,18 @@
       "noCatalog": "Todavía no hay catálogo conectado. Nada aquí instala ni ejecuta nada."
     }
   },
-  "worldsVisual": {"coordinator": "Coordinador", "crew": "Compañeros", "worldStatus": "Registro del mundo", "working": "Trabajando", "waiting": "Requieren atención", "about": "Acerca de ISyCo Worlds"}
+  "worldsVisual": {
+    "coordinator": "Coordinador",
+    "crew": "Compañeros",
+    "worldStatus": "Registro del mundo",
+    "working": "Trabajando",
+    "waiting": "Requieren atención",
+    "about": "Acerca de ISyCo Worlds"
+  },
+  "worldCharacters": {
+    "leaf": "Brote",
+    "fire": "Brasa",
+    "water": "Marea",
+    "professor": "Profesor"
+  }
 }

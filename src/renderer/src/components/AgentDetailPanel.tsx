@@ -19,12 +19,14 @@ import { Icon } from './Icon';
 import { AgentNameEditor } from './AgentNameEditor';
 import { useStore, type Agent } from '@/store/store';
 import { usePtyParser } from '@/hooks/usePtyParser';
+import type { WorldId } from '@shared/worlds';
 
 export interface AgentDetailPanelProps {
   agent: Agent;
+  profileId?: WorldId;
 }
 
-export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
+export function AgentDetailPanel({ agent, profileId = 'office' }: AgentDetailPanelProps) {
   const { t } = useTranslation();
   const [openTerminalState, setOpenTerminalState] = useState<'idle' | 'opening' | 'ok' | 'error'>('idle');
   const [openTerminalError, setOpenTerminalError] = useState<string | undefined>();
@@ -288,7 +290,7 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
       </div>
 
       {editOpen && (
-        <EditAgentModal agent={agent} onClose={() => setEditOpen(false)} />
+        <EditAgentModal agent={agent} profileId={profileId} onClose={() => setEditOpen(false)} />
       )}
     </PixelPanel>
   );

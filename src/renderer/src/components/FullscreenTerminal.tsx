@@ -22,6 +22,7 @@ import { useHasTerminalDraft, disposeTerminal, reflowTerminal, notifyThemeChange
 import { useAppTheme, toggleAppTheme } from '@/design/theme';
 import type { HarnessConfig } from '@/store/config';
 import { useRtl } from '@/i18n/useDirection';
+import type { WorldId } from '@shared/worlds';
 
 /** Roster rail width. A fixed 232px is right on a 14" laptop but reads as a
  *  sliver on a 27" display, where names truncate for no reason — so it tracks
@@ -145,9 +146,10 @@ export interface FullscreenTerminalProps {
   /** Only needed to rebuild a spawn command for a restorable agent saved before
    *  the `command` field existed — same role as in AgentStrip. */
   config?: HarnessConfig | null;
+  profileId?: WorldId;
 }
 
-export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
+export function FullscreenTerminal({ config, profileId = 'office' }: FullscreenTerminalProps) {
   const { t } = useTranslation();
   const agents = useStore(s => s.agents);
   const restorableAgents = useStore(s => s.restorableAgents);
@@ -578,7 +580,7 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
             <>
               <Header agent={agent} onEdit={() => setEditAgentOpen(true)} />
               {editAgentOpen && (
-                <EditAgentModal agent={agent} onClose={() => setEditAgentOpen(false)} />
+                <EditAgentModal agent={agent} profileId={profileId} onClose={() => setEditAgentOpen(false)} />
               )}
 
               {/* #7C — pause / halt / steer. These only existed in the docked

@@ -254,9 +254,9 @@
         "enable": "启用可视化世界",
         "description": "试用同一批在线智能体的实验性视图。办公室仍是默认视图，随时可切回。",
         "selector": "世界",
-        "office": "办公室",
-        "monsterTrainer": "怪兽训练师（实验性）",
-        "returnToOffice": "返回办公室",
+        "office": "Munder Difflin",
+        "monsterTrainer": "ISyCo World",
+        "returnToOffice": "返回 Munder Difflin",
         "startupTitle": "选择世界配置",
         "activeProfile": "当前运行配置",
         "preferredProfile": "下次启动偏好",
@@ -1444,8 +1444,8 @@
   "startScreen": {
     "title": "选择从哪里开始",
     "intro": "选择一个世界和工作区。进入前可在此调整详细设置。",
-    "isycoWorld": "ISyCo 世界",
-    "monsterTrainer": "怪物训练师",
+    "isycoWorld": "ISyCo World",
+    "monsterTrainer": "ISyCo World",
     "world": "你的世界",
     "workspace": "你的工作区",
     "workspaceTitle": "你想在哪里工作？",
@@ -1470,7 +1470,8 @@
     "browseWorkspace": "浏览文件夹",
     "addProject": "添加项目文件夹",
     "noProjects": "还没有项目，可以稍后添加。",
-    "errorStatus": "无法检查当前世界。你可以在此重试。"
+    "errorStatus": "无法检查当前世界。你可以在此重试。",
+    "munderDifflin": "Munder Difflin"
   },
   "hivePicker": {
     "title": "SELECT A HARNESS CONFIG",
@@ -1712,5 +1713,18 @@
       "noCatalog": "尚未接入任何目录。这里不会安装或运行任何东西。"
     }
   },
-  "worldsVisual": {"coordinator": "协调员", "crew": "伙伴", "worldStatus": "世界记录", "working": "工作中", "waiting": "需要关注", "about": "关于 ISyCo Worlds"}
+  "worldsVisual": {
+    "coordinator": "协调员",
+    "crew": "伙伴",
+    "worldStatus": "世界记录",
+    "working": "工作中",
+    "waiting": "需要关注",
+    "about": "关于 ISyCo Worlds"
+  },
+  "worldCharacters": {
+    "leaf": "芽芽",
+    "fire": "火焰",
+    "water": "潮汐",
+    "professor": "教授"
+  }
 }

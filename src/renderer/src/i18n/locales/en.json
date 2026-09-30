@@ -254,9 +254,9 @@
         "enable": "Enable visual worlds",
         "description": "Each world has its own Hive, actions, and capabilities. Changing an active profile restarts the harness runtime; your project workspace stays shared.",
         "selector": "WORLD",
-        "office": "Office",
-        "monsterTrainer": "Monster Trainer (experimental)",
-        "returnToOffice": "Back to Office",
+        "office": "Munder Difflin",
+        "monsterTrainer": "ISyCo World",
+        "returnToOffice": "Back to Munder Difflin",
         "startupTitle": "Choose a world profile",
         "activeProfile": "Active runtime",
         "preferredProfile": "Next startup preference",
@@ -1445,7 +1445,7 @@
     "title": "Choose where to begin",
     "intro": "Pick a world and workspace. You can adjust the details here before you enter.",
     "isycoWorld": "ISyCo World",
-    "monsterTrainer": "Monster Trainer",
+    "monsterTrainer": "ISyCo World",
     "world": "Your world",
     "workspace": "Your workspace",
     "workspaceTitle": "Where do you want to work?",
@@ -1470,7 +1470,8 @@
     "browseWorkspace": "Browse folders",
     "addProject": "Add a project folder",
     "noProjects": "No projects yet — you can add one later.",
-    "errorStatus": "Could not check the active world. You can retry here."
+    "errorStatus": "Could not check the active world. You can retry here.",
+    "munderDifflin": "Munder Difflin"
   },
   "hivePicker": {
     "title": "SELECT A HARNESS CONFIG",
@@ -1712,5 +1713,18 @@
       "noCatalog": "No catalog is connected yet. Nothing here installs or runs anything."
     }
   },
-  "worldsVisual": {"coordinator": "Coordinator", "crew": "Crew", "worldStatus": "World ledger", "working": "At work", "waiting": "Needs attention", "about": "About ISyCo Worlds"}
+  "worldsVisual": {
+    "coordinator": "Coordinator",
+    "crew": "Crew",
+    "worldStatus": "World ledger",
+    "working": "At work",
+    "waiting": "Needs attention",
+    "about": "About ISyCo Worlds"
+  },
+  "worldCharacters": {
+    "leaf": "Sprout",
+    "fire": "Ember",
+    "water": "Ripple",
+    "professor": "Professor"
+  }
 }

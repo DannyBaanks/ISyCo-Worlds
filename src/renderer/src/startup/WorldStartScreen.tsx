@@ -20,11 +20,11 @@ type WorldStatus = WorldProfileRuntimeStatus & { preferredWorldProfile: WorldId 
 type ActivationResult = Awaited<ReturnType<typeof window.cth.requestWorldProfileActivation>>;
 
 const PROFILE_LABELS: Record<WorldId, string> = {
-  office: 'startScreen.isycoWorld',
-  'monster-trainer': 'startScreen.monsterTrainer'
+  office: 'startScreen.munderDifflin',
+  'monster-trainer': 'startScreen.isycoWorld'
 };
 const PROFILE_ART_LABEL: Record<WorldId, string> = {
-  office: 'ISyCo World',
+  office: 'Munder Difflin',
   'monster-trainer': 'Starter Village'
 };
 const PROFILE_SCENE: Record<WorldId, string> = {
