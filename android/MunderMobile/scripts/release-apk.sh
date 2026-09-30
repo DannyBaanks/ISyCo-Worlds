@@ -15,6 +15,10 @@
 # Se corre desde android/MunderMobile. Deja MunderMobile-release.apk ahí.
 set -euo pipefail
 
+# Primero, antes de cualquier validación: un APK de una corrida anterior no
+# debe sobrevivir a esta si falla, o parecería su resultado.
+rm -f MunderMobile-release.apk
+
 missing=""
 [ -n "${KS_B64:-}" ] || missing="$missing secrets.ANDROID_KEYSTORE_B64"
 [ -n "${MUNDER_ANDROID_KEYSTORE_PASSWORD:-}" ] || missing="$missing secrets.ANDROID_KEYSTORE_PASSWORD"
@@ -34,7 +38,6 @@ fi
 
 tmp="${RUNNER_TEMP:-${TMPDIR:-/tmp}}"
 export MUNDER_ANDROID_KEYSTORE="$tmp/munder-release-$$.jks"
-rm -f MunderMobile-release.apk
 trap 'rm -f "$MUNDER_ANDROID_KEYSTORE"' EXIT
 ( umask 077; printf '%s' "$KS_B64" | tr -d ' \r\n\t' | base64 -d > "$MUNDER_ANDROID_KEYSTORE" ) || {
   echo "::error::secrets.ANDROID_KEYSTORE_B64 no es base64 válido."
