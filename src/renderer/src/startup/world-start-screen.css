@@ -9,7 +9,8 @@
   overflow: auto;
   padding: clamp(12px, 2.5vw, 32px);
   color: #2c2117;
-  background: var(--start-wood-900);
+  background: var(--worlds-chrome, var(--start-wood-900));
+  background-size: auto, 480px;
   font-family: var(--cth-font-ui);
 }
 
@@ -144,22 +145,39 @@
 }
 
 .cth-world-start-art-window {
+  position: relative;
   flex: 1;
   min-height: 220px;
   display: grid;
   place-items: center;
   overflow: hidden;
-  padding: 24px;
-  background: linear-gradient(180deg, #8ec6d4 0%, #cde0ae 62%, #789c57 100%);
+  padding: 0;
+  background: #314336;
+  border-bottom: 3px solid #765333;
 }
 
 .cth-world-start-art-window img {
   display: block;
-  width: min(100%, 560px);
-  max-height: 260px;
-  object-fit: contain;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 7px 0 #30412660);
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: cover;
+  image-rendering: auto;
+  filter: none;
+}
+
+.cth-world-start-art-window::after {
+  content: '';
+  position: absolute;
+  inset: 45% 0 0;
+  background: linear-gradient(180deg, transparent, #21170a45);
+  pointer-events: none;
+}
+
+.cth-world-start-art-window[data-world-profile='monster-trainer'] img {
+  object-position: center 56%;
 }
 
 .cth-world-start-world-options {
