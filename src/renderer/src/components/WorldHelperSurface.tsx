@@ -1,11 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import type { WorldHelperProviderId, WorldHelperProviderMetadata, WorldHelperSafeSnapshot } from '@shared/worldHelper';
 import type { WorldHelperStreamEvent } from '@shared/worldHelper';
+import './world-helper-surface.css';
 
 type HelperBridge = NonNullable<Window['gusOverlay']>;
 
 const COLORS = {
-  ink: '#26152b', cream: '#fffbea', creamDark: '#f4edc9', purple: '#9b70c5', lemon: '#efd02c', muted: '#776d7c', red: '#9b333e'
+  ink: 'var(--worlds-page-ink, #382a1c)',
+  cream: 'var(--worlds-page, #f5e5bd)',
+  creamDark: 'var(--cth-cream-200, #ebd7ad)',
+  trim: 'var(--worlds-rim, #80572f)',
+  brass: 'var(--worlds-brass, #c89c57)',
+  muted: 'var(--worlds-page-muted, #67523b)',
+  red: '#8b3d30'
 };
 
 function explainError(category?: string): string {
@@ -146,40 +153,41 @@ export function WorldHelperSurface({ snapshot, setupRequired, onSnapshot, bridge
   };
 
   const frame: React.CSSProperties = {
-    background: COLORS.cream, color: COLORS.ink, border: `2px solid ${COLORS.ink}`,
-    boxShadow: `5px 5px 0 ${COLORS.purple}`, fontFamily: 'var(--cth-font-ui)',
+    background: COLORS.cream, color: COLORS.ink, border: `3px solid ${COLORS.trim}`,
+    boxShadow: `inset 0 0 0 2px ${COLORS.brass}, 0 7px 0 #21170c, 0 12px 25px #130d0880`,
+    fontFamily: 'var(--cth-font-ui)',
   };
   const button: React.CSSProperties = {
-    background: COLORS.creamDark, border: `1px solid ${COLORS.purple}`, color: COLORS.ink,
+    background: COLORS.creamDark, border: `1px solid ${COLORS.trim}`, color: COLORS.ink,
     padding: '7px 10px', cursor: 'pointer', fontFamily: 'var(--cth-font-ui)', fontSize: 12
   };
 
   if (setupRequired || showSetup) {
     return (
-      <div style={{ position: 'fixed', zIndex: 1500, inset: 0, display: 'grid', placeItems: 'center', padding: 20, background: 'rgba(38,21,43,.45)' }}>
-        <section aria-label="Configure World Helper" style={{ ...frame, width: 'min(500px, 96vw)', maxHeight: '90vh', overflow: 'auto', padding: 24 }}>
-          <div style={{ color: COLORS.purple, fontSize: 11, letterSpacing: 2 }}>OPTIONAL · WORLD HELPER</div>
-          <h1 style={{ fontFamily: 'var(--cth-font-display)', fontSize: 22, margin: '8px 0' }}>Configure GUS</h1>
+      <div className="world-helper-root world-helper-root--setup" style={{ position: 'fixed', zIndex: 1500, inset: 0, display: 'grid', placeItems: 'center', padding: 20, background: 'rgba(24,18,12,.62)' }}>
+        <section className="world-helper-setup-card" aria-label="Configure World Helper" style={{ ...frame, width: 'min(500px, 96vw)', maxHeight: '90vh', overflow: 'auto', padding: 24 }}>
+          <div className="world-helper-kicker" style={{ color: COLORS.brass, fontSize: 11, letterSpacing: 2 }}>OPTIONAL · WORLD HELPER</div>
+          <h1 className="world-helper-title" style={{ fontFamily: 'var(--cth-font-display)', fontSize: 22, margin: '8px 0' }}>Configure GUS</h1>
           <p style={{ color: COLORS.muted, lineHeight: 1.5, fontSize: 13 }}>
             GUS helps configure your workers, roles and world, watches their progress, and explains what is happening. It uses an external provider you choose. The API key belongs only to GUS; workers do not inherit it. GUS has no implicit admin authority.
           </p>
           <label style={{ display: 'grid', gap: 5, marginTop: 16, fontSize: 12 }}>Provider
-            <select value={provider} onChange={(event) => updateProvider(event.target.value as WorldHelperProviderId)} style={{ padding: 8, border: `1px solid ${COLORS.purple}`, background: 'white' }}>
+            <select value={provider} onChange={(event) => updateProvider(event.target.value as WorldHelperProviderId)} style={{ padding: 8, border: `1px solid ${COLORS.trim}`, background: COLORS.cream }}>
               {providers.map((item) => <option key={item.id} value={item.id}>{item.displayName}{item.recommended ? ' · Recommended' : ''}</option>)}
             </select>
           </label>
           {activeProvider?.availabilityNote && <p style={{ margin: '5px 0', color: COLORS.muted, fontSize: 11 }}>{activeProvider.availabilityNote}</p>}
           <label style={{ display: 'grid', gap: 5, marginTop: 12, fontSize: 12 }}>Model
-            <select value={model} onChange={(event) => setModel(event.target.value)} style={{ padding: 8, border: `1px solid ${COLORS.purple}`, background: 'white' }}>
+            <select value={model} onChange={(event) => setModel(event.target.value)} style={{ padding: 8, border: `1px solid ${COLORS.trim}`, background: COLORS.cream }}>
               {activeProvider?.models.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
             </select>
           </label>
           <label style={{ display: 'grid', gap: 5, marginTop: 12, fontSize: 12 }}>API key
-            <input type="password" value={apiKey} onChange={(event) => setApiKey(event.target.value)} placeholder={snapshot.configured && snapshot.provider === provider ? 'Leave blank to keep saved key · or paste replacement' : 'Paste key · stored encrypted on this device'} autoComplete="new-password" style={{ padding: 9, border: `1px solid ${COLORS.purple}`, background: 'white' }} />
+            <input type="password" value={apiKey} onChange={(event) => setApiKey(event.target.value)} placeholder={snapshot.configured && snapshot.provider === provider ? 'Leave blank to keep saved key · or paste replacement' : 'Paste key · stored encrypted on this device'} autoComplete="new-password" style={{ padding: 9, border: `1px solid ${COLORS.trim}`, background: COLORS.cream }} />
           </label>
           <button type="button" style={{ ...button, marginTop: 7, fontSize: 11 }} onClick={() => activeProvider && void bridge.openProviderHelp(activeProvider.id)}>Get API key ↗</button>
           <label style={{ display: 'grid', gap: 5, marginTop: 14, fontSize: 12 }}>How do you want to use this World?
-            <textarea value={message} onChange={(event) => setMessage(event.target.value)} rows={3} placeholder="For example: maintain a repo, investigate bugs and prepare PRs." style={{ padding: 9, resize: 'vertical', border: `1px solid ${COLORS.purple}`, background: 'white' }} />
+            <textarea value={message} onChange={(event) => setMessage(event.target.value)} rows={3} placeholder="For example: maintain a repo, investigate bugs and prepare PRs." style={{ padding: 9, resize: 'vertical', border: `1px solid ${COLORS.trim}`, background: COLORS.cream }} />
           </label>
           {error && <p role="alert" style={{ color: COLORS.red, fontSize: 12 }}>{error}</p>}
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginTop: 16 }}>
@@ -187,7 +195,7 @@ export function WorldHelperSurface({ snapshot, setupRequired, onSnapshot, bridge
             <div style={{ display: 'flex', gap: 8 }}>
               {snapshot.configured && snapshot.provider === provider && <button type="button" style={{ ...button, color: COLORS.red, fontSize: 11 }} disabled={busy} onClick={() => void (async () => { await bridge.removeKey(); onSnapshot(await bridge.snapshot()); setError('Saved key removed. GUS is stopped; your workers continue running.'); })()}>Remove key</button>}
               <button type="button" style={button} disabled={busy} onClick={() => void configure()}>{busy ? 'Connecting…' : 'Verify & continue'}</button>
-              <button type="button" style={{ ...button, background: COLORS.lemon }} disabled={busy || !message.trim()} onClick={() => { void (async () => { if (await configure()) { setExpanded(true); await send(); } })(); }}>Connect & ask GUS</button>
+              <button type="button" style={{ ...button, background: COLORS.brass }} disabled={busy || !message.trim()} onClick={() => { void (async () => { if (await configure()) { setExpanded(true); await send(); } })(); }}>Connect & ask GUS</button>
             </div>
           </div>
           {reply && <p style={{ fontSize: 12 }}>{reply}</p>}
@@ -197,12 +205,12 @@ export function WorldHelperSurface({ snapshot, setupRequired, onSnapshot, bridge
   }
 
   return (
-    <div style={{ position: 'fixed', zIndex: 1300, right: 16, bottom: 16 }}>
+    <div className="world-helper-root world-helper-root--desk" style={{ position: 'fixed', zIndex: 1300, right: 16, bottom: 16 }}>
       {expanded && (
-        <section aria-label="GUS World Helper" style={{ ...frame, width: 'min(360px, calc(100vw - 32px))', height: 430, display: 'flex', flexDirection: 'column', marginBottom: 10 }}>
-          <header style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 10, borderBottom: `1px solid ${COLORS.purple}`, background: COLORS.creamDark }}>
+        <section className="world-helper-desk" aria-label="GUS World Helper" style={{ ...frame, width: 'min(360px, calc(100vw - 32px))', height: 430, display: 'flex', flexDirection: 'column', marginBottom: 10 }}>
+          <header className="world-helper-desk-header" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 10, borderBottom: `1px solid ${COLORS.trim}`, background: COLORS.creamDark }}>
             <span aria-hidden="true">✦</span><strong style={{ flex: 1 }}>GUS · World Helper</strong>
-            <span style={{ color: COLORS.muted, fontSize: 10 }}>{snapshot.lifecycle.toLowerCase()}</span>
+            <span className="world-helper-lifecycle" style={{ color: COLORS.brass, fontSize: 10 }}>{snapshot.lifecycle.toLowerCase()}</span>
             <button type="button" aria-label="Minimize GUS" style={{ ...button, padding: '3px 7px' }} onClick={() => setExpanded(false)}>−</button>
             <button type="button" aria-label="Hide GUS overlay" style={{ ...button, padding: '3px 7px' }} onClick={onHide}>×</button>
           </header>
@@ -214,11 +222,11 @@ export function WorldHelperSurface({ snapshot, setupRequired, onSnapshot, bridge
             </div>
           ) : (
             <>
-              <div style={{ flex: 1, overflow: 'auto', padding: 11, fontSize: 12 }}>
-                {snapshot.transcript?.map((item, index) => <p key={`${item.at}-${index}`} style={{ margin: '7px 0', whiteSpace: 'pre-wrap' }}><b>{item.role === 'user' ? 'You' : 'GUS'}:</b> {item.text}</p>)}
+              <div className="world-helper-conversation" style={{ flex: 1, overflow: 'auto', padding: 11, fontSize: 12 }}>
+                {snapshot.transcript?.map((item, index) => <p className={`world-helper-message world-helper-message--${item.role}`} key={`${item.at}-${index}`} style={{ margin: '7px 0', whiteSpace: 'pre-wrap' }}><b>{item.role === 'user' ? 'You' : 'GUS'}:</b> {item.text}</p>)}
                 {streamDraft && <p className="world-helper-stream" aria-live="polite" style={{ color: COLORS.muted, whiteSpace: 'pre-wrap' }}>{streamDraft}<span className="world-helper-caret" aria-hidden="true">▍</span></p>}
                 {reply && <p style={{ color: COLORS.muted }}>{reply}</p>}
-                {snapshot.pendingProposal && <div style={{ borderTop: `1px solid ${COLORS.purple}`, marginTop: 10, paddingTop: 8 }}>
+                {snapshot.pendingProposal && <div className="world-helper-proposal" style={{ borderTop: `1px solid ${COLORS.trim}`, marginTop: 10, paddingTop: 8 }}>
                   <strong>Proposed team · review before launch</strong>
                   {snapshot.pendingProposal.workspace && <p style={{ margin: '8px 0', color: COLORS.muted, overflowWrap: 'anywhere' }}>Launch target (bound to this approval): <b>{snapshot.pendingProposal.workspace}</b></p>}
                   {snapshot.pendingProposal.worldSuggestion && <p style={{ margin: '8px 0', color: COLORS.muted }}>World suggestion: <b>{snapshot.pendingProposal.worldSuggestion === 'monster-trainer' ? 'Monster Trainer' : 'Office'}</b> · advisory only; select the world yourself from Worlds.</p>}
@@ -226,17 +234,17 @@ export function WorldHelperSurface({ snapshot, setupRequired, onSnapshot, bridge
                     <input type="checkbox" checked={selected.includes(worker.name)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, worker.name] : current.filter((name) => name !== worker.name))} />
                     <span><b>{worker.name}</b> · {worker.role}<br /><span style={{ color: COLORS.muted }}>{worker.purpose} · {worker.provider}</span></span>
                   </label>)}
-                  <button type="button" style={{ ...button, marginTop: 10, background: COLORS.lemon }} disabled={busy || !selected.length} onClick={() => void approve()}>Launch approved team</button>
+                  <button type="button" style={{ ...button, marginTop: 10, background: COLORS.brass }} disabled={busy || !selected.length} onClick={() => void approve()}>Launch approved team</button>
                 </div>}
-                {snapshot.notices.slice(-4).map((notice) => <p key={notice.id} style={{ borderLeft: `3px solid ${notice.severity === 'requires_action' ? COLORS.lemon : COLORS.purple}`, paddingLeft: 7 }}>{notice.title}</p>)}
+                {snapshot.notices.slice(-4).map((notice) => <p className={`world-helper-notice world-helper-notice--${notice.severity}`} key={notice.id} style={{ borderLeft: `3px solid ${notice.severity === 'requires_action' ? COLORS.brass : COLORS.trim}`, paddingLeft: 7 }}>{notice.title}</p>)}
               </div>
               {error && <div role="alert" style={{ color: COLORS.red, fontSize: 11, padding: '0 10px 5px' }}>{error}</div>}
-              <form onSubmit={(event) => { event.preventDefault(); void send(); }} style={{ display: 'flex', gap: 6, padding: 8, borderTop: `1px solid ${COLORS.purple}` }}>
-                <input value={message} onChange={(event) => setMessage(event.target.value)} placeholder="How do you want to use this World?" style={{ flex: 1, minWidth: 0, padding: 7, border: `1px solid ${COLORS.purple}` }} />
+              <form className="world-helper-compose" onSubmit={(event) => { event.preventDefault(); void send(); }} style={{ display: 'flex', gap: 6, padding: 8, borderTop: `1px solid ${COLORS.trim}` }}>
+                <input value={message} onChange={(event) => setMessage(event.target.value)} placeholder="How do you want to use this World?" style={{ flex: 1, minWidth: 0, padding: 7, border: `1px solid ${COLORS.trim}` }} />
                 {busy && <button type="button" onClick={() => { void bridge.cancel(streamRequestId.current ?? undefined); }} style={button}>Stop</button>}
                 <button type="submit" disabled={busy || !message.trim()} style={button}>Send</button>
               </form>
-              <footer style={{ display: 'flex', justifyContent: 'space-between', padding: '0 8px 8px' }}>
+              <footer className="world-helper-footer" style={{ display: 'flex', justifyContent: 'space-between', padding: '0 8px 8px' }}>
                 <button type="button" style={{ ...button, fontSize: 10 }} onClick={() => { setShowSetup(true); setError(''); }}>Provider settings</button>
                 <button type="button" style={{ ...button, fontSize: 10 }} onClick={() => void stop()}>Stop Helper</button>
               </footer>
@@ -244,7 +252,7 @@ export function WorldHelperSurface({ snapshot, setupRequired, onSnapshot, bridge
           )}
         </section>
       )}
-      <button type="button" aria-label={expanded ? 'Minimize GUS' : 'Open GUS World Helper'} onClick={() => setExpanded((value) => !value)} style={{ ...frame, width: 56, height: 48, cursor: 'pointer', fontSize: 18, borderRadius: 8 }}>
+      <button className="world-helper-launcher" type="button" aria-label={expanded ? 'Minimize GUS' : 'Open GUS World Helper'} onClick={() => setExpanded((value) => !value)} style={{ ...frame, width: 56, height: 48, cursor: 'pointer', fontSize: 18, borderRadius: 8 }}>
         ✦{snapshot.notices.some((notice) => notice.severity === 'requires_action') ? <span style={{ color: COLORS.red }}>●</span> : null}
       </button>
     </div>

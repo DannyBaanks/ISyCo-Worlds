@@ -12,7 +12,8 @@ import { Icon } from '@/components/Icon';
 import { ProviderLogo } from '@/components/ProviderLogo';
 import { PixelButton } from '@/components/PixelButton';
 import { LANGUAGES, setLanguage } from '@/i18n';
-import buildingsUrl from '@/assets/worlds/starter-village/starter-village-buildings.png?url';
+import officeSceneUrl from '@/assets/worlds/materials/isyco-world-scene.webp?url';
+import monsterTrainerSceneUrl from '@/assets/worlds/materials/monster-trainer-scene.webp?url';
 import './world-start-screen.css';
 
 type WorldStatus = WorldProfileRuntimeStatus & { preferredWorldProfile: WorldId };
@@ -25,6 +26,10 @@ const PROFILE_LABELS: Record<WorldId, string> = {
 const PROFILE_ART_LABEL: Record<WorldId, string> = {
   office: 'ISyCo World',
   'monster-trainer': 'Starter Village'
+};
+const PROFILE_SCENE: Record<WorldId, string> = {
+  office: officeSceneUrl,
+  'monster-trainer': monsterTrainerSceneUrl
 };
 const SKIP_PICKER_ONCE = 'cth.skipHivePickerOnce';
 const INPUT_STYLE: CSSProperties = {
@@ -239,7 +244,7 @@ export function WorldStartScreen({ config, worldProfileStatus, onConfigSaved, on
   };
 
   return (
-    <main className="cth-world-start" aria-label={t('startScreen.title')}>
+    <main className="cth-world-start" data-world-profile={selectedProfile} aria-label={t('startScreen.title')}>
       <div className="cth-world-start-frame">
         <header className="cth-world-start-header">
           <div className="cth-world-start-brand" aria-label="ISyCo World">
@@ -265,9 +270,8 @@ export function WorldStartScreen({ config, worldProfileStatus, onConfigSaved, on
               <h2 id="start-world-heading">{t(PROFILE_LABELS[selectedProfile])}</h2>
               <span className="cth-world-start-landmark">{PROFILE_ART_LABEL[selectedProfile]}</span>
             </div>
-            <div className="cth-world-start-art-window" aria-hidden="true">
-              <div className="cth-world-start-skyline" />
-              <img src={buildingsUrl} alt="" />
+            <div className="cth-world-start-art-window" data-world-profile={selectedProfile} aria-hidden="true">
+              <img src={PROFILE_SCENE[selectedProfile]} alt="" />
             </div>
             <div className="cth-world-start-world-options" role="radiogroup" aria-label={t('settings.general.worlds.selector')}>
               {WORLD_IDS.map((profileId) => {
