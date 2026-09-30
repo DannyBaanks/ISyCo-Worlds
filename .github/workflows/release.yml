@@ -68,17 +68,19 @@ jobs:
         # no cert, warns, and produces an unsigned build.
         # NOTE: `secrets.*` is not a valid context inside step `if:` (parse
         # error, zero-job run), so the gate is matrix-only and the emptiness
-        # check lives in bash with the secrets mapped through `env:` (safe for
-        # arbitrary password characters, unlike `${{ }}` inside the script).
+        # check lives in the script, with the secrets mapped through `env:`
+        # (safe for arbitrary password characters, unlike `${{ }}` inline).
         if: ${{ matrix.os == 'macos-latest' }}
         env:
           P12_B64: ${{ secrets.APPLE_CERTIFICATE_P12 }}
           P12_PASS: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-        run: |
-          if [ -n "$P12_B64" ]; then
-            echo "CSC_LINK=$P12_B64" >> "$GITHUB_ENV"
-            echo "CSC_KEY_PASSWORD=$P12_PASS" >> "$GITHUB_ENV"
-          fi
+        # scripts/github-env.cjs writes the multiline `NAME<<DELIM` form and
+        # strips the base64 of line breaks: with `echo "CSC_LINK=$P12_B64"` a
+        # GNU-wrapped secret (76 cols) truncated CSC_LINK to its first line
+        # and turned every other line into a bogus variable. Empty secrets
+        # are skipped, so the vars stay ABSENT. Tested in
+        # test/github-env.test.cjs.
+        run: node scripts/github-env.cjs CSC_LINK=P12_B64:base64 CSC_KEY_PASSWORD=P12_PASS
 
       - name: Package installers
         # GH_TOKEN lets electron-builder skip its own publish; we upload via the
@@ -229,8 +231,14 @@ jobs:
           retention-days: 30
 
   mobile-android:
-    # El Android de la release: el mismo APK debug del CI (firmado con la
-    # llave de debug, se instala directo, no caduca).
+    # El Android de la release: `assembleRelease` firmado SIEMPRE con la misma
+    # llave, para que cada versión se instale encima de la anterior sin perder
+    # el emparejamiento. La llave vive solo en GitHub Secrets; nunca en el repo.
+    #
+    # Fail-closed: sin los secretos, o si la llave no es la esperada, el job
+    # FALLA y la release no se publica. Publicar un APK con otra firma (o el
+    # debug, cuya llave cambia en cada runner) dejaría a los usuarios sin poder
+    # actualizar. Configuración: docs/release-signing/README.md.
     name: Build Android APK
     runs-on: ubuntu-latest
     steps:
@@ -240,17 +248,22 @@ jobs:
           distribution: temurin
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew :app:assembleDebug --stacktrace
+      - name: Build and sign the release APK
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          MUNDER_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          MUNDER_ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          MUNDER_ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          # Huella SHA-256 del certificado de firma (no es secreta): la que ya
+          # tienen instalada los usuarios. Es lo que garantiza la continuidad.
+          EXPECTED_CERT_SHA256: ${{ vars.ANDROID_SIGNING_CERT_SHA256 }}
+        # Toda la lógica (faltan secretos -> falla; huella distinta -> falla)
+        # vive en el script, ejercitado en android.yml con una llave desechable.
+        run: bash scripts/release-apk.sh
         working-directory: android/MunderMobile
-      - name: Rename for the release page
-        run: |
-          APK=$(find android/MunderMobile/app/build/outputs/apk/debug -name "*.apk" | head -1)
-          test -n "$APK" || { echo "::error::APK not found"; exit 1; }
-          cp "$APK" android/MunderMobile/MunderMobile-debug.apk
-          ls -la android/MunderMobile/MunderMobile-debug.apk
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: MunderMobile-debug-apk
-          path: android/MunderMobile/MunderMobile-debug.apk
+          name: MunderMobile-release-apk
+          path: android/MunderMobile/MunderMobile-release.apk
           retention-days: 30

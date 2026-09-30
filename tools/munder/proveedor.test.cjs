@@ -140,8 +140,12 @@ test('linkKeyToCli solo toca el auth del CLI (código auditable)', () => {
 // 7) Higiene de secretos E2E (pty): la key pegada SOLO aparece en el auth
 // del CLI destino; en ningún log, estado, roster ni repo.
 test('secret hygiene: la key solo existe en el auth destino', () => {
-  // Sin CLIs reales que muevan los menús (si los hay, skip honesto).
-  const elsewhere = ['/usr/local/bin', '/opt/homebrew/bin'].flatMap((d) => {
+  // Sin CLIs reales que muevan los menús (si los hay, skip honesto). Se miran
+  // también los directorios que sandbox() SÍ pone en el PATH: con node
+  // instalado junto a un `claude` real (p. ej. /opt/node22/bin), el flujo
+  // elegía ese claude, pedía su key y se colgaba hasta el timeout.
+  const sandboxDirs = [path.dirname(process.execPath), '/usr/bin', '/bin'];
+  const elsewhere = [...sandboxDirs, '/usr/local/bin', '/opt/homebrew/bin'].flatMap((d) => {
     try { return fs.readdirSync(d); } catch { return []; }
   });
   const leak = ['claude', 'codex', 'gemini', 'opencode', 'qwen', 'crush', 'pi', 'copilot', 'cursor-agent', 'agy']

@@ -21,8 +21,32 @@ android {
         vectorDrawables { useSupportLibrary = true }
     }
 
+    // Firma de release: la MISMA llave en cada versión, o Android no deja
+    // actualizar encima ("App no instalada") y el usuario pierde el
+    // emparejamiento al desinstalar. La llave nunca vive en el repo: el CI de
+    // release la decodifica desde Secrets a un archivo temporal y pasa la ruta
+    // y las claves por entorno (docs/release-signing/README.md). Sin
+    // MUNDER_ANDROID_KEYSTORE (compilación local) el release sale sin firmar,
+    // y el CI de release lo rechaza.
+    fun env(name: String): String? = System.getenv(name)?.takeIf { it.isNotBlank() }
+    val releaseKeystore = env("MUNDER_ANDROID_KEYSTORE")?.let { path ->
+        file(path).also { require(it.isFile) { "MUNDER_ANDROID_KEYSTORE no existe: $path" } }
+    }
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = releaseKeystore
+                storePassword = requireNotNull(env("MUNDER_ANDROID_KEYSTORE_PASSWORD")) { "Falta MUNDER_ANDROID_KEYSTORE_PASSWORD" }
+                keyAlias = requireNotNull(env("MUNDER_ANDROID_KEY_ALIAS")) { "Falta MUNDER_ANDROID_KEY_ALIAS" }
+                // Un secreto no configurado llega como "" desde Actions: cae a la del keystore.
+                keyPassword = env("MUNDER_ANDROID_KEY_PASSWORD") ?: env("MUNDER_ANDROID_KEYSTORE_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (releaseKeystore != null) signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

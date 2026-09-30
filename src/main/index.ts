@@ -2655,6 +2655,9 @@ function createWorldPresentationSupervisor(win: BrowserWindow): WorldPresentatio
           backgroundThrottling: false
         }
       });
+      // The world renderer paints; it never opens windows or leaves its page.
+      view.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+      view.webContents.on('will-navigate', (event) => event.preventDefault());
       win.contentView.addChildView(view);
       raiseWorldHelperOverlay(win);
       view.setBounds({ x: 0, y: 0, width: 0, height: 0 });
@@ -2755,6 +2758,7 @@ function createWorldHelperOverlayView(win: BrowserWindow): WebContentsView {
     if (/^https:\/\//i.test(url)) shell.openExternal(url);
     return { action: 'deny' };
   });
+  view.webContents.on('will-navigate', (event) => event.preventDefault());
   const loading = isDev && process.env.ELECTRON_RENDERER_URL
     ? view.webContents.loadURL(new URL('/world-helper-overlay.html', process.env.ELECTRON_RENDERER_URL).toString())
     : view.webContents.loadFile(join(__dirname, '../renderer/world-helper-overlay.html'));
