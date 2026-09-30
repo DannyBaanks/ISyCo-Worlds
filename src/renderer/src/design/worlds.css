@@ -1,0 +1,402 @@
+/* ISyCo Worlds material layer. No runtime state or world selection lives here.
+   Art decorates chrome; content, terminals and the scene remain real components. */
+:root {
+  --worlds-wood: url('../assets/worlds/materials/world-wood.webp');
+  --worlds-scene: url('../assets/worlds/materials/isyco-world-scene.webp');
+  --worlds-timber: #392519;
+  --worlds-brass: #c89c57;
+  --worlds-rim: #80572f;
+  --worlds-on-wood: #ffebbc;
+  --worlds-title: Georgia, 'Palatino Linotype', 'Noto Serif', serif;
+  --worlds-page: #f5e5bd;
+  --worlds-page-edge: #d5b67a;
+  --worlds-page-ink: #382a1c;
+  --worlds-page-muted: #67523b;
+  --worlds-paper: radial-gradient(ellipse at 50% 35%, #fff4d8b8, transparent 75%),
+    linear-gradient(90deg, #ab793029, transparent 5%, transparent 95%, #ab793036),
+    linear-gradient(#f6e7c7, #efdab0);
+  --worlds-chrome: linear-gradient(#37221760, #20150ce0), var(--worlds-wood);
+  --cth-cream-50: #fff8e7;
+  --cth-cream-100: #f6e8c9;
+  --cth-cream-200: #ebd7ad;
+  --cth-cream-300: #d9bd89;
+  --cth-paper-100: #faf0d9;
+  --cth-paper-200: #eee0bd;
+  --cth-ink-900: #332719;
+  --cth-ink-700: #55422e;
+  --cth-ink-500: #725a3d;
+  --cth-ink-300: #9c7c50;
+  --cth-ink-100: #d5bc91;
+}
+:root[data-cth-theme='dark'] {
+  color-scheme: dark;
+  --cth-cream-50: #211e19;
+  --cth-cream-100: #28241e;
+  --cth-cream-200: #332d24;
+  --cth-cream-300: #40372b;
+  --cth-paper-100: #25211b;
+  --cth-paper-200: #302920;
+  --cth-ink-900: #eee0c6;
+  --cth-ink-700: #cdbfa6;
+  --cth-ink-500: #b6a68e;
+  --cth-ink-300: #9d896c;
+  --cth-ink-100: #554735;
+  --worlds-paper: radial-gradient(ellipse at 50% 35%, #56452d38, transparent 75%),
+    linear-gradient(90deg, #120d0636, transparent 6%, transparent 94%, #120d064a),
+    linear-gradient(#322b21, #29241d);
+  --worlds-page: #322b21;
+  --worlds-page-edge: #79603f;
+  --worlds-page-ink: #eee0c6;
+  --worlds-page-muted: #c1ad8e;
+}
+.worlds-shell { background: var(--worlds-chrome); background-size: auto, 480px; }
+.worlds-titlebar {
+  position: relative;
+  height: auto !important;
+  min-height: 60px !important;
+  flex-shrink: 0;
+  gap: 10px !important;
+  padding-block: 8px;
+  background: var(--worlds-chrome) !important;
+  background-size: auto, 480px !important;
+  border-bottom: 3px solid var(--worlds-rim) !important;
+  box-shadow: inset 0 1px #d7b279, 0 2px 0 #1c130d;
+  color: var(--worlds-on-wood);
+  z-index: 120;
+}
+/* Light text belongs on timber regardless of the selected page theme. */
+.worlds-titlebar > span { color: var(--worlds-on-wood) !important; }
+.worlds-titlebar > button { flex-shrink: 0; }
+.worlds-brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  flex-shrink: 0;
+  padding: 6px 13px;
+  color: var(--worlds-on-wood);
+  font-family: var(--worlds-title);
+  font-size: 21px;
+  line-height: 28px;
+  white-space: nowrap;
+  background: linear-gradient(#613f24, #39251a);
+  border: 1px solid #c69752;
+  border-radius: 6px 13px 6px 13px;
+  box-shadow: inset 0 0 0 3px #312016, inset 0 0 0 4px #946b38, 0 3px 0 #1c130d;
+  text-shadow: 0 2px #20170f;
+}
+.worlds-brand strong { font-weight: 400; }
+.worlds-brand-globe { font-size: 26px; line-height: 28px; }
+.worlds-titlebar .worlds-brand { font-size: 18px; padding: 3px 10px; gap: 6px; }
+.worlds-titlebar .worlds-brand-globe { font-size: 23px; }
+.worlds-selector { min-width: 0; flex-shrink: 1; }
+.worlds-selector > span { color: var(--worlds-on-wood) !important; }
+.worlds-selector select { min-width: 0; max-width: 140px !important; height: 30px !important; border-radius: 3px; }
+.cth-globalnav { flex-shrink: 0; }
+.cth-globalnav-tab {
+  height: 34px !important;
+  font-family: var(--worlds-title) !important;
+  font-weight: 700;
+  font-size: 15px !important;
+  line-height: 20px !important;
+  padding: 4px 12px !important;
+  border: 1px solid #987142 !important;
+  border-radius: 3px 3px 6px 6px !important;
+  background: linear-gradient(#65523a, #3c3023) !important;
+  color: var(--worlds-on-wood) !important;
+  box-shadow: inset 0 0 0 2px #241b136b, 0 2px #20160e;
+}
+.cth-globalnav-tab[aria-current='page'],
+.cth-globalnav-tab[aria-expanded='true'], .cth-globalnav-tab:hover {
+  background: linear-gradient(#fae9be, #d9b271) !important;
+  color: #352619 !important;
+  border-color: #edce8e !important;
+  text-shadow: 0 1px #ffefc9;
+}
+#cth-settings-menu { max-height: calc(100vh - 90px); overflow-y: auto; border: 3px solid var(--worlds-rim); border-radius: 4px; }
+.cth-globalnav-item { font-family: var(--cth-font-ui) !important; font-size: 13px !important; line-height: 19px !important; }
+.worlds-workspace { min-width: 0; padding: 12px !important; }
+.worlds-stage {
+  border: 5px solid var(--worlds-rim);
+  border-radius: 5px;
+  box-shadow: 0 0 0 1px #21170e, inset 0 0 0 2px #21170e;
+  background: #253125;
+  overflow: hidden;
+  isolation: isolate;
+}
+.worlds-sidebar {
+  min-width: 0;
+  max-width: calc(100% - 290px);
+  border: 4px solid var(--worlds-rim);
+  border-radius: 5px;
+  box-shadow: 0 0 0 1px #21170e;
+  background: var(--cth-paper-100);
+  overflow: hidden;
+  container-type: inline-size;
+}
+.worlds-panel { min-width: 0; max-width: 100%; }
+.worlds-panel:not(.worlds-panel--terminal):not(.worlds-panel--inset) {
+  background-image: var(--worlds-paper) !important;
+  background-color: var(--worlds-page);
+}
+.worlds-panel--dialog {
+  border: 5px solid var(--worlds-rim);
+  border-radius: 7px;
+  box-shadow: inset 0 0 0 1px var(--worlds-brass), 0 8px 30px #140d0859 !important;
+}
+.worlds-panel-title {
+  background: var(--worlds-chrome) !important;
+  background-size: auto, 400px !important;
+  color: var(--worlds-on-wood) !important;
+  font-family: var(--worlds-title) !important;
+  font-size: 19px !important;
+  font-weight: 700;
+  line-height: 25px !important;
+  padding-block: 10px !important;
+  overflow-wrap: anywhere;
+}
+.worlds-button {
+  border-radius: 3px 5px 3px 5px;
+  max-width: 100%;
+  background-image: linear-gradient(#ffffff12, #32190012) !important;
+}
+.worlds-button--primary:not(:disabled) {
+  background-color: #476339 !important;
+  color: #fff4d8 !important;
+  box-shadow: inset 0 0 0 1px #263e1e, inset 0 0 0 2px #9eae6266, 0 2px #25321c !important;
+}
+.worlds-button--secondary:not(:disabled) { box-shadow: inset 0 0 0 1px var(--worlds-rim), inset 0 0 0 3px #b88b3926, 0 2px #442e2240 !important; }
+.worlds-button:hover:not(:disabled) { filter: brightness(1.08); }
+.worlds-button:disabled { opacity: .7; }
+.worlds-command { min-height: 0; }
+.worlds-command > :first-child { background-image: var(--worlds-paper) !important; }
+.worlds-command .cth-tabbar { gap: 4px !important; padding: 8px !important; background-image: var(--worlds-paper) !important; }
+.worlds-command .cth-tabbar button { border-radius: 3px 3px 0 0; min-width: 0; max-width: 100%; min-height: 29px; }
+.worlds-command-body { min-width: 0; overflow: hidden; }
+/* Inline-size containment prevents intrinsic widths of forms/paths growing the
+   sidebar. Scroll belongs to the active section, never to the entire world. */
+.worlds-command-body > * { min-width: 0; max-width: 100%; }
+.worlds-command-body :is(input, select, textarea) { min-width: 0; max-width: 100%; }
+.worlds-command-body :is(p, label, h1, h2, h3) { overflow-wrap: anywhere; }
+.worlds-command-body [data-section] { min-width: 0; }
+.worlds-command-body[data-section='tasks'],
+.worlds-command-body[data-section='memory'],
+.worlds-command-body[data-section='skills'],
+.worlds-command-body[data-section='workers'] { background-image: var(--worlds-paper); }
+.worlds-roster {
+  position: relative;
+  height: 148px !important;
+  min-height: 148px !important;
+  padding: 16px 20px !important;
+  background: var(--worlds-chrome) !important;
+  background-size: auto, 480px !important;
+  border-top: 3px solid var(--worlds-rim) !important;
+  box-shadow: inset 0 1px #d6b37d;
+  gap: 18px !important;
+}
+/* The scroll silhouette and every control share the same rectangular hitbox.
+   Decorative rolled edges are inset, never click targets outside the paper. */
+.worlds-worker { border-radius: 5px; }
+.worlds-worker-sheet { border-radius: 5px; box-shadow: inset 0 0 0 1px var(--worlds-page-edge), 0 3px 4px #130d0980 !important; }
+.worlds-worker-sheet::before, .worlds-worker-sheet::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  height: 7px;
+  border: 1px solid var(--worlds-page-edge);
+  border-radius: 5px;
+  background: linear-gradient(var(--worlds-page-edge), var(--worlds-page) 45%, var(--worlds-page-edge));
+  pointer-events: none;
+}
+.worlds-worker-sheet::before { top: 0; }
+.worlds-worker-sheet::after { bottom: 0; }
+.worlds-worker[aria-pressed='true'] { outline: 2px solid #f2c36d; outline-offset: 3px; }
+.worlds-worker[data-coordinator] .worlds-worker-sheet { border-inline-start: 4px solid #b38640; }
+.worlds-worker-identity { display: grid !important; grid-template-columns: minmax(0, 1fr) auto; gap: 3px !important; }
+.worlds-worker-name { grid-column: 1 / -1; }
+.worlds-worker-name > span:first-child > span { font-family: var(--cth-font-ui) !important; font-size: 12px !important; font-weight: 700; }
+.worlds-worker-role { font-family: var(--cth-font-ui); font-size: 10px; color: var(--cth-ink-700); }
+.worlds-worker-identity > span:last-child { font-size: 10px !important; justify-self: start; }
+.worlds-settings-book { background: var(--worlds-paper) !important; }
+.worlds-settings-index {
+  overflow-y: auto;
+  min-height: 0;
+  background: linear-gradient(90deg, #583c2520, transparent 10%, #583c2517 97%, #583c2560) !important;
+  border-right: 0 !important;
+  border-inline-end: 4px double var(--worlds-page-edge) !important;
+  padding-inline: 6px;
+}
+.worlds-settings-index button { font-family: var(--cth-font-ui) !important; font-size: 12px !important; line-height: 18px !important; border-radius: 2px 6px 6px 2px; text-align: start !important; }
+.worlds-settings-page {
+  background: linear-gradient(90deg, #51341320, transparent 20px), var(--worlds-paper);
+  scrollbar-gutter: stable;
+}
+.worlds-settings-page :is(input, select, textarea) { min-width: 0; max-width: 100%; }
+.worlds-settings-page :is(p, label) { overflow-wrap: anywhere; }
+.worlds-marketplace {
+  padding: 28px !important;
+  background: radial-gradient(ellipse at top, #8f66364a, transparent 75%), var(--worlds-chrome) !important;
+  background-size: auto, auto, 640px !important;
+  align-items: center;
+}
+.worlds-market-awning {
+  width: min(940px, 100%);
+  height: 58px;
+  flex-shrink: 0;
+  border: 3px solid #40271a;
+  border-radius: 4px 4px 16px 16px;
+  background: linear-gradient(#fff1b929, #1d13084d), repeating-linear-gradient(90deg, #914337 0 58px, #e9d3a3 58px 116px);
+  box-shadow: inset 0 3px #e4bd783b, 0 5px 10px #0004;
+  z-index: 1;
+}
+.worlds-market-counter { border: 7px solid var(--worlds-rim); border-top: 0; border-radius: 0 0 5px 5px; box-shadow: 0 10px 24px #0005 !important; flex-shrink: 0; }
+.worlds-market-counter h1 { font-family: var(--worlds-title) !important; font-size: 30px !important; line-height: 38px !important; }
+.worlds-market-counter h2 { font-family: var(--worlds-title) !important; font-size: 18px !important; line-height: 24px !important; color: var(--cth-ink-700) !important; }
+.worlds-market-sign { padding: 14px 18px; border: 3px double var(--worlds-rim); border-radius: 4px; text-align: center; }
+.worlds-entry {
+  background: linear-gradient(90deg, #1a201ac9, #18201969), var(--worlds-scene) center / cover !important;
+  overflow-y: auto;
+  align-items: safe center !important;
+}
+.worlds-entry > div { flex-shrink: 0; max-width: 100% !important; }
+.worlds-entry .worlds-brand { display: flex; width: max-content; max-width: 100%; margin: 0 auto 22px; font-size: 30px; padding: 12px 24px; }
+.worlds-entry .worlds-panel--dialog { box-shadow: 0 16px 60px #0008, inset 0 0 0 1px var(--worlds-brass) !important; }
+.worlds-shell :focus-visible, .worlds-entry :focus-visible { outline: 2px solid var(--cth-sky); outline-offset: 2px; }
+@media (max-width: 1179px) {
+  .worlds-titlebar { flex-wrap: wrap; gap: 7px !important; padding-block: 6px; }
+  .worlds-titlebar .worlds-brand { font-size: 16px; }
+  .worlds-selector > span { display: none; }
+  .worlds-workspace { padding: 8px !important; }
+  .cth-globalnav-tab { padding-inline: 9px !important; }
+}
+@media (max-width: 899px) {
+  .worlds-titlebar { padding-left: 80px !important; }
+  .worlds-titlebar .worlds-brand { font-size: 15px; padding-inline: 7px; }
+  .worlds-selector select { max-width: 120px !important; }
+  .worlds-titlebar > span { font-size: 11px !important; }
+  .worlds-roster { padding-inline: 12px !important; }
+  .worlds-settings-page { padding: 16px !important; }
+  .worlds-marketplace { padding: 16px !important; }
+}
+@media (max-width: 620px) {
+  .worlds-sidebar { max-width: 65%; }
+  .worlds-settings-index { width: 125px !important; }
+  .worlds-entry { padding: 16px !important; }
+}
+
+.worlds-titlebar > span > button, .worlds-titlebar > span > button span { color: var(--worlds-on-wood) !important; }
+.worlds-titlebar > button { color: var(--cth-ink-900) !important; }
+.worlds-village-viewport { display: grid; place-items: safe center; background: radial-gradient(ellipse, #354b32, #182c21) !important; }
+
+/* Route 2 composition: a scene and its crew, beside a working ledger. */
+.worlds-wood-frame {
+  position: relative; min-width: 0; min-height: 0;
+  padding: 10px; border: 2px solid #27190e; border-radius: 10px;
+  background: var(--worlds-chrome); background-size: auto, 400px;
+  box-shadow: inset 0 0 0 2px #b58b4c, inset 0 0 0 5px #332115, 0 6px 12px #0004;
+}
+.worlds-world-column { display: flex; flex-direction: column; flex: 1; padding-top: 30px; }
+.worlds-world-column .worlds-stage { border: 2px solid #b69053; border-radius: 3px 3px 0 0; }
+.worlds-hanging-sign {
+  position: relative; width: max-content; max-width: 90%;
+  padding: 5px 23px; margin-inline: auto;
+  border: 1px solid #744c28; border-radius: 2px 2px 5px 5px;
+  color: #3b2919; background: linear-gradient(#ffedc2, #d6ae70);
+  box-shadow: inset 0 0 0 2px #e5c998, inset 0 0 0 3px #a97b434f, 0 3px 4px #1d130870;
+  font-family: var(--worlds-title); font-weight: 700; font-size: 18px; line-height: 23px;
+  text-align: center; overflow-wrap: anywhere; z-index: 2;
+}
+.worlds-hanging-sign::before, .worlds-hanging-sign::after {
+  content: ''; position: absolute; top: 5px; width: 4px; height: 4px;
+  border-radius: 50%; background: #6d4827; box-shadow: 0 1px #f4dca5;
+}
+.worlds-hanging-sign::before { left: 8px; }
+.worlds-hanging-sign::after { right: 8px; }
+.worlds-world-sign { position: absolute; top: -4px; left: 50%; transform: translateX(-50%); }
+.worlds-crew-sign { margin-block: -5px -12px; font-size: 15px; padding-block: 2px; }
+.worlds-world-column .worlds-roster { height: 151px !important; min-height: 151px !important; border-top: 0 !important; padding-top: 24px !important; background: transparent !important; box-shadow: none; }
+.worlds-vine { position: absolute; top: -4px; left: -3px; width: 90px; height: 100px; pointer-events: none; z-index: 5; filter: drop-shadow(1px 2px 1px #162711aa); }
+.worlds-vine--flipped { left: auto; right: -3px; transform: scaleX(-1); }
+.worlds-sidebar {
+  padding: 8px; gap: 15px; border: 0; border-radius: 8px;
+  background: var(--worlds-chrome); background-size: auto, 400px;
+  box-shadow: inset 0 0 0 1px #bd9554, inset 0 0 0 4px #2e2018;
+  overflow: visible;
+}
+.worlds-command-slot { display: flex; flex-direction: column; min-height: 0; min-width: 0; flex: 1; overflow: hidden; border-radius: 5px; }
+.worlds-ledger-book {
+  min-width: 0; min-height: 0; padding: 8px;
+  background: linear-gradient(90deg, #36251b, #765438 6px, #30241a 12px, #5c422b);
+  border: 1px solid #a57d43; border-radius: 5px 9px 9px 5px;
+  box-shadow: inset 2px 0 0 #d0a66c, 3px 3px 0 #22170e;
+}
+.worlds-command > :first-child { padding: 12px !important; flex-wrap: wrap; gap: 7px !important; border-bottom: 3px double var(--worlds-page-edge) !important; }
+.worlds-command > :first-child > :nth-child(2) > :first-child { font-family: var(--worlds-title) !important; font-size: 19px !important; line-height: 25px !important; }
+.worlds-command > :first-child > :last-child { width: 100%; justify-content: flex-end; }
+.worlds-book-spread { display: flex; flex: 1; min-height: 0; min-width: 0; }
+.worlds-command .worlds-book-spread > .cth-tabbar {
+  flex-direction: column; flex-wrap: nowrap !important; flex: 0 0 42px; gap: 6px !important;
+  padding: 10px 3px !important; overflow: auto !important;
+  background: linear-gradient(90deg, #694b30, #39291c) !important;
+  border: 0; scrollbar-width: thin;
+}
+.worlds-command .worlds-book-spread > .cth-tabbar button {
+  flex: 0 0 35px !important; min-height: 35px; padding: 5px !important;
+  color: #f6e5c1 !important; background: linear-gradient(#69533b, #453522) !important;
+  box-shadow: inset 0 0 0 1px #a98852, 0 2px #281b12 !important;
+  border-radius: 3px 0 0 3px; max-width: 100%;
+}
+.worlds-command .worlds-book-spread > .cth-tabbar button[aria-pressed='true'] { background: #f0d49c !important; color: #42311f !important; border-inline-start: 3px solid #aa6f2c !important; }
+.worlds-command .worlds-tab-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.worlds-book-page { min-width: 0; min-height: 0; flex: 1; display: flex; flex-direction: column; background: var(--worlds-paper); border-inline-start: 3px double var(--worlds-page-edge); }
+.worlds-page-heading { display: flex; justify-content: space-between; gap: 8px; flex-shrink: 0; padding: 12px 16px 9px; font: 700 19px/25px var(--worlds-title); border-bottom: 1px solid var(--worlds-page-edge); color: var(--cth-ink-900); }
+.worlds-page-heading > :last-child { font: 12px/25px var(--cth-font-mono); color: var(--cth-ink-500); }
+.worlds-command--fullscreen .worlds-book-spread { flex-direction: column; }
+.worlds-command--fullscreen .worlds-book-spread > .cth-tabbar { flex-direction: row; flex-basis: auto; }
+.worlds-command--fullscreen .worlds-book-spread > .cth-tabbar button { flex: 1 0 auto !important; }
+.worlds-command--fullscreen .worlds-tab-label { position: static; width: auto; height: auto; clip-path: none; }
+.worlds-parchment-surface { position: relative; min-width: 0; padding: 14px; background: var(--worlds-paper); border: 2px solid var(--worlds-page-edge); border-radius: 3px 6px 3px 6px; box-shadow: 0 3px 0 #261b11, inset 0 0 0 3px #b99a6633; }
+.worlds-status-ledger { flex-shrink: 0; padding: 0 12px 8px; }
+.worlds-status-ledger .worlds-hanging-sign { margin-top: -9px; font-size: 15px; padding-block: 2px; }
+.worlds-status-ledger dl { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); margin: 10px 0 0; gap: 8px; }
+.worlds-status-ledger dl > div { display: flex; flex-direction: column-reverse; text-align: center; border-inline-end: 1px solid var(--cth-ink-100); }
+.worlds-status-ledger dl > div:last-child { border: 0; }
+.worlds-status-ledger dt { font-size: 10px; line-height: 13px; color: var(--cth-ink-700); overflow-wrap: anywhere; }
+.worlds-status-ledger dd { margin: 0; font: 700 24px/28px var(--worlds-title); color: var(--cth-ink-900); }
+.worlds-system-stamp { display: flex; align-items: center; flex-direction: column; flex-shrink: 0; gap: 3px; }
+.worlds-system-stamp > span > button, .worlds-system-stamp > span > button span { color: var(--worlds-on-wood) !important; font-size: 10px !important; line-height: 13px !important; }
+.worlds-titlebar { min-height: 77px !important; }
+.worlds-about-entry { padding: 10px 12px; border: 1px solid var(--cth-ink-100); border-radius: 3px; }
+.worlds-about-entry summary { cursor: pointer; font: 700 17px/25px var(--worlds-title); color: var(--cth-ink-700); }
+.worlds-about-entry[open] summary { margin-bottom: 12px; }
+.worlds-settings-book { border-width: 10px 12px 12px 10px; border-radius: 8px 14px 14px 8px; }
+.worlds-settings-index { width: 184px !important; border-inline-end-width: 7px !important; padding-top: 24px !important; }
+.worlds-settings-page { padding: 28px !important; box-shadow: inset -6px 0 0 #aa855115; }
+.worlds-settings-page > div[style*='height: 1'] { flex-shrink: 0; opacity: .5; }
+.worlds-market-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0,1fr); gap: 28px; }
+.worlds-market-stock { display: flex; flex-direction: column; min-width: 0; gap: 22px; }
+.worlds-market-stock > input { width: 100%; }
+.worlds-market-order { padding: 20px; border: 1px solid var(--worlds-page-edge); background: var(--worlds-paper); border-radius: 4px; box-shadow: 3px 5px 0 #49321e40; min-width: 0; }
+.worlds-market-shelves { display: grid !important; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 22px 14px !important; padding: 18px 12px 24px !important; background: var(--worlds-chrome); background-size: auto, 320px; border: 5px solid var(--worlds-rim); }
+.worlds-market-shelves li { text-align: center; border-bottom: 6px solid #a17643; padding-block: 15px 8px !important; box-shadow: 0 4px 3px #0006 !important; border-radius: 5px 5px 0 0; overflow-wrap: anywhere; }
+@media (max-width: 1100px) {
+  .worlds-vine { width: 62px; height: 70px; }
+  .worlds-titlebar { gap: 7px !important; }
+  .worlds-titlebar .worlds-brand { font-size: 17px; }
+  .worlds-settings-index { width: 155px !important; }
+  .worlds-settings-page { padding: 18px !important; }
+  .worlds-market-grid { gap: 16px; }
+}
+@media (max-width: 899px) {
+  .worlds-sidebar { width: 370px !important; max-width: calc(100% - 280px); padding: 6px; }
+  .worlds-world-column { padding-inline: 6px; }
+  .worlds-command > :first-child { padding: 9px !important; }
+  .worlds-market-grid { grid-template-columns: minmax(0,1fr); }
+  .worlds-market-shelves { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .worlds-system-stamp .worlds-brand { font-size: 15px; }
+}
+
+/* Monitor rows also wrap inside the narrow ledger, including live telemetry. */
+.worlds-monitor-agent > div { min-width: 0; flex-wrap: wrap; }
+.worlds-monitor-agent-header > button { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+.worlds-monitor-agent-header > span { max-width: 100%; overflow-wrap: anywhere; }

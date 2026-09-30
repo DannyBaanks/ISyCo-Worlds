@@ -55,9 +55,10 @@ export function PixelPanel({
   }
 
   return (
-    <div className={className} style={baseStyle}>
+    <div className={`worlds-panel worlds-panel--${variant} ${className ?? ''}`} style={baseStyle}>
       {title && (
         <div
+          className="worlds-panel-title"
           style={{
             margin: noPadding ? 0 : '-12px -12px 12px',
             padding: '6px 12px 4px',

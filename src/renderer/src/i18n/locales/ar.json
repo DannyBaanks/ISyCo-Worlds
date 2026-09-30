@@ -1685,7 +1685,7 @@
   "shell": {
     "nav": {
       "label": "التنقل العام",
-      "office": "المكتب",
+      "office": "العالم",
       "settings": "الإعدادات",
       "settingsShort": "الإعدادات",
       "marketplace": "المتجر",
@@ -1693,7 +1693,7 @@
     },
     "marketplace": {
       "title": "المتجر",
-      "tagline": "اكتشف وابنِ إضافات لـ Munder.",
+      "tagline": "اكتشف وابنِ إضافات لـ ISyCo Worlds.",
       "searchPlaceholder": "ابحث عن الإضافات وخوادم MCP والمزوّدين…",
       "categories": "الفئات",
       "category": {
@@ -1704,12 +1704,13 @@
         "pack": "حزمة مكتب",
         "theme": "سمة"
       },
-      "createTitle": "أنشئ لـ Munder",
-      "createBlurb": "صف ما تريد إضافته إلى Munder.",
-      "intentPlaceholder": "أريد أن يتمكن Munder من…",
+      "createTitle": "أنشئ لـ ISyCo Worlds",
+      "createBlurb": "صف ما تريد إضافته إلى ISyCo Worlds.",
+      "intentPlaceholder": "أريد أن يتمكن ISyCo Worlds من…",
       "prepare": "تجهيز المساهمة",
       "pipelineSoon": "قريبًا: مسار المساهمات غير متصل بعد.",
       "noCatalog": "لا يوجد كتالوج متصل بعد. لا شيء هنا يثبّت أو يشغّل أي شيء."
     }
-  }
+  },
+  "worldsVisual": {"coordinator": "المنسق", "crew": "الرفاق", "worldStatus": "سجل العالم", "working": "يعملون", "waiting": "بحاجة إلى الانتباه", "about": "حول ISyCo Worlds"}
 }

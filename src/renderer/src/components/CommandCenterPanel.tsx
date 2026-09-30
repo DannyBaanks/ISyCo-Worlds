@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PixelPanel } from './PixelPanel';
+import { LedgerBook } from './worlds/WorldMaterials';
 import { PixelBadge } from './PixelBadge';
 import { PixelButton } from './PixelButton';
 import { SpritePortrait } from './SpritePortrait';
@@ -149,10 +149,8 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
   };
 
   return (
-    <PixelPanel
-      variant="default"
-      className="cth-world-command-panel cth-world-panel"
-      noPadding
+    <LedgerBook
+      className={`worlds-command ${fullscreen ? 'worlds-command--fullscreen' : ''}`}
       style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0, overflow: 'hidden' }}
     >
       {/* Header */}
@@ -227,35 +225,11 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
         </div>
       </div>
 
-      {/* Tab bar — ONE row, tabs at their natural width, scrolling only if the
-          panel is genuinely too narrow for all of them.
-
-          This was an auto-fit grid of equal-width cells, which had a failure mode
-          the equal widths caused: every column is sized to the WIDEST tab, so the
-          track count is set by the longest label rather than by the total width
-          the labels actually need. Adding a 12th tab tipped it over at fullscreen
-          width and dropped `setup` onto a second row with most of the first row's
-          space still unused — the tabs need ~1320px of content and had ~1610px.
-
-          Content-sized tabs fit all twelve on one line with room to spare, and the
-          `.cth-tabbar` rules in global.css (scrollbar-width: none, ::-webkit-
-          scrollbar { height: 0 }) already exist for exactly this: a single row that
-          scrolls with the scrollbar hidden. The grid never scrolled, so those rules
-          have been dead code since it landed.
-
-          Trade-off, deliberate: in the NARROW docked panel the far-right tabs now
-          scroll out of view instead of wrapping to a visible second row. One row
-          that sometimes needs a scroll beats two rows where one is nearly empty —
-          and the grid's own reason for existing (keeping wrapped rows aligned)
-          stops applying the moment there is only ever one row. */}
+      <div className="worlds-book-spread">
+      {/* Bookmarks form a vertical index in the docked ledger. Focus mode
+          uses a horizontal row with visible labels; both retain every section. */}
       <div className="cth-tabbar" style={{
         display: 'flex', gap: 4,
-        // Docked in the sidebar the panel is narrow, so tabs WRAP: a second row
-        // costs a few pixels of a tall column, while a horizontal scroll there
-        // would hide half the tabs behind a gesture with no affordance.
-        // In focus mode the panel is wide and vertical space is the scarce
-        // resource, so it stays ONE row and scrolls instead. `.cth-tabbar` in
-        // global.css already hides that scrollbar.
         flexWrap: fullscreen ? 'nowrap' : 'wrap',
         overflowX: fullscreen ? 'auto' : 'visible',
         padding: '6px 8px', background: 'var(--cth-cream-100)',
@@ -264,6 +238,9 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
         {visibleTabs.map((tabDef) => (
           <button
             key={tabDef.key}
+            title={t(tabDef.labelKey)}
+            aria-label={t(tabDef.labelKey)}
+            aria-pressed={tab === tabDef.key}
             onClick={() => setTab(tabDef.key)}
             style={{
               whiteSpace: 'nowrap',
@@ -285,19 +262,21 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
               fontFamily: 'var(--cth-font-ui)', fontSize: 13
             }}
           >
-            <Icon name={tabDef.icon} /> {t(tabDef.labelKey)}
+            <Icon name={tabDef.icon} /><span className="worlds-tab-label">{t(tabDef.labelKey)}</span>
           </button>
         ))}
       </div>
 
+      <div className="worlds-book-page">
+      <header className="worlds-page-heading"><span>{t(TABS.find(item => item.key === tab)!.labelKey)}</span><span aria-hidden="true">{String(TABS.findIndex(item => item.key === tab) + 1).padStart(2, '0')}</span></header>
       {/* Body */}
-      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+      <div className="worlds-command-body" data-section={tab} style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         {tab === 'terminal' && (
           isFullscreenedHere ? (
             <Centered>{t('commandCenter.terminalFullscreen')}</Centered>
           ) : agent.ptyId ? (
             <>
-              <div className="cth-world-terminal" style={{ flex: 1, minHeight: 0, display: 'flex' }}>
+              <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
                 <PtyTerminalView
                   key={terminalInstanceKey(agent.ptyId, agent.terminalGeneration)}
                   ptyId={agent.ptyId}
@@ -338,7 +317,9 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
         {tab === 'skills' && <SkillsTab agentCwd={agent.cwd} />}
         {tab === 'workers' && <WorkersTab />}
       </div>
-    </PixelPanel>
+      </div>
+      </div>
+    </LedgerBook>
   );
 }
 
@@ -697,12 +678,12 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
           const currentModelKnown = modelsForProvider(agentProvider)
             .some((model) => model.id === a.model);
           return (
-          <div key={a.id} style={{
+          <div key={a.id} className="worlds-monitor-agent" style={{
             display: 'flex', flexDirection: 'column', gap: 4,
             padding: 6, marginBottom: 6,
             background: armed ? 'var(--cth-coral-light)' : 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className="worlds-monitor-agent-header" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <div style={{
                 width: 24, height: 24, background: `var(--cth-${a.accent}-light)`,
                 boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
@@ -716,7 +697,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                   border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
                   fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-900)'
                 }}
-              >{a.name}{a.isGod ? t('commandCenter.godTag') : ''}</button>
+              >{a.name}{a.isGod ? ` · ${t('worldsVisual.coordinator')}` : ''}</button>
               <PixelBadge status={armed ? 'looping' : a.status} />
               {armed && <span title={breaker?.reason} style={{ color: 'var(--cth-coral)', fontSize: 12 }}>⚠</span>}
               <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--cth-ink-500)' }}>

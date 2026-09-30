@@ -1685,7 +1685,7 @@
   "shell": {
     "nav": {
       "label": "全局导航",
-      "office": "办公室",
+      "office": "世界",
       "settings": "设置",
       "settingsShort": "设置",
       "marketplace": "市场",
@@ -1693,7 +1693,7 @@
     },
     "marketplace": {
       "title": "市场",
-      "tagline": "发现并构建 Munder 扩展。",
+      "tagline": "发现并构建 ISyCo Worlds 扩展。",
       "searchPlaceholder": "搜索插件、MCP、提供方…",
       "categories": "分类",
       "category": {
@@ -1704,12 +1704,13 @@
         "pack": "办公室包",
         "theme": "主题"
       },
-      "createTitle": "为 Munder 创建",
-      "createBlurb": "描述你想为 Munder 添加什么。",
-      "intentPlaceholder": "我希望 Munder 能够…",
+      "createTitle": "为 ISyCo Worlds 创建",
+      "createBlurb": "描述你想为 ISyCo Worlds 添加什么。",
+      "intentPlaceholder": "我希望 ISyCo Worlds 能够…",
       "prepare": "准备贡献",
       "pipelineSoon": "即将推出：贡献流程尚未接入。",
       "noCatalog": "尚未接入任何目录。这里不会安装或运行任何东西。"
     }
-  }
+  },
+  "worldsVisual": {"coordinator": "协调员", "crew": "伙伴", "worldStatus": "世界记录", "working": "工作中", "waiting": "需要关注", "about": "关于 ISyCo Worlds"}
 }

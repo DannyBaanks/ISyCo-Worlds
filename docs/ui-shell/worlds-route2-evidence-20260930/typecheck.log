@@ -1,0 +1,12 @@
+
+> munder-difflin@0.5.2-ISyCo.2 typecheck
+> npm run typecheck:node && npm run typecheck:web
+
+
+> munder-difflin@0.5.2-ISyCo.2 typecheck:node
+> tsc --noEmit -p tsconfig.node.json
+
+
+> munder-difflin@0.5.2-ISyCo.2 typecheck:web
+> tsc --noEmit -p tsconfig.web.json
+

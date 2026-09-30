@@ -1,3 +1,4 @@
+import { Icon } from './Icon';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -102,7 +103,7 @@ export function GlobalNav({
         onClick={() => onView('office')}
         style={tabStyle(view === 'office')}
       >
-        {t('shell.nav.office')}
+        <Icon name="web" />{t('shell.nav.office')}
       </button>
 
       <div ref={wrapRef} style={{ position: 'relative', display: 'flex' }}>
@@ -123,7 +124,7 @@ export function GlobalNav({
           }}
           style={tabStyle(menuOpen || settingsOpen)}
         >
-          {settingsLabel}
+          <Icon name="gear" />{settingsLabel}
           {/* The pixel display font has no ▾; draw the caret. */}
           <svg aria-hidden="true" focusable="false" width="8" height="8" viewBox="0 0 8 8" style={{ display: 'block' }}>
             <path d="M1 2h6v1H6v1H5v1H3V4H2V3H1z" fill="currentColor" />
@@ -185,7 +186,7 @@ export function GlobalNav({
         onClick={() => onView('marketplace')}
         style={tabStyle(view === 'marketplace')}
       >
-        {t('shell.nav.marketplace')}
+        <Icon name="mcp" />{t('shell.nav.marketplace')}
       </button>
     </nav>
   );

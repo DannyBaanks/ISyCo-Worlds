@@ -1685,7 +1685,7 @@
   "shell": {
     "nav": {
       "label": "Navegación global",
-      "office": "Oficina",
+      "office": "Mundo",
       "settings": "Configuración",
       "settingsShort": "Config",
       "marketplace": "Marketplace",
@@ -1693,7 +1693,7 @@
     },
     "marketplace": {
       "title": "MARKETPLACE",
-      "tagline": "Descubre y construye extensiones para Munder.",
+      "tagline": "Descubre y construye extensiones para ISyCo Worlds.",
       "searchPlaceholder": "Buscar plugins, MCPs, providers…",
       "categories": "Categorías",
       "category": {
@@ -1704,12 +1704,13 @@
         "pack": "Office Pack",
         "theme": "Tema"
       },
-      "createTitle": "Crear para Munder",
-      "createBlurb": "Describe qué quieres agregar a Munder.",
-      "intentPlaceholder": "Quiero que Munder pueda…",
+      "createTitle": "Crear para ISyCo Worlds",
+      "createBlurb": "Describe qué quieres agregar a ISyCo Worlds.",
+      "intentPlaceholder": "Quiero que ISyCo Worlds pueda…",
       "prepare": "Preparar contribución",
       "pipelineSoon": "Próximamente: el flujo de contribuciones todavía no está conectado.",
       "noCatalog": "Todavía no hay catálogo conectado. Nada aquí instala ni ejecuta nada."
     }
-  }
+  },
+  "worldsVisual": {"coordinator": "Coordinador", "crew": "Compañeros", "worldStatus": "Registro del mundo", "working": "Trabajando", "waiting": "Requieren atención", "about": "Acerca de ISyCo Worlds"}
 }

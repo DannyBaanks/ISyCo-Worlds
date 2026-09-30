@@ -12,11 +12,9 @@ export interface AgentStripProps {
   /** Needed to rebuild a spawn command when a restorable agent predates the
    *  persisted `command` field. Optional so the strip renders without config. */
   config?: HarnessConfig | null;
-  /** Notifies the isolated native world view when a strip popover overlays it. */
-  onOverlayVisibilityChange?: (open: boolean) => void;
 }
 
-export function AgentStrip({ config, onOverlayVisibilityChange }: AgentStripProps) {
+export function AgentStrip({ config }: AgentStripProps) {
   const { t } = useTranslation();
   const rtl = useRtl();
   const agents = useStore(s => s.agents);
@@ -59,9 +57,6 @@ export function AgentStrip({ config, onOverlayVisibilityChange }: AgentStripProp
   // The editor is a fixed popover ABOVE the card (anchored off its rect): the
   // strip clips overflow and the compact cards have no room for an inline box.
   const [noteEditId, setNoteEditId] = useState<string | null>(null);
-  useEffect(() => {
-    onOverlayVisibilityChange?.(restoreMenuOpen || noteEditId !== null);
-  }, [restoreMenuOpen, noteEditId, onOverlayVisibilityChange]);
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   // Each worker's actively-DOING ledger tasks, polled from hive/tasks.json —
   // rendered as a sticky note on the avatar card (click → task detail).
@@ -87,7 +82,7 @@ export function AgentStrip({ config, onOverlayVisibilityChange }: AgentStripProp
   }, []);
 
   return (
-    <div className="cth-world-agent-strip" style={{
+    <div className="worlds-roster" style={{
       display: 'flex',
       gap: 12,
       padding: '14px 16px',

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
+import { WorldBrand } from './WorldBrand';
 import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
 import { Icon, type IconName } from './Icon';
@@ -20,7 +21,6 @@ export interface OnboardingWizardProps {
 
 type Audience = 'technical' | 'non-technical';
 type Step = 'language' | 'persona' | 'welcome' | 'home' | 'orchestrator' | 'repos' | 'permissions' | 'done';
-const ONBOARDING_STEPS: Step[] = ['language', 'persona', 'welcome', 'home', 'orchestrator', 'repos', 'permissions'];
 
 // First-run showcase "— the highest-value features a brand-new user should grasp
 // before any setup. Labels and copy live in i18n (two registers: `desc` for the
@@ -102,7 +102,6 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   // the rest of the wizard reads `plain` to swap copy registers.
   const [audience, setAudience] = useState<Audience | undefined>();
   const plain = audience === 'non-technical';
-  const currentStep = Math.max(0, ONBOARDING_STEPS.indexOf(step));
 
   const [home, setHome] = useState<string>('');
   const [repos, setRepos] = useState<string[]>([]);
@@ -238,8 +237,11 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   };
 
   return (
-    <div className="cth-onboarding-overlay" style={{
+    <div className="worlds-entry" style={{
       position: 'fixed', inset: 0,
+      background: 'var(--cth-cream-200)',
+      backgroundImage:
+        `repeating-linear-gradient(45deg, rgba(232, 217, 160, 0.4) 0 1px, transparent 1px 8px)`,
       // Scroll the overlay rather than clip the wizard. Step 2 lists every
       // installed CLI engine (8 rows + a model select), which is taller than a
       // 1080p-class window once the OS chrome is subtracted "— the panel was
@@ -253,19 +255,9 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
           that overflows its container is clipped at the TOP and unreachable by
           scrolling (the overflow spills past the scroll origin); auto margins
           center while it fits and collapse to a normal scroll once it doesn't. */}
-      <div style={{ width: 680, maxWidth: '94vw', margin: 'auto' }}>
-        <div className="cth-onboarding-progress" aria-label={`${currentStep + 1} / ${ONBOARDING_STEPS.length}`}>
-          <span className="cth-onboarding-progress-label">{currentStep + 1} / {ONBOARDING_STEPS.length}</span>
-          <div className="cth-onboarding-progress-track" role="progressbar" aria-valuemin={1} aria-valuemax={ONBOARDING_STEPS.length} aria-valuenow={Math.min(currentStep + 1, ONBOARDING_STEPS.length)}>
-            {ONBOARDING_STEPS.map((item, index) => (
-              <span key={item} className={index <= currentStep ? 'is-lit' : undefined} />
-            ))}
-          </div>
-          <span className="cth-onboarding-progress-caption">{t('onboarding.progress')}</span>
-        </div>
-        <div className="cth-onboarding-step" data-onboarding-step={step}>
+      <div style={{ width: 640, maxWidth: '94vw', margin: 'auto' }}>
+        <WorldBrand />
         <PixelPanel
-          className="cth-onboarding-panel"
           variant="dialog"
           title={
             step === 'language' ? t('onboarding.titles.language')
@@ -839,7 +831,6 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
             </div>
           </div>
         </PixelPanel>
-        </div>
       </div>
     </div>
   );
@@ -853,8 +844,6 @@ function LanguageCard({ nativeLabel, desc, selected, onClick }: {
 }) {
   return (
     <button
-      aria-pressed={selected}
-      className="cth-onboarding-choice"
       onClick={onClick}
       style={{
         textAlign: 'left', cursor: 'pointer', border: 'none',
@@ -882,8 +871,6 @@ function PersonaCard({ icon, title, desc, selected, onClick }: {
 }) {
   return (
     <button
-      aria-pressed={selected}
-      className="cth-onboarding-choice cth-onboarding-persona-choice"
       onClick={onClick}
       style={{
         textAlign: 'left', cursor: 'pointer', border: 'none',

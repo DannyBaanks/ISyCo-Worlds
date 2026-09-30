@@ -1685,7 +1685,7 @@
   "shell": {
     "nav": {
       "label": "グローバルナビゲーション",
-      "office": "オフィス",
+      "office": "ワールド",
       "settings": "設定",
       "settingsShort": "設定",
       "marketplace": "マーケットプレイス",
@@ -1693,7 +1693,7 @@
     },
     "marketplace": {
       "title": "マーケットプレイス",
-      "tagline": "Munder の拡張を見つけて、作る。",
+      "tagline": "ISyCo Worlds の拡張を見つけて、作る。",
       "searchPlaceholder": "プラグイン、MCP、プロバイダーを検索…",
       "categories": "カテゴリ",
       "category": {
@@ -1704,12 +1704,13 @@
         "pack": "オフィスパック",
         "theme": "テーマ"
       },
-      "createTitle": "Munder のために作る",
-      "createBlurb": "Munder に追加したいものを記述してください。",
-      "intentPlaceholder": "Munder にできるようになってほしいことは…",
+      "createTitle": "ISyCo Worlds のために作る",
+      "createBlurb": "ISyCo Worlds に追加したいものを記述してください。",
+      "intentPlaceholder": "ISyCo Worlds にできるようになってほしいことは…",
       "prepare": "コントリビューションを準備",
       "pipelineSoon": "近日公開: コントリビューションパイプラインはまだ接続されていません。",
       "noCatalog": "カタログはまだ接続されていません。ここにあるものは何もインストールも実行もしません。"
     }
-  }
+  },
+  "worldsVisual": {"coordinator": "コーディネーター", "crew": "仲間", "worldStatus": "ワールド記録", "working": "作業中", "waiting": "確認が必要", "about": "ISyCo Worldsについて"}
 }
