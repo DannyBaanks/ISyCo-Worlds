@@ -135,6 +135,8 @@ jobs:
       - name: Missing secrets fail closed
         working-directory: android/MunderMobile
         run: |
+          # Un APK viejo no debe sobrevivir a una corrida que falla temprano.
+          echo stale > MunderMobile-release.apk
           if bash scripts/release-apk.sh > out.txt 2>&1; then cat out.txt; echo "::error::debió fallar sin secretos"; exit 1; fi
           grep -q "Firma de Android sin configurar" out.txt
           test ! -e MunderMobile-release.apk
