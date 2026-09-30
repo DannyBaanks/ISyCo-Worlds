@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
+import { WorldBrand } from './WorldBrand';
 import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
 import { Icon, type IconName } from './Icon';
@@ -236,7 +237,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   };
 
   return (
-    <div style={{
+    <div className="worlds-entry" style={{
       position: 'fixed', inset: 0,
       background: 'var(--cth-cream-200)',
       backgroundImage:
@@ -255,6 +256,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
           scrolling (the overflow spills past the scroll origin); auto margins
           center while it fits and collapse to a normal scroll once it doesn't. */}
       <div style={{ width: 640, maxWidth: '94vw', margin: 'auto' }}>
+        <WorldBrand />
         <PixelPanel
           variant="dialog"
           title={

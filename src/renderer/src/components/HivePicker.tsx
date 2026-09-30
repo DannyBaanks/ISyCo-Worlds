@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
+import { WorldBrand } from './WorldBrand';
 import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
 import { Icon } from './Icon';
@@ -111,7 +112,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
   };
 
   return (
-    <div style={{
+    <div className="worlds-entry" style={{
       position: 'fixed', inset: 0,
       background: 'var(--cth-cream-200)',
       backgroundImage:
@@ -121,6 +122,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
       padding: 32
     }}>
       <div style={{ width: 560, maxWidth: '94vw' }}>
+        <WorldBrand />
         <PixelPanel variant="dialog" title={t('hivePicker.title')} noPadding>
           <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
             <p style={{ margin: 0, fontSize: 12, lineHeight: '19px', color: 'var(--cth-ink-700)' }}>

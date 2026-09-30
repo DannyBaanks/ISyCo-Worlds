@@ -36,12 +36,16 @@ import { FullscreenTerminal } from '@/components/FullscreenTerminal';
 import { TaskDetailOverlay } from '@/components/TaskDetailOverlay';
 import { IdePanel } from '@/ide/IdePanel';
 import { useHoldOptionToTalk } from '@/freeflow/holdOption';
-import brandLogo from '@brand/logo.png?url';
+import { HangingSign, WoodFrame, VineCorner } from '@/components/worlds/WorldMaterials';
+import { WorldStatusLedger } from '@/components/worlds/WorldStatusLedger';
+import { useTranslation } from 'react-i18next';
+import { WorldBrand } from '@/components/WorldBrand';
 
 // Injected at build time from package.json (see electron.vite.config.ts).
 declare const __APP_VERSION__: string;
 
 export function App() {
+  const { t } = useTranslation();
   // Point every {{godName}} string at the orchestrator's real, renameable name.
   useGodNameSync();
   // Mirror the document only for a user who has picked an RTL app language.
@@ -278,7 +282,7 @@ export function App() {
   }
 
   return (
-    <div style={{
+    <div className="worlds-shell" style={{
       display: 'flex', flexDirection: 'column',
       width: '100vw', height: '100vh',
       overflow: 'hidden'
@@ -291,7 +295,7 @@ export function App() {
       <UpdateToast />
       {/* Title bar */}
       <div
-        className="cth-titlebar-drag"
+        className="cth-titlebar-drag worlds-titlebar"
         style={{
           height: 36, minHeight: 36,
           background: 'linear-gradient(180deg, var(--cth-cream-100) 0%, var(--cth-cream-200) 100%)',
@@ -304,14 +308,10 @@ export function App() {
           userSelect: 'none'
         }}
       >
-        <img
-          src={brandLogo}
-          alt="Munder Difflin"
-          style={{ height: 20, width: 'auto', display: 'block' }}
-        />
+        <div className="worlds-system-stamp"><WorldBrand />
         {/* v0.3.7: the version is no longer inert text — it doubles as the
             update control (check / download / restart to update). */}
-        <UpdateBadge />
+        <UpdateBadge /></div>
         {density === 'full' ? (
           <span style={{
             fontFamily: 'var(--cth-font-ui)',
@@ -414,7 +414,7 @@ export function App() {
 
       </div>
 
-      <div style={{
+      <div className="worlds-workspace" style={{
         flex: 1, minHeight: 0,
         display: 'flex',
         padding: 16,
@@ -422,7 +422,10 @@ export function App() {
         position: 'relative'
       }}>
         {globalView === 'marketplace' && <MarketplaceView />}
-        <div style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative' }}>
+        <WoodFrame className="worlds-world-column">
+          <HangingSign className="worlds-world-sign">{t('shell.nav.office')}</HangingSign>
+          <VineCorner /><VineCorner flipped />
+        <div className="worlds-stage" style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative' }}>
           <WorldHost config={config} />
           <MemoryPanel />
           {agentCount === 0 && godStatus === 'booting' && <MichaelBooting />}
@@ -450,16 +453,21 @@ export function App() {
           )}
         </div>
 
+          <HangingSign className="worlds-crew-sign">{t('worldsVisual.crew')}</HangingSign>
+          <AgentStrip config={config} />
+        </WoodFrame>
+
         <SidebarSplitter
           width={sidebarWidth}
           onChange={setSidebarWidth}
           viewportWidth={vpWidth}
         />
 
-        <div style={{
+        <div className="worlds-sidebar" style={{
           width: sidebarWidth, flexShrink: 0,
           minHeight: 0, display: 'flex', flexDirection: 'column'
         }}>
+          <div className="worlds-command-slot">
           {agent ? (
             <AgentDetailPanel agent={agent} />
           ) : godStatus === 'booting' ? (
@@ -498,10 +506,10 @@ export function App() {
               </PixelButton>
             </PixelPanel>
           )}
+          </div>
+          <WorldStatusLedger />
         </div>
       </div>
-
-      <AgentStrip config={config} />
 
       {addAgentOpen && (
         <AddAgentModal

@@ -102,8 +102,8 @@ export function AgentCard({
   // that gets cut. Widened for every card so the dock stays uniform, with enough
   // slack that Talk's info mark (which only appears when the OpenAI key is
   // missing) has somewhere to sit rather than pushing the row apart.
-  const width = 220;
-  const height = 78;
+  const width = 252;
+  const height = 110;
   const lift = (isGod ? -2 : 0) - (hover ? 1 : 0) - (selected ? 1 : 0);
   /** God's distinction: a tinted surface plus a thin accent border all the way
    *  around — NOT the 3px rule that used to sit on the top edge alone. That rule
@@ -130,6 +130,9 @@ export function AgentCard({
 
   return (
     <div
+      className="worlds-worker cth-titlebar-nodrag"
+      aria-pressed={!!selected}
+      data-coordinator={isGod || undefined}
       role="button"
       tabIndex={0}
       onClick={onClick}
@@ -146,7 +149,6 @@ export function AgentCard({
       // The ring is the visual answer to "which terminal is open"; this is the
       // same answer for a screen reader. Matches SidebarRow in fullscreen.
       aria-current={selected ? 'true' : undefined}
-      className="cth-titlebar-nodrag"
       style={{
         width, minWidth: width, height,
         padding: 0, border: 'none', background: 'transparent', cursor: 'pointer', textAlign: 'left',
@@ -165,7 +167,7 @@ export function AgentCard({
             : t('agentCard.doingTasksPlural', { count: doingCount })}
           onClick={(e) => { e.stopPropagation(); onTaskNoteClick?.(); }}
           style={{
-            position: 'absolute', right: -4, bottom: -5, zIndex: 2,
+            position: 'absolute', right: 4, bottom: 4, zIndex: 2,
             width: 20, height: 18,
             background: 'var(--cth-sky)',
             boxShadow: 'inset 0 0 0 1px var(--cth-ink-300), 1px 2px 0 rgba(26,19,32,0.18)',
@@ -180,7 +182,8 @@ export function AgentCard({
       )}
       <PixelPanel
         variant="default"
-        style={{ height: '100%', padding: '6px 8px', ...godSurface }}
+        className="worlds-worker-sheet"
+        style={{ height: '100%', padding: '12px 10px', ...godSurface }}
         noPadding
       >
         <div style={{ display: 'flex', gap: 8, height: '100%' }}>
@@ -202,8 +205,8 @@ export function AgentCard({
 
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
             {/* Identity row: name (+ BOSS tag) + status. */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'space-between', minWidth: 0 }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, minWidth: 0, flex: 1 }}>
+            <div className="worlds-worker-identity" style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'space-between', minWidth: 0 }}>
+              <span className="worlds-worker-name" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, minWidth: 0, flex: 1 }}>
                 {onRename ? (
                   <AgentNameEditor name={name} onCommit={onRename} uppercase />
                 ) : (
@@ -216,13 +219,8 @@ export function AgentCard({
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                   }}>{name.toUpperCase()}</span>
                 )}
-                {isGod && (
-                  <span style={{
-                    fontFamily: 'var(--cth-font-display)', fontSize: 7, lineHeight: '11px',
-                    background: `var(--cth-${accent})`, color: 'var(--cth-ink-900)',
-                    padding: '1px 4px 0', flexShrink: 0
-                  }}>{t('agentCard.boss')}</span>                )}
               </span>
+              {isGod && <span className="worlds-worker-role">{t('worldsVisual.coordinator')}</span>}
               {/* flexShrink:0 — the badge is a fixed 2-to-5 character chip; when
                   it was allowed to shrink, the browser resolved the overflow by
                   eating the NAME instead. Truncation should land on the longest,

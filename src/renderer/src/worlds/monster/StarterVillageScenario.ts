@@ -1,4 +1,4 @@
-import starterVillageAtlasUrl from '../../assets/worlds/starter-village/starter-village-atlas.svg?url';
+import starterVillageAtlasUrl from '../../assets/worlds/starter-village/starter-village-atlas.png?url';
 
 export const STARTER_VILLAGE_TILE_SIZE = 16;
 export const STARTER_VILLAGE_COLUMNS = 24;
@@ -79,6 +79,7 @@ export const STARTER_VILLAGE_SCENARIO: StarterVillageScenario = {
         id: 'roads',
         zIndex: 20,
         tiles: [
+          ...rectangle('dirt', 5, 6, 2, 3),
           ...rectangle('dirt', 7, 7, 11, 2),
           ...rectangle('road', 17, 4, 2, 4),
           ...rectangle('road', 18, 3, 5, 2),
@@ -102,7 +103,11 @@ export const STARTER_VILLAGE_SCENARIO: StarterVillageScenario = {
         id: 'foreground',
         zIndex: 40,
         tiles: [
-          ...rectangle('tree', 0, 0, 2, 5),
+          ...rectangle('tree', 0, 0, 2, 8),
+          ...rectangle('tree', 2, 0, 20, 1),
+          ...rectangle('tree', 13, 13, 11, 3),
+          ...rectangle('shrub', 10, 1, 4, 2),
+          ...rectangle('flowers', 8, 4, 2, 2),
           ...rectangle('tree', 22, 0, 2, 7),
           ...rectangle('shrub', 2, 10, 2, 1),
           ...rectangle('shrub', 11, 11, 1, 4),

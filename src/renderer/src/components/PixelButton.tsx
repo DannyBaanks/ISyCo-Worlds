@@ -80,6 +80,7 @@ export function PixelButton({
 
   return (
     <button
+      className={`worlds-button worlds-button--${variant}`}
       title={title}
       onClick={disabled ? undefined : onClick}
       onMouseDown={() => setPressed(true)}

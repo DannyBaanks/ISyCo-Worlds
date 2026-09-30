@@ -82,7 +82,7 @@ export function AgentStrip({ config }: AgentStripProps) {
   }, []);
 
   return (
-    <div style={{
+    <div className="worlds-roster" style={{
       display: 'flex',
       gap: 12,
       padding: '14px 16px',

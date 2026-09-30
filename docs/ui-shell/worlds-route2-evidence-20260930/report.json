@@ -1,0 +1,1178 @@
+{
+  "timestamp": "2026-09-30T15:28:28.749Z",
+  "environment": "Chromium / production React App / inert IPC fixture",
+  "checks": [
+    {
+      "label": "world-1440",
+      "viewport": 1440,
+      "body": 1440,
+      "stage": {
+        "x": 24,
+        "y": 121,
+        "right": 986,
+        "bottom": 713,
+        "width": 962,
+        "height": 592,
+        "scroll": 958,
+        "client": 958
+      },
+      "sidebar": {
+        "x": 1008,
+        "y": 89,
+        "right": 1428,
+        "bottom": 888,
+        "width": 420,
+        "height": 799,
+        "scroll": 420,
+        "client": 420
+      },
+      "roster": {
+        "x": 24,
+        "y": 725,
+        "right": 986,
+        "bottom": 876,
+        "width": 962,
+        "height": 151,
+        "scroll": 1008,
+        "client": 962
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 1440,
+        "bottom": 77,
+        "width": 1440,
+        "height": 77,
+        "scroll": 1440,
+        "client": 1440
+      }
+    },
+    {
+      "label": "world-1024",
+      "viewport": 1024,
+      "body": 1024,
+      "stage": {
+        "x": 20,
+        "y": 117,
+        "right": 574,
+        "bottom": 717,
+        "width": 554,
+        "height": 600,
+        "scroll": 550,
+        "client": 550
+      },
+      "sidebar": {
+        "x": 596,
+        "y": 85,
+        "right": 1016,
+        "bottom": 892,
+        "width": 420,
+        "height": 807,
+        "scroll": 420,
+        "client": 420
+      },
+      "roster": {
+        "x": 20,
+        "y": 729,
+        "right": 574,
+        "bottom": 880,
+        "width": 554,
+        "height": 151,
+        "scroll": 1008,
+        "client": 554
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 1024,
+        "bottom": 77,
+        "width": 1024,
+        "height": 77,
+        "scroll": 1024,
+        "client": 1024
+      }
+    },
+    {
+      "label": "world-860",
+      "viewport": 860,
+      "body": 860,
+      "stage": {
+        "x": 16,
+        "y": 146,
+        "right": 464,
+        "bottom": 717,
+        "width": 448,
+        "height": 571,
+        "scroll": 444,
+        "client": 444
+      },
+      "sidebar": {
+        "x": 482,
+        "y": 114,
+        "right": 852,
+        "bottom": 892,
+        "width": 370,
+        "height": 778,
+        "scroll": 370,
+        "client": 370
+      },
+      "roster": {
+        "x": 16,
+        "y": 729,
+        "right": 464,
+        "bottom": 880,
+        "width": 448,
+        "height": 151,
+        "scroll": 992,
+        "client": 448
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 860,
+        "bottom": 106,
+        "width": 860,
+        "height": 106,
+        "scroll": 860,
+        "client": 860
+      }
+    },
+    {
+      "label": "resize-1440",
+      "viewport": 1440,
+      "body": 1440,
+      "stage": {
+        "x": 24,
+        "y": 121,
+        "right": 986,
+        "bottom": 713,
+        "width": 962,
+        "height": 592,
+        "scroll": 958,
+        "client": 958
+      },
+      "sidebar": {
+        "x": 1008,
+        "y": 89,
+        "right": 1428,
+        "bottom": 888,
+        "width": 420,
+        "height": 799,
+        "scroll": 420,
+        "client": 420
+      },
+      "roster": {
+        "x": 24,
+        "y": 725,
+        "right": 986,
+        "bottom": 876,
+        "width": 962,
+        "height": 151,
+        "scroll": 1008,
+        "client": 962
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 1440,
+        "bottom": 77,
+        "width": 1440,
+        "height": 77,
+        "scroll": 1440,
+        "client": 1440
+      }
+    },
+    {
+      "label": "resize-860",
+      "viewport": 860,
+      "body": 860,
+      "stage": {
+        "x": 16,
+        "y": 146,
+        "right": 464,
+        "bottom": 717,
+        "width": 448,
+        "height": 571,
+        "scroll": 444,
+        "client": 444
+      },
+      "sidebar": {
+        "x": 482,
+        "y": 114,
+        "right": 852,
+        "bottom": 892,
+        "width": 370,
+        "height": 778,
+        "scroll": 370,
+        "client": 370
+      },
+      "roster": {
+        "x": 16,
+        "y": 729,
+        "right": 464,
+        "bottom": 880,
+        "width": 448,
+        "height": 151,
+        "scroll": 992,
+        "client": 448
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 860,
+        "bottom": 106,
+        "width": 860,
+        "height": 106,
+        "scroll": 860,
+        "client": 860
+      }
+    },
+    {
+      "label": "resize-1024",
+      "viewport": 1024,
+      "body": 1024,
+      "stage": {
+        "x": 20,
+        "y": 117,
+        "right": 574,
+        "bottom": 717,
+        "width": 554,
+        "height": 600,
+        "scroll": 550,
+        "client": 550
+      },
+      "sidebar": {
+        "x": 596,
+        "y": 85,
+        "right": 1016,
+        "bottom": 892,
+        "width": 420,
+        "height": 807,
+        "scroll": 420,
+        "client": 420
+      },
+      "roster": {
+        "x": 20,
+        "y": 729,
+        "right": 574,
+        "bottom": 880,
+        "width": 554,
+        "height": 151,
+        "scroll": 1008,
+        "client": 554
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 1024,
+        "bottom": 77,
+        "width": 1024,
+        "height": 77,
+        "scroll": 1024,
+        "client": 1024
+      }
+    },
+    {
+      "label": "resize-1440",
+      "viewport": 1440,
+      "body": 1440,
+      "stage": {
+        "x": 24,
+        "y": 121,
+        "right": 986,
+        "bottom": 713,
+        "width": 962,
+        "height": 592,
+        "scroll": 958,
+        "client": 958
+      },
+      "sidebar": {
+        "x": 1008,
+        "y": 89,
+        "right": 1428,
+        "bottom": 888,
+        "width": 420,
+        "height": 799,
+        "scroll": 420,
+        "client": 420
+      },
+      "roster": {
+        "x": 24,
+        "y": 725,
+        "right": 986,
+        "bottom": 876,
+        "width": 962,
+        "height": 151,
+        "scroll": 1008,
+        "client": 962
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 1440,
+        "bottom": 77,
+        "width": 1440,
+        "height": 77,
+        "scroll": 1440,
+        "client": 1440
+      }
+    },
+    {
+      "label": "resize-860",
+      "viewport": 860,
+      "body": 860,
+      "stage": {
+        "x": 16,
+        "y": 146,
+        "right": 464,
+        "bottom": 717,
+        "width": 448,
+        "height": 571,
+        "scroll": 444,
+        "client": 444
+      },
+      "sidebar": {
+        "x": 482,
+        "y": 114,
+        "right": 852,
+        "bottom": 892,
+        "width": 370,
+        "height": 778,
+        "scroll": 370,
+        "client": 370
+      },
+      "roster": {
+        "x": 16,
+        "y": 729,
+        "right": 464,
+        "bottom": 880,
+        "width": 448,
+        "height": 151,
+        "scroll": 992,
+        "client": 448
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 860,
+        "bottom": 106,
+        "width": 860,
+        "height": 106,
+        "scroll": 860,
+        "client": 860
+      }
+    },
+    {
+      "label": "tab-Terminal",
+      "viewport": 860,
+      "body": 860,
+      "stage": {
+        "x": 16,
+        "y": 146,
+        "right": 464,
+        "bottom": 717,
+        "width": 448,
+        "height": 571,
+        "scroll": 444,
+        "client": 444
+      },
+      "sidebar": {
+        "x": 482,
+        "y": 114,
+        "right": 852,
+        "bottom": 892,
+        "width": 370,
+        "height": 778,
+        "scroll": 370,
+        "client": 370
+      },
+      "roster": {
+        "x": 16,
+        "y": 729,
+        "right": 464,
+        "bottom": 880,
+        "width": 448,
+        "height": 151,
+        "scroll": 992,
+        "client": 448
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 860,
+        "bottom": 106,
+        "width": 860,
+        "height": 106,
+        "scroll": 860,
+        "client": 860
+      }
+    },
+    {
+      "label": "tab-Monitor",
+      "viewport": 860,
+      "body": 860,
+      "stage": {
+        "x": 16,
+        "y": 146,
+        "right": 464,
+        "bottom": 717,
+        "width": 448,
+        "height": 571,
+        "scroll": 444,
+        "client": 444
+      },
+      "sidebar": {
+        "x": 482,
+        "y": 114,
+        "right": 852,
+        "bottom": 892,
+        "width": 370,
+        "height": 778,
+        "scroll": 370,
+        "client": 370
+      },
+      "roster": {
+        "x": 16,
+        "y": 729,
+        "right": 464,
+        "bottom": 880,
+        "width": 448,
+        "height": 151,
+        "scroll": 992,
+        "client": 448
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 860,
+        "bottom": 106,
+        "width": 860,
+        "height": 106,
+        "scroll": 860,
+        "client": 860
+      }
+    },
+    {
+      "label": "tab-Tareas",
+      "viewport": 860,
+      "body": 860,
+      "stage": {
+        "x": 16,
+        "y": 146,
+        "right": 464,
+        "bottom": 717,
+        "width": 448,
+        "height": 571,
+        "scroll": 444,
+        "client": 444
+      },
+      "sidebar": {
+        "x": 482,
+        "y": 114,
+        "right": 852,
+        "bottom": 892,
+        "width": 370,
+        "height": 778,
+        "scroll": 370,
+        "client": 370
+      },
+      "roster": {
+        "x": 16,
+        "y": 729,
+        "right": 464,
+        "bottom": 880,
+        "width": 448,
+        "height": 151,
+        "scroll": 992,
+        "client": 448
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 860,
+        "bottom": 106,
+        "width": 860,
+        "height": 106,
+        "scroll": 860,
+        "client": 860
+      }
+    },
+    {
+      "label": "tab-Pregúntame",
+      "viewport": 860,
+      "body": 860,
+      "stage": {
+        "x": 16,
+        "y": 146,
+        "right": 464,
+        "bottom": 717,
+        "width": 448,
+        "height": 571,
+        "scroll": 444,
+        "client": 444
+      },
+      "sidebar": {
+        "x": 482,
+        "y": 114,
+        "right": 852,
+        "bottom": 892,
+        "width": 370,
+        "height": 778,
+        "scroll": 370,
+        "client": 370
+      },
+      "roster": {
+        "x": 16,
+        "y": 729,
+        "right": 464,
+        "bottom": 880,
+        "width": 448,
+        "height": 151,
+        "scroll": 992,
+        "client": 448
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 860,
+        "bottom": 106,
+        "width": 860,
+        "height": 106,
+        "scroll": 860,
+        "client": 860
+      }
+    },
+    {
+      "label": "tab-Desencadenantes",
+      "viewport": 860,
+      "body": 860,
+      "stage": {
+        "x": 16,
+        "y": 146,
+        "right": 464,
+        "bottom": 717,
+        "width": 448,
+        "height": 571,
+        "scroll": 444,
+        "client": 444
+      },
+      "sidebar": {
+        "x": 482,
+        "y": 114,
+        "right": 852,
+        "bottom": 892,
+        "width": 370,
+        "height": 778,
+        "scroll": 370,
+        "client": 370
+      },
+      "roster": {
+        "x": 16,
+        "y": 729,
+        "right": 464,
+        "bottom": 880,
+        "width": 448,
+        "height": 151,
+        "scroll": 992,
+        "client": 448
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 860,
+        "bottom": 106,
+        "width": 860,
+        "height": 106,
+        "scroll": 860,
+        "client": 860
+      }
+    },
+    {
+      "label": "tab-Historia",
+      "viewport": 860,
+      "body": 860,
+      "stage": {
+        "x": 16,
+        "y": 146,
+        "right": 464,
+        "bottom": 717,
+        "width": 448,
+        "height": 571,
+        "scroll": 444,
+        "client": 444
+      },
+      "sidebar": {
+        "x": 482,
+        "y": 114,
+        "right": 852,
+        "bottom": 892,
+        "width": 370,
+        "height": 778,
+        "scroll": 370,
+        "client": 370
+      },
+      "roster": {
+        "x": 16,
+        "y": 729,
+        "right": 464,
+        "bottom": 880,
+        "width": 448,
+        "height": 151,
+        "scroll": 992,
+        "client": 448
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 860,
+        "bottom": 106,
+        "width": 860,
+        "height": 106,
+        "scroll": 860,
+        "client": 860
+      }
+    },
+    {
+      "label": "tab-Memoria",
+      "viewport": 860,
+      "body": 860,
+      "stage": {
+        "x": 16,
+        "y": 146,
+        "right": 464,
+        "bottom": 717,
+        "width": 448,
+        "height": 571,
+        "scroll": 444,
+        "client": 444
+      },
+      "sidebar": {
+        "x": 482,
+        "y": 114,
+        "right": 852,
+        "bottom": 892,
+        "width": 370,
+        "height": 778,
+        "scroll": 370,
+        "client": 370
+      },
+      "roster": {
+        "x": 16,
+        "y": 729,
+        "right": 464,
+        "bottom": 880,
+        "width": 448,
+        "height": 151,
+        "scroll": 992,
+        "client": 448
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 860,
+        "bottom": 106,
+        "width": 860,
+        "height": 106,
+        "scroll": 860,
+        "client": 860
+      }
+    },
+    {
+      "label": "tab-Gráfico",
+      "viewport": 860,
+      "body": 860,
+      "stage": {
+        "x": 16,
+        "y": 146,
+        "right": 464,
+        "bottom": 717,
+        "width": 448,
+        "height": 571,
+        "scroll": 444,
+        "client": 444
+      },
+      "sidebar": {
+        "x": 482,
+        "y": 114,
+        "right": 852,
+        "bottom": 892,
+        "width": 370,
+        "height": 778,
+        "scroll": 370,
+        "client": 370
+      },
+      "roster": {
+        "x": 16,
+        "y": 729,
+        "right": 464,
+        "bottom": 880,
+        "width": 448,
+        "height": 151,
+        "scroll": 992,
+        "client": 448
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 860,
+        "bottom": 106,
+        "width": 860,
+        "height": 106,
+        "scroll": 860,
+        "client": 860
+      }
+    },
+    {
+      "label": "tab-Actividad",
+      "viewport": 860,
+      "body": 860,
+      "stage": {
+        "x": 16,
+        "y": 146,
+        "right": 464,
+        "bottom": 717,
+        "width": 448,
+        "height": 571,
+        "scroll": 444,
+        "client": 444
+      },
+      "sidebar": {
+        "x": 482,
+        "y": 114,
+        "right": 852,
+        "bottom": 892,
+        "width": 370,
+        "height": 778,
+        "scroll": 370,
+        "client": 370
+      },
+      "roster": {
+        "x": 16,
+        "y": 729,
+        "right": 464,
+        "bottom": 880,
+        "width": 448,
+        "height": 151,
+        "scroll": 992,
+        "client": 448
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 860,
+        "bottom": 106,
+        "width": 860,
+        "height": 106,
+        "scroll": 860,
+        "client": 860
+      }
+    },
+    {
+      "label": "tab-Habilidades",
+      "viewport": 860,
+      "body": 860,
+      "stage": {
+        "x": 16,
+        "y": 146,
+        "right": 464,
+        "bottom": 717,
+        "width": 448,
+        "height": 571,
+        "scroll": 444,
+        "client": 444
+      },
+      "sidebar": {
+        "x": 482,
+        "y": 114,
+        "right": 852,
+        "bottom": 892,
+        "width": 370,
+        "height": 778,
+        "scroll": 370,
+        "client": 370
+      },
+      "roster": {
+        "x": 16,
+        "y": 729,
+        "right": 464,
+        "bottom": 880,
+        "width": 448,
+        "height": 151,
+        "scroll": 992,
+        "client": 448
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 860,
+        "bottom": 106,
+        "width": 860,
+        "height": 106,
+        "scroll": 860,
+        "client": 860
+      }
+    },
+    {
+      "label": "tab-Trabajadores",
+      "viewport": 860,
+      "body": 860,
+      "stage": {
+        "x": 16,
+        "y": 146,
+        "right": 464,
+        "bottom": 717,
+        "width": 448,
+        "height": 571,
+        "scroll": 444,
+        "client": 444
+      },
+      "sidebar": {
+        "x": 482,
+        "y": 114,
+        "right": 852,
+        "bottom": 892,
+        "width": 370,
+        "height": 778,
+        "scroll": 370,
+        "client": 370
+      },
+      "roster": {
+        "x": 16,
+        "y": 729,
+        "right": 464,
+        "bottom": 880,
+        "width": 448,
+        "height": 151,
+        "scroll": 992,
+        "client": 448
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 860,
+        "bottom": 106,
+        "width": 860,
+        "height": 106,
+        "scroll": 860,
+        "client": 860
+      }
+    },
+    {
+      "label": "locale-en",
+      "viewport": 860,
+      "body": 860,
+      "stage": {
+        "x": 16,
+        "y": 146,
+        "right": 464,
+        "bottom": 717,
+        "width": 448,
+        "height": 571,
+        "scroll": 444,
+        "client": 444
+      },
+      "sidebar": {
+        "x": 482,
+        "y": 114,
+        "right": 852,
+        "bottom": 892,
+        "width": 370,
+        "height": 778,
+        "scroll": 370,
+        "client": 370
+      },
+      "roster": {
+        "x": 16,
+        "y": 729,
+        "right": 464,
+        "bottom": 880,
+        "width": 448,
+        "height": 151,
+        "scroll": 956,
+        "client": 448
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 860,
+        "bottom": 106,
+        "width": 860,
+        "height": 106,
+        "scroll": 860,
+        "client": 860
+      }
+    },
+    {
+      "label": "locale-es",
+      "viewport": 860,
+      "body": 860,
+      "stage": {
+        "x": 16,
+        "y": 146,
+        "right": 464,
+        "bottom": 717,
+        "width": 448,
+        "height": 571,
+        "scroll": 444,
+        "client": 444
+      },
+      "sidebar": {
+        "x": 482,
+        "y": 114,
+        "right": 852,
+        "bottom": 892,
+        "width": 370,
+        "height": 778,
+        "scroll": 370,
+        "client": 370
+      },
+      "roster": {
+        "x": 16,
+        "y": 729,
+        "right": 464,
+        "bottom": 880,
+        "width": 448,
+        "height": 151,
+        "scroll": 992,
+        "client": 448
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 860,
+        "bottom": 106,
+        "width": 860,
+        "height": 106,
+        "scroll": 860,
+        "client": 860
+      }
+    },
+    {
+      "label": "locale-ja",
+      "viewport": 860,
+      "body": 860,
+      "stage": {
+        "x": 16,
+        "y": 146,
+        "right": 464,
+        "bottom": 717,
+        "width": 448,
+        "height": 571,
+        "scroll": 444,
+        "client": 444
+      },
+      "sidebar": {
+        "x": 482,
+        "y": 114,
+        "right": 852,
+        "bottom": 892,
+        "width": 370,
+        "height": 778,
+        "scroll": 370,
+        "client": 370
+      },
+      "roster": {
+        "x": 16,
+        "y": 729,
+        "right": 464,
+        "bottom": 880,
+        "width": 448,
+        "height": 151,
+        "scroll": 1014,
+        "client": 448
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 860,
+        "bottom": 106,
+        "width": 860,
+        "height": 106,
+        "scroll": 860,
+        "client": 860
+      }
+    },
+    {
+      "label": "locale-zh-CN",
+      "viewport": 860,
+      "body": 860,
+      "stage": {
+        "x": 16,
+        "y": 117,
+        "right": 464,
+        "bottom": 717,
+        "width": 448,
+        "height": 600,
+        "scroll": 444,
+        "client": 444
+      },
+      "sidebar": {
+        "x": 482,
+        "y": 85,
+        "right": 852,
+        "bottom": 892,
+        "width": 370,
+        "height": 807,
+        "scroll": 370,
+        "client": 370
+      },
+      "roster": {
+        "x": 16,
+        "y": 729,
+        "right": 464,
+        "bottom": 880,
+        "width": 448,
+        "height": 151,
+        "scroll": 958,
+        "client": 448
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 860,
+        "bottom": 77,
+        "width": 860,
+        "height": 77,
+        "scroll": 860,
+        "client": 860
+      }
+    },
+    {
+      "label": "locale-ar",
+      "viewport": 860,
+      "body": 860,
+      "stage": {
+        "x": 396,
+        "y": 117,
+        "right": 844,
+        "bottom": 717,
+        "width": 448,
+        "height": 600,
+        "scroll": 444,
+        "client": 444
+      },
+      "sidebar": {
+        "x": 8,
+        "y": 85,
+        "right": 378,
+        "bottom": 892,
+        "width": 370,
+        "height": 807,
+        "scroll": 370,
+        "client": 370
+      },
+      "roster": {
+        "x": 396,
+        "y": 729,
+        "right": 844,
+        "bottom": 880,
+        "width": 448,
+        "height": 151,
+        "scroll": 948,
+        "client": 448
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 860,
+        "bottom": 77,
+        "width": 860,
+        "height": 77,
+        "scroll": 860,
+        "client": 860
+      }
+    },
+    {
+      "label": "dark-1440",
+      "viewport": 1440,
+      "body": 1440,
+      "stage": {
+        "x": 24,
+        "y": 121,
+        "right": 986,
+        "bottom": 713,
+        "width": 962,
+        "height": 592,
+        "scroll": 958,
+        "client": 958
+      },
+      "sidebar": {
+        "x": 1008,
+        "y": 89,
+        "right": 1428,
+        "bottom": 888,
+        "width": 420,
+        "height": 799,
+        "scroll": 420,
+        "client": 420
+      },
+      "roster": {
+        "x": 24,
+        "y": 725,
+        "right": 986,
+        "bottom": 876,
+        "width": 962,
+        "height": 151,
+        "scroll": 1008,
+        "client": 962
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 1440,
+        "bottom": 77,
+        "width": 1440,
+        "height": 77,
+        "scroll": 1440,
+        "client": 1440
+      }
+    },
+    {
+      "label": "dark-860",
+      "viewport": 860,
+      "body": 860,
+      "stage": {
+        "x": 16,
+        "y": 146,
+        "right": 464,
+        "bottom": 717,
+        "width": 448,
+        "height": 571,
+        "scroll": 444,
+        "client": 444
+      },
+      "sidebar": {
+        "x": 482,
+        "y": 114,
+        "right": 852,
+        "bottom": 892,
+        "width": 370,
+        "height": 778,
+        "scroll": 370,
+        "client": 370
+      },
+      "roster": {
+        "x": 16,
+        "y": 729,
+        "right": 464,
+        "bottom": 880,
+        "width": 448,
+        "height": 151,
+        "scroll": 992,
+        "client": 448
+      },
+      "header": {
+        "x": 0,
+        "y": 0,
+        "right": 860,
+        "bottom": 106,
+        "width": 860,
+        "height": 106,
+        "scroll": 860,
+        "client": 860
+      }
+    }
+  ],
+  "errors": [],
+  "result": "PASS"
+}

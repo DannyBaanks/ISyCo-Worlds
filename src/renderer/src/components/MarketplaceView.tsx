@@ -30,6 +30,7 @@ export function MarketplaceView() {
 
   return (
     <div
+      className="worlds-marketplace"
       role="region"
       aria-label={t('shell.nav.marketplace')}
       style={{
@@ -41,7 +42,8 @@ export function MarketplaceView() {
         background: 'var(--cth-paper-100)'
       }}
     >
-      <PixelPanel variant="default" noPadding style={{ maxWidth: 880, width: '100%', margin: '0 auto' }}>
+      <div className="worlds-market-awning" aria-hidden="true" />
+      <PixelPanel className="worlds-market-counter" variant="default" noPadding style={{ maxWidth: 880, width: '100%', margin: '0 auto' }}>
         <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
           <header style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <h1 style={{
@@ -55,6 +57,8 @@ export function MarketplaceView() {
             </p>
           </header>
 
+          <div className="worlds-market-grid">
+          <div className="worlds-market-stock">
           <input
             type="search"
             disabled={!connected}
@@ -71,7 +75,7 @@ export function MarketplaceView() {
 
           <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <h2 style={label}>{t('shell.marketplace.categories')}</h2>
-            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            <ul className="worlds-market-shelves" style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {MARKETPLACE_CATEGORIES.map((c) => (
                 <li
                   key={c}
@@ -88,9 +92,11 @@ export function MarketplaceView() {
             </ul>
           </section>
 
-          <div style={{ height: 2, background: 'var(--cth-ink-300)' }} />
-
-          <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <p className="worlds-market-sign" role="status" style={{ margin: 0, fontSize: 13, color: 'var(--cth-ink-500)' }}>
+            {t('shell.marketplace.noCatalog')}
+          </p>
+          </div>
+          <section className="worlds-market-order" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <h2 style={label}>{t('shell.marketplace.createTitle')}</h2>
             <p style={{ margin: 0, fontSize: 13, color: 'var(--cth-ink-700)' }}>
               {t('shell.marketplace.createBlurb')}
@@ -118,11 +124,9 @@ export function MarketplaceView() {
             </div>
           </section>
 
-          <div style={{ height: 2, background: 'var(--cth-ink-300)' }} />
+          </div>
 
-          <p role="status" style={{ margin: 0, fontSize: 13, color: 'var(--cth-ink-500)' }}>
-            {t('shell.marketplace.noCatalog')}
-          </p>
+
         </div>
       </PixelPanel>
     </div>

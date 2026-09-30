@@ -1,0 +1,19 @@
+{
+  "date": "2026-09-30",
+  "platform": "Linux 7.0.0-34-generic x86_64 GNU/Linux",
+  "node": "v24.21.0",
+  "baseCommit": "6c74b293",
+  "browserExecutable": "/home/danny/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell",
+  "playwrightModule": "/home/danny/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright",
+  "visualCommand": "VISUAL_OUTPUT=/tmp/isyco-worlds-route2-evidence-6 node test/visual/check-worlds.cjs (with PLAYWRIGHT_MODULE and CHROMIUM_EXECUTABLE as recorded)",
+  "exitCodes": {
+    "nodeTests": 0,
+    "typecheck": 0,
+    "build": 0,
+    "visual": 0
+  },
+  "inputs": {
+    "isyco-worlds-visual-handoff.zip": "303913dbc91d873b384940141df3c0cdffc94fa76785419425afa2f864a3e18c",
+    "isyco-worlds-route2-astra-packet.zip": "399c8cd83cd23f8a3be78c585a4272b75820f9360da6716f024ce8d9811a688d"
+  }
+}

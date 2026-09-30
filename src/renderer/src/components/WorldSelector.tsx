@@ -10,7 +10,7 @@ export function WorldSelector({ config }: { config: HarnessConfig }) {
     ? config.selectedWorld
     : 'office';
   return (
-    <label className="cth-titlebar-nodrag" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+    <label className="cth-titlebar-nodrag worlds-selector" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
       <span style={{ fontFamily: 'var(--cth-font-display)', fontSize: 7, color: 'var(--cth-ink-500)' }}>
         {t('settings.general.worlds.selector')}
       </span>

@@ -827,6 +827,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
         }}
       >
         <PixelPanel
+          className="worlds-settings-book"
           variant="dialog"
           title={modalTitle}
           noPadding
@@ -923,7 +924,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
               <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
 
                 {/* Left nav */}
-                <div style={{
+                <div className="worlds-settings-index" style={{
                   width: 160, flexShrink: 0,
                   display: 'flex', flexDirection: 'column',
                   borderRight: '2px solid var(--cth-ink-300)',
@@ -960,7 +961,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                 {/* Right scrollable content pane. minWidth:0 lets this flex child
                     shrink to the row's width instead of growing to its content's
                     min-content (which would push a horizontal scrollbar). */}
-                <div style={{
+                <div className="worlds-settings-page" style={{
                   flex: 1, minWidth: 0, overflowY: 'auto', overflowX: 'hidden',
                   padding: '20px 24px',
                   display: 'flex', flexDirection: 'column', gap: 20
@@ -973,7 +974,10 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                           sponsor, and the app-level actions that belong to none
                           of the settings below. Slots for a future subscription
                           and a sponsor live here; both render nothing until set. */}
-                      <SettingsHeroCard />
+                      <details className="worlds-about-entry">
+                        <summary>{t('worldsVisual.about')}</summary>
+                        <SettingsHeroCard />
+                      </details>
 
                       <div style={{ height: 1, background: 'var(--cth-ink-300)' }} />
 
