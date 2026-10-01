@@ -237,6 +237,7 @@ export class WorldHelperHost {
 
   async chat(message: unknown, onStreamEvent?: (event: WorldHelperStreamEvent) => void): Promise<WorldHelperHostResult<{ proposal?: { id: string; reply: string; workers: ProposedWorker[]; worldSuggestion?: WorldId } }>> {
     this.cancelChat();
+    this.pending = null;
     const requestId = `${this.createId()}-chat-${++this.requestSequence}`;
     const controller = new AbortController();
     const publish = (event: WorldHelperStreamEvent) => { try { onStreamEvent?.(event); } catch { /* UI listeners are isolated */ } };
@@ -262,7 +263,6 @@ export class WorldHelperHost {
     const userText = redact(typeof message === 'string' ? message : '');
     if (!userText.trim()) { this.activeChat = null; return { ok: false, category: 'invalid-config' }; }
     this.lifecycle = 'BUSY';
-    this.pending = null;
     this.deps.state.transcript.push({ role: 'user', text: userText, at: this.now() });
     let context: WorldHelperContext;
     try { context = await this.deps.context(); }
@@ -329,27 +329,32 @@ export class WorldHelperHost {
   }
 
   async approveProposal(id: unknown, selectedNames: unknown): Promise<WorldHelperHostResult<{ launched: string[] }>> {
-    if (!this.pending || typeof id !== 'string' || this.pending.id !== id) return { ok: false, category: 'stale-proposal' };
+    const proposal = this.pending;
+    const sequence = this.requestSequence;
+    if (!this.deps.state.enabled || !proposal || typeof id !== 'string' || proposal.id !== id) return { ok: false, category: 'stale-proposal' };
     if (!Array.isArray(selectedNames) || selectedNames.length === 0 || selectedNames.some((name) => typeof name !== 'string')) return { ok: false, category: 'approval-required' };
+    const selected = [...selectedNames] as string[];
     let context: WorldHelperContext;
     try { context = await this.deps.context(); }
     catch { return { ok: false, category: 'workspace-unavailable' }; }
+    if (!this.deps.state.enabled || this.pending !== proposal || this.requestSequence !== sequence) return { ok: false, category: 'stale-proposal' };
     if (!context.workspaceAvailable || !context.workspace) return { ok: false, category: 'workspace-unavailable' };
-    const approvedWorkspace = this.pending.workspace;
+    const approvedWorkspace = proposal.workspace;
     if (!approvedWorkspace || approvedWorkspace !== context.workspace) return { ok: false, category: 'workspace-changed' };
-    const selected = selectedNames as string[];
-    const workers = this.pending.workers.filter((worker) => selected.includes(worker.name));
+    const workers = proposal.workers.filter((worker) => selected.includes(worker.name));
     if (!workers.length || workers.length !== new Set(selected).size) return { ok: false, category: 'invalid-proposal' };
-    if (context.availableRoles?.length && workers.some((worker) => !context.availableRoles?.includes(worker.role))) return { ok: false, category: 'unavailable-role' };
-    if (context.installedProviders?.length && workers.some((worker) => !context.installedProviders?.includes(worker.provider))) return { ok: false, category: 'unavailable-provider' };
+    if (workers.some((worker) => !(context.availableRoles ?? []).includes(worker.role))) return { ok: false, category: 'unavailable-role' };
+    if (workers.some((worker) => !(context.installedProviders ?? []).includes(worker.provider))) return { ok: false, category: 'unavailable-provider' };
     // Consume before the first side effect: retries after a partial launch cannot duplicate hires.
     this.pending = null;
     await this.save();
     const launched: string[] = [];
     for (const worker of workers) {
+      if (!this.deps.state.enabled || this.requestSequence !== sequence) return { ok: false, category: 'stale-proposal', launched };
       let latest: WorldHelperContext;
       try { latest = await this.deps.context(); }
       catch { return { ok: false, category: 'workspace-unavailable', launched }; }
+      if (!this.deps.state.enabled || this.requestSequence !== sequence) return { ok: false, category: 'stale-proposal', launched };
       if (!latest.workspaceAvailable || !latest.workspace) return { ok: false, category: 'workspace-unavailable', launched };
       if (latest.workspace !== approvedWorkspace) return { ok: false, category: 'workspace-changed', launched };
       if (!(latest.installedProviders ?? []).includes(worker.provider)) return { ok: false, category: 'unavailable-provider', launched };
@@ -375,6 +380,7 @@ export class WorldHelperHost {
   }
 
   async stop(): Promise<void> {
+    ++this.requestSequence;
     this.cancelChat();
     this.lifecycle = 'STOPPING';
     this.deps.state.enabled = false;

@@ -2,10 +2,27 @@
 
 ## Scope
 
-Munder Difflin is a **local-first desktop app**. It spawns local processes in PTYs and
-reads/writes files under directories you register. It opens **no network listeners
-beyond a local Unix domain socket** used for the in-app hook server, and has no auth or
-remote surface by design.
+Munder Difflin is a **local-first desktop app**, not a network-free app. It spawns
+local processes in PTYs and reads/writes workspace files using the user's OS permissions.
+Its main process has several optional network surfaces:
+
+- Local hook/control sockets and a loopback HTTP integration broker. The broker
+  requires per-worker capability tokens and authorizes registered integrations.
+- Slack and generic webhook HTTP receivers bind to `127.0.0.1`, but an enabled
+  receiver can open a **public tunnel**. Loopback binding does not make a tunneled
+  receiver private. Webhooks require an endpoint secret to submit work and a
+  capability token to poll it; Slack has its own signing-secret gate.
+- Webhooks are not enabled by default: the operator must enable an endpoint.
+  Per-endpoint pre-auth limits bound rejected traffic; only authenticated requests
+  clearing that budget consume the global admission budget. This is not a DDoS
+  guarantee: exhausting multiple endpoints or the global authenticated budget can
+  still limit service.
+- Provider API calls, downloads, analytics when opted in, and update checks are
+  outbound network activity. CLI servers under `tools/munder/` are additional
+  opt-in surfaces with their own configuration/authentication; consult their guides.
+
+Do not expose a listener or tunnel without reviewing its authentication and the
+authority of the agents receiving its messages.
 
 ## Supported versions
 
@@ -32,8 +49,24 @@ credit you (unless you prefer to stay anonymous).
 
 - Renderer ↔ main IPC goes through a typed `contextBridge` (`window.cth`); the renderer
   has no direct Node access (`nodeIntegration: false`, `contextIsolation: true`).
-- All `fs:*` / `git:*` IPC calls are sandboxed and path-validated in the main process,
-  rooted at an agent's working directory.
+- The four workspace content channels (`fs:listDir`, `fs:readFile`, `fs:readBinary`,
+  `fs:writeFile`) require a live primary/floor WebContents, its main frame and the
+  expected local document. Navigation/redirects away from that document are blocked.
+  Requested roots must be confined beneath main-owned registered repositories,
+  harness/profile homes or registered PTY/Hive working directories. Filesystem and
+  whole-user-home roots are refused. The shared path guard also checks traversal
+  and symlink containment. A supplied root alone is never a grant.
+- `fs:statAbs` and `fs:revealPath` are separate metadata/OS reveal operations, not
+  workspace content access. Git operations have their own validation; do not infer
+  that every IPC operation uses the workspace content gate.
+- The primary/floor renderer remains an operator interface: it can configure
+  projects and launch local processes. This content-channel gate is **not** a claim
+  that a fully compromised operator renderer is an OS-level sandbox. Protecting
+  every configuration/spawn operation against such a renderer is a separate boundary.
+- GUS proposals are inert until approved. Approval is bound to the exact pending
+  proposal and current conversation generation, and consumed once before launch.
+  New chats or stopping GUS invalidate in-flight approvals. Already-started launches
+  are not retroactively cancelled.
 - The hive commits to a local git repo from a **single committer** (the main process);
   agents only write plain files.
 
