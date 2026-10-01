@@ -13,9 +13,10 @@ test('App keeps the Office projection mounted and routes pre-runtime states thro
   assert.match(app, /shouldShowWorldStartScreen\(/);
   assert.match(app, /<WorldStartScreen/);
   assert.doesNotMatch(app, /return <WorldsView/);
-  assert.match(app, /<WorldHost config=\{officeWorldConfig\} profileId=\{worldProfileStatus\?\.activeProfileId === 'monster-trainer' \? 'monster-trainer' : 'office'\} suspended=\{worldPresentationSuspended\} \/>/);
+  assert.match(app, /const activeWorldProfileId = worldProfileStatus\?\.activeProfileId === 'monster-trainer' \? 'monster-trainer' : 'office'/);
+  assert.match(app, /<WorldHost config=\{officeWorldConfig\} profileId=\{activeWorldProfileId\} suspended=\{worldPresentationSuspended\} \/>/);
   assert.match(app, /<MemoryPanel onOpenChange=\{setMemoryPanelOpen\} \/>/);
-  assert.match(app, /<AgentStrip\s+config=\{config\}\s+onOverlayVisibilityChange=\{setAgentStripOverlayOpen\}\s*\/>/);
+  assert.match(app, /<AgentStrip\s+config=\{config\}\s+profileId=\{activeWorldProfileId\}\s+onOverlayVisibilityChange=\{setAgentStripOverlayOpen\}\s*\/>/);
   assert.doesNotMatch(app, /<OfficeFloor\s*\/>/);
 });
 
@@ -63,12 +64,12 @@ test('skin classes decorate existing panels, navigation, terminal and agent stri
   const strip = source('src/renderer/src/components/AgentStrip.tsx');
   const nav = source('src/renderer/src/components/GlobalNav.tsx');
   const css = source('src/renderer/src/design/global.css');
-  assert.match(app, /className="cth-app-shell"/);
+  assert.match(app, /className="[^"]*cth-app-shell[^"]*"/);
   assert.match(detail, /cth-world-command-panel/);
   assert.match(commandCenter, /cth-world-command-panel/);
   assert.match(strip, /cth-world-agent-strip/);
   assert.match(nav, /cth-world-nav/);
-  assert.match(panel, /<div className=\{className\}/, 'PixelPanel preserves skin marker classes supplied by callers');
+  assert.match(panel, /className=\{`worlds-panel[^`]*\$\{className \?\? ''\}[^`]*`\}/, 'PixelPanel preserves skin marker classes supplied by callers');
   assert.match(css, /cth-world-command-panel/);
   assert.match(css, /cth-world-terminal/);
   assert.match(css, /cth-world-agent-strip/);

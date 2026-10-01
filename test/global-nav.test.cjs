@@ -50,7 +50,7 @@ test('Marketplace paints over the office, it never unmounts it', () => {
   assert.match(app, /<WorldHost config=\{officeWorldConfig\} profileId=\{/);
   assert.doesNotMatch(app, /globalView === 'office' &&/);
   assert.doesNotMatch(app, /globalView !== 'marketplace' &&/);
-  assert.match(app, /<AgentStrip config=\{config\} onOverlayVisibilityChange=\{setAgentStripOverlayOpen\} \/>/);
+  assert.match(app, /<AgentStrip config=\{config\} profileId=\{activeWorldProfileId\} onOverlayVisibilityChange=\{setAgentStripOverlayOpen\} \/>/);
 });
 
 test('Worlds is not a sibling global destination; Marketplace remains available', () => {

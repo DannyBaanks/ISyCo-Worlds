@@ -356,7 +356,7 @@ export function App() {
   const officeWorldConfig: HarnessConfig = { ...config, worldsEnabled: false };
 
   return (
-    <div className="worlds-shell" data-world-skin={worldSkin} style={{
+    <div className="cth-app-shell worlds-shell" data-world-skin={worldSkin} style={{
       display: 'flex', flexDirection: 'column',
       width: '100vw', height: '100vh',
       overflow: 'hidden'

@@ -91,7 +91,7 @@ export function AgentStrip({ config, onOverlayVisibilityChange, profileId = 'off
   }, []);
 
   return (
-    <div className="worlds-roster" style={{
+    <div className="cth-world-agent-strip worlds-roster" style={{
       display: 'flex',
       gap: 12,
       padding: '14px 16px',

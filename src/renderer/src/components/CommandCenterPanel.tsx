@@ -150,7 +150,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
 
   return (
     <LedgerBook
-      className={`worlds-command ${fullscreen ? 'worlds-command--fullscreen' : ''}`}
+      className={`cth-world-command-panel worlds-command ${fullscreen ? 'worlds-command--fullscreen' : ''}`}
       style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0, overflow: 'hidden' }}
     >
       {/* Header */}

@@ -10,7 +10,7 @@ const { STARTER_VILLAGE_ATLAS_FRAMES: frames } = loadTs('src/renderer/src/worlds
 test('every scene frame fits the supplied PNG and has a whole-tile footprint', () => {
   const png = fs.readFileSync(path.join(root, 'src/renderer/src/assets/worlds/starter-village/starter-village-atlas.png'));
   const width = png.readUInt32BE(16), height = png.readUInt32BE(20);
-  assert.equal(Object.keys(frames).length, 15);
+  assert.equal(Object.keys(frames).length, 17);
   for (const [id,f] of Object.entries(frames)) {
     assert(f.x >= 0 && f.y >= 0 && f.width > 0 && f.height > 0, id);
     assert(f.x + f.width <= width && f.y + f.height <= height, id+' source rectangle');
