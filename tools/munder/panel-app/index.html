@@ -3,28 +3,28 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Munder Panel</title>
+  <title>Worlds Panel</title>
   <link rel="stylesheet" href="/panel.css">
 </head>
 <body>
   <header>
-    <h1>MUNDER PANEL</h1>
-    <p class="sub">Todo lo de la terminal, con botones. Funciona aunque Munder esté cerrado.</p>
+    <h1>WORLDS PANEL</h1>
+    <p class="sub">Todo lo de la terminal, con botones. Funciona aunque ISyCo Worlds esté cerrado.</p>
   </header>
 
   <main>
     <section class="card" id="app">
-      <h2>Munder</h2>
+      <h2>ISyCo Worlds</h2>
       <p class="state"><span class="dot" id="app-dot"></span><span id="app-text">Revisando…</span></p>
       <div class="row">
-        <button data-action="app.open" class="primary">Abrir Munder</button>
+        <button data-action="app.open" class="primary">Abrir ISyCo Worlds</button>
         <button data-action="app.restart">Reiniciar</button>
-        <button data-action="app.close" class="danger" data-confirm="¿Cerrar Munder? Tus agentes se detienen hasta que lo vuelvas a abrir.">Cerrar</button>
+        <button data-action="app.close" class="danger" data-confirm="¿Cerrar ISyCo Worlds? Tus agentes se detienen hasta que lo vuelvas a abrir.">Cerrar</button>
       </div>
     </section>
 
     <section class="card" id="link">
-      <h2>Munder Link</h2>
+      <h2>World Link</h2>
       <p class="hint">Conecta tus otras computadoras y tu celular.</p>
       <p class="state"><span class="dot" id="link-dot"></span><span id="link-text">Revisando…</span></p>
       <div class="row">
@@ -35,7 +35,7 @@
       <h3>Tus otras oficinas</h3>
       <ul id="link-peers" class="list"></ul>
       <h3>Para tu celular</h3>
-      <p class="hint">En la app de Munder Mobile escribe una de estas direcciones y toca «Emparejar».</p>
+      <p class="hint">En la app de Worlds Mobile escribe una de estas direcciones y toca «Emparejar».</p>
       <ul id="link-urls" class="list mono"></ul>
       <h3>Celulares emparejados</h3>
       <ul id="link-phones" class="list"></ul>
@@ -54,17 +54,17 @@
 
     <section class="card" id="reviver">
       <h2>Reviver</h2>
-      <p class="hint">Si Munder se cae, lo vuelve a abrir solo.</p>
+      <p class="hint">Si ISyCo Worlds se cae, lo vuelve a abrir solo.</p>
       <p class="state"><span class="dot" id="rv-dot"></span><span id="rv-text">Revisando…</span></p>
       <div class="row">
         <button data-action="reviver.enable" class="primary">Activar</button>
-        <button data-action="reviver.disable" class="danger" data-confirm="¿Quitar el Reviver? Munder ya no se levantará solo si se cae.">Quitar</button>
+        <button data-action="reviver.disable" class="danger" data-confirm="¿Quitar el Reviver? ISyCo Worlds ya no se levantará solo si se cae.">Quitar</button>
       </div>
     </section>
   </main>
 
   <footer>
-    <button data-action="shortcut.install" class="ghost">Agregar «Munder Panel» a mis aplicaciones</button>
+    <button data-action="shortcut.install" class="ghost">Agregar «Worlds Panel» a mis aplicaciones</button>
   </footer>
 
   <div id="toast" role="status" aria-live="polite"></div>

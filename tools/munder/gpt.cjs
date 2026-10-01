@@ -1,22 +1,22 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * munder gpt: the operator's side of the ChatGPT principal (lib-gpt.cjs).
+ * worlds gpt: the operator's side of the ChatGPT principal (lib-gpt.cjs).
  *
- *   munder gpt                       estado + menú (con TTY)
- *   munder gpt perfil lectura|operador|full [--si]
- *   munder gpt capacidades [perfil]
- *   munder gpt encender [--transporte local|ngrok|cloudflared|manual] [--dominio D] [--url U] [--puerto N]
- *   munder gpt apagar
- *   munder gpt estado
- *   munder gpt solicitudes           accesos que ChatGPT está pidiendo
- *   munder gpt aprobar CÓDIGO        el código de 6 dígitos que muestra la página de autorización
- *   munder gpt rechazar CÓDIGO
- *   munder gpt permisos              permisos vivos (uno por ChatGPT conectado)
- *   munder gpt revocar ID|CLIENTE|todo
- *   munder gpt auditoria [N]
- *   munder gpt buzon                 lo que Michael le mandó a GPT
- *   munder gpt reviver               darle a GPT su propia llave del Reviver
+ *   worlds gpt                       estado + menú (con TTY)
+ *   worlds gpt perfil lectura|operador|full [--si]
+ *   worlds gpt capacidades [perfil]
+ *   worlds gpt encender [--transporte local|ngrok|cloudflared|manual] [--dominio D] [--url U] [--puerto N]
+ *   worlds gpt apagar
+ *   worlds gpt estado
+ *   worlds gpt solicitudes           accesos que ChatGPT está pidiendo
+ *   worlds gpt aprobar CÓDIGO        el código de 6 dígitos que muestra la página de autorización
+ *   worlds gpt rechazar CÓDIGO
+ *   worlds gpt permisos              permisos vivos (uno por ChatGPT conectado)
+ *   worlds gpt revocar ID|CLIENTE|todo
+ *   worlds gpt auditoria [N]
+ *   worlds gpt buzon                 lo que Michael le mandó a GPT
+ *   worlds gpt reviver               darle a GPT su propia llave del Reviver
  */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -24,8 +24,8 @@ const readline = require('node:readline');
 const { spawn } = require('node:child_process');
 const G = require('./lib-gpt.cjs');
 
-const say = (m) => console.log(`munder gpt: ${m}`);
-const die = (m, code = 1) => { console.error(`munder gpt: ${m}`); process.exit(code); };
+const say = (m) => console.log(`worlds gpt: ${m}`);
+const die = (m, code = 1) => { console.error(`worlds gpt: ${m}`); process.exit(code); };
 const IS_TTY = !!process.stdin.isTTY && !!process.stdout.isTTY;
 
 function flags(args) {
@@ -136,7 +136,7 @@ async function cmdOn(f) {
   let config = G.loadConfig(dir);
   if (f.puerto) config = G.saveConfig(dir, { port: Number(f.puerto) });
   const inbox = G.ensureInbox();
-  if (!inbox) say('AVISO: no encuentro el hive de esta oficina (abre Munder una vez); sin buzón de GPT hasta entonces');
+  if (!inbox) say('AVISO: no encuentro el hive de esta oficina (abre ISyCo Worlds una vez); sin buzón de GPT hasta entonces');
   // 1. the gateway (loopback)
   let pid = readPid(G.files(dir).pid);
   if (!(pid && alive(pid) && await health(`http://127.0.0.1:${config.port}`, 1500))) {
@@ -162,7 +162,7 @@ async function cmdOn(f) {
 
 function printReady(config, t, reachable) {
   const grants = Object.values(G.loadGrants(G.stateDir())).filter((g) => !g.revoked_at && Date.parse(g.expires_at) > Date.now());
-  console.log('\nMUNDER GPT\n');
+  console.log('\nWORLDS GPT\n');
   console.log(`Principal:  ${G.PRINCIPAL}`);
   console.log(`Autoridad:  ${config.profile.toUpperCase()} (${G.PROFILES[config.profile].join(' ')})`);
   console.log(`OAuth:      listo (registro dinámico + PKCE + tu aprobación en esta terminal)`);
@@ -174,7 +174,7 @@ function printReady(config, t, reachable) {
   console.log(`  MCP Server URL: ${t.public_url}/mcp`);
   console.log('  Authentication: OAuth');
   console.log('  Al conectar, ChatGPT abre una página con un código de 6 dígitos:');
-  console.log('  apruébalo aquí con  munder gpt aprobar <código>');
+  console.log('  apruébalo aquí con  worlds gpt aprobar <código>');
   if (t.provider === 'local') console.log('\n(transporte local: solo para probar en esta máquina; ChatGPT necesita una URL https pública)');
 }
 
@@ -187,7 +187,7 @@ function cmdOff() {
     try { fs.unlinkSync(f); } catch { /* none */ }
   }
   G.audit(dir, { event: 'gateway_disabled', by: 'operator' });
-  say('apagado. Los permisos siguen guardados (revócalos con munder gpt revocar todo); el hive y Link no se tocan.');
+  say('apagado. Los permisos siguen guardados (revócalos con worlds gpt revocar todo); el hive y Link no se tocan.');
 }
 
 async function cmdStatus(f) {
@@ -207,17 +207,17 @@ async function cmdStatus(f) {
     grants: grants.filter((g) => g.active), pending, inbox_unread: inbox.length,
   };
   if (f.json) { console.log(JSON.stringify(out, null, 2)); return; }
-  console.log(`MUNDER GPT · principal ${G.PRINCIPAL}`);
+  console.log(`WORLDS GPT · principal ${G.PRINCIPAL}`);
   console.log(`autoridad:  ${c.profile.toUpperCase()} (${out.scopes.join(' ')})`);
   console.log(`gateway:    ${c.enabled ? 'encendido' : 'apagado'}; proceso ${local ? `vivo (pid ${pid})` : 'parado'} en 127.0.0.1:${c.port}`);
   console.log(`transporte: ${c.transport.provider}${c.public_url ? ` → ${c.public_url}` : ''}${c.enabled ? (pub ? ' (responde)' : ' (NO responde)') : ''}`);
   console.log(`permisos:   ${out.grants.length} activo(s)${out.grants.map((g) => `\n  ${g.grant_id}  ${g.client_name}  ${g.scopes.join(' ')}  caduca ${g.expires_at.slice(0, 10)}${g.last_used_at ? `  usado ${g.last_used_at}` : ''}`).join('')}`);
-  if (pending.length) console.log(`solicitudes: ${pending.map((p) => `\n  código ${p.approval_code}  ${p.client_name}  (${p.redirect_host}, ${p.expires_in_s}s)  → munder gpt aprobar ${p.approval_code}`).join('')}`);
+  if (pending.length) console.log(`solicitudes: ${pending.map((p) => `\n  código ${p.approval_code}  ${p.client_name}  (${p.redirect_host}, ${p.expires_in_s}s)  → worlds gpt aprobar ${p.approval_code}`).join('')}`);
   console.log(`buzón:      ${inbox.length} sin leer`);
 }
 
 function cmdApprove(f, decision) {
-  const code = f._[0] || die(`uso: munder gpt ${decision === 'approve' ? 'aprobar' : 'rechazar'} CÓDIGO`);
+  const code = f._[0] || die(`uso: worlds gpt ${decision === 'approve' ? 'aprobar' : 'rechazar'} CÓDIGO`);
   const r = G.approve(G.stateDir(), code, decision);
   if (r.denied) { say(`rechazado: ${r.client_name}`); return; }
   say(`aprobado: ${r.client_name} → permiso ${r.grant_id} (${r.scopes.join(' ')}), caduca ${r.expires_at.slice(0, 10)}. La página de ChatGPT sigue sola.`);
@@ -230,7 +230,7 @@ function cmdGrants() {
 }
 
 function cmdRevoke(f) {
-  const which = f._[0] || die('uso: munder gpt revocar ID|CLIENTE|todo');
+  const which = f._[0] || die('uso: worlds gpt revocar ID|CLIENTE|todo');
   const hits = G.revoke(G.stateDir(), which);
   say(hits.length ? `revocado: ${hits.join(', ')}. Deja de funcionar desde la siguiente llamada.` : `no había permisos activos que coincidan con «${which}»`);
 }
@@ -251,11 +251,11 @@ function cmdInbox() {
 function cmdReviver() {
   const R = require('./lib-reviver.cjs');
   let cred;
-  try { cred = R.newClientCredential(R.stateDir(), 'gpt'); } catch (e) { die(`${e.message}\nPrimero: munder reviver init`); }
+  try { cred = R.newClientCredential(R.stateDir(), 'gpt'); } catch (e) { die(`${e.message}\nPrimero: worlds reviver init`); }
   const f = G.files(G.stateDir()).reviver;
   fs.mkdirSync(path.dirname(f), { recursive: true, mode: 0o700 });
   fs.writeFileSync(f, JSON.stringify(cred, null, 2) + '\n', { mode: 0o600 });
-  say(`GPT tiene su propia llave del Reviver (cliente ${cred.client_id}); sus recibos dirán «gpt». Quítala con: munder reviver cliente quitar gpt`);
+  say(`GPT tiene su propia llave del Reviver (cliente ${cred.client_id}); sus recibos dirán «gpt». Quítala con: worlds reviver cliente quitar gpt`);
 }
 
 async function menu() {
@@ -277,22 +277,22 @@ async function menu() {
     if (!n) return;
     const item = items[n - 1];
     if (!item) continue;
-    try { await item[1](); } catch (e) { console.error(`munder gpt: ${e.message}`); }
+    try { await item[1](); } catch (e) { console.error(`worlds gpt: ${e.message}`); }
   }
 }
 
-const HELP = `munder gpt: ChatGPT como principal «gpt» de tu oficina, con la autoridad que tú le das
+const HELP = `worlds gpt: ChatGPT como principal «gpt» de tu oficina, con la autoridad que tú le das
 
-  munder gpt                        estado y menú
-  munder gpt perfil lectura|operador|full [--si]
-  munder gpt capacidades [perfil]
-  munder gpt encender [--transporte local|ngrok|cloudflared|manual] [--dominio D] [--url U] [--puerto N]
-  munder gpt apagar | estado [--json]
-  munder gpt solicitudes | aprobar CÓDIGO | rechazar CÓDIGO
-  munder gpt permisos | revocar ID|CLIENTE|todo
-  munder gpt auditoria [N] | buzon | reviver
+  worlds gpt                        estado y menú
+  worlds gpt perfil lectura|operador|full [--si]
+  worlds gpt capacidades [perfil]
+  worlds gpt encender [--transporte local|ngrok|cloudflared|manual] [--dominio D] [--url U] [--puerto N]
+  worlds gpt apagar | estado [--json]
+  worlds gpt solicitudes | aprobar CÓDIGO | rechazar CÓDIGO
+  worlds gpt permisos | revocar ID|CLIENTE|todo
+  worlds gpt auditoria [N] | buzon | reviver
 
-La URL solo dice dónde está Munder. Entrar exige OAuth y tu aprobación aquí.
+La URL solo dice dónde está ISyCo Worlds. Entrar exige OAuth y tu aprobación aquí.
 Guía: tools/munder/GPT.md`;
 
 async function main(argv) {

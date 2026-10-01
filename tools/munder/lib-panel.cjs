@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Munder Panel: the `munder` CLI as buttons, for people who never open a terminal.
+ * Worlds Panel: the `worlds` CLI as buttons, for people who never open a terminal.
  *
  * A tiny local web app (builtins only, like the rest of tools/munder) that the
  * packaged app opens with `Munder Difflin --panel`, and a dev checkout with
@@ -281,10 +281,10 @@ function panelCommand() {
 function desktopEntry({ cmd, args }) {
   const q = (s) => (/[\s"'\\]/.test(s) ? `"${s.replace(/(["\\`$])/g, '\\$1')}"` : s);
   return [
-    '[Desktop Entry]', 'Type=Application', 'Name=Munder Panel',
-    'Comment=Abre, cierra y maneja Munder Difflin con botones',
+    '[Desktop Entry]', 'Type=Application', 'Name=Worlds Panel',
+    'Comment=Abre, cierra y maneja ISyCo Worlds con botones',
     `Exec=${[cmd, ...args].map(q).join(' ')}`,
-    'Icon=munder-difflin', 'Terminal=false', 'Categories=Development;Utility;', '',
+    'Icon=isyco-worlds', 'Terminal=false', 'Categories=Development;Utility;', '',
   ].join('\n');
 }
 
@@ -292,22 +292,22 @@ function installShortcut() {
   if (process.platform === 'linux') {
     const dir = path.join(process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share'), 'applications');
     fs.mkdirSync(dir, { recursive: true });
-    const file = path.join(dir, 'munder-panel.desktop');
+    const file = path.join(dir, 'worlds-panel.desktop');
     fs.writeFileSync(file, desktopEntry(panelCommand()), { mode: 0o755 });
-    return { ok: true, text: 'Listo: busca «Munder Panel» en tu menú de aplicaciones.' };
+    return { ok: true, text: 'Listo: busca «Worlds Panel» en tu menú de aplicaciones.' };
   }
   if (process.platform === 'win32') {
     const portable = process.env.PORTABLE_EXECUTABLE_FILE;
-    if (!portable) return { ok: true, text: 'En Windows el instalador ya pone «Munder Panel» en el menú Inicio.' };
+    if (!portable) return { ok: true, text: 'En Windows el instalador ya pone «Worlds Panel» en el menú Inicio.' };
     // The portable .exe has no installer: make the Start menu entry here.
     // Paths travel as env vars, never spliced into the PowerShell command.
     const dir = path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), 'Microsoft', 'Windows', 'Start Menu', 'Programs');
     const r = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
       '$s=(New-Object -ComObject WScript.Shell).CreateShortcut($env:MP_LNK); $s.TargetPath=$env:MP_EXE; $s.Arguments="--panel"; $s.Save()'],
-    { env: { ...process.env, MP_LNK: path.join(dir, 'Munder Panel.lnk'), MP_EXE: portable }, windowsHide: true, encoding: 'utf8', timeout: 20_000 });
-    return r.status === 0 ? { ok: true, text: 'Listo: busca «Munder Panel» en el menú Inicio.' } : { ok: false, text: `No pude crear el acceso directo: ${(r.stderr || r.error?.message || '').trim()}` };
+    { env: { ...process.env, MP_LNK: path.join(dir, 'Worlds Panel.lnk'), MP_EXE: portable }, windowsHide: true, encoding: 'utf8', timeout: 20_000 });
+    return r.status === 0 ? { ok: true, text: 'Listo: busca «Worlds Panel» en el menú Inicio.' } : { ok: false, text: `No pude crear el acceso directo: ${(r.stderr || r.error?.message || '').trim()}` };
   }
-  return { ok: false, text: 'En Mac, abre el Panel desde Munder o con: munder panel' };
+  return { ok: false, text: 'En Mac, abre el Panel desde ISyCo Worlds o con: worlds panel' };
 }
 
 // ─── the server ──────────────────────────────────────────────────────────────

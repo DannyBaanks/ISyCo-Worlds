@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * Munder Panel: opens the button panel in the browser.
+ * Worlds Panel: opens the button panel in the browser.
  *
- *   munder panel                 dev checkout
+ *   worlds panel                 dev checkout
  *   "Munder Difflin" --panel     packaged app (the launcher runs this file as node)
  *   … [--no-abrir]               start it without opening the browser (tests, SSH)
  *
@@ -34,7 +34,7 @@ async function main() {
 
   const existing = await reuse(file);
   if (existing) {
-    console.log(`Munder Panel ya estaba abierto: ${existing.replace(/#t=.*/, '')}`);
+    console.log(`Worlds Panel ya estaba abierto: ${existing.replace(/#t=.*/, '')}`);
     if (open) P.openBrowser(existing);
     return;
   }
@@ -44,11 +44,11 @@ async function main() {
   server.listen(0, '127.0.0.1', () => {
     const { port } = server.address();
     fs.writeFileSync(file, JSON.stringify({ pid: process.pid, port, token }), { mode: 0o600 });
-    console.log(`Munder Panel en http://127.0.0.1:${port}/ (se cierra solo al cerrar la página)`);
+    console.log(`Worlds Panel en http://127.0.0.1:${port}/ (se cierra solo al cerrar la página)`);
     if (open) P.openBrowser(url());
   });
   process.on('SIGTERM', bye);
   process.on('SIGINT', bye);
 }
 
-main().catch((e) => { console.error(`munder panel: ${e.message}`); process.exit(1); });
+main().catch((e) => { console.error(`worlds panel: ${e.message}`); process.exit(1); });

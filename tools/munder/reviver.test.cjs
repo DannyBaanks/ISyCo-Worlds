@@ -457,7 +457,7 @@ test('e2e: the daemon outlives Munder and revives it through the CLI', { timeout
   await until(() => cli('status').status === 3, 15_000, 'daemon up');
 
   let r = cli('status');
-  assert.match(r.stdout, /munder: +down/);
+  assert.match(r.stdout, /worlds: +down/);
   r = cli('start', '--json');
   assert.equal(r.status, 0, r.stderr);
   const started = JSON.parse(r.stdout);
@@ -511,7 +511,7 @@ test('MCP adapter: three tools, the only input is a machine from the targets fil
 
   const st = await MCP.handle({ id: 3, method: 'tools/call', params: { name: 'munder_status', arguments: { machine: 'xeon' } } }, machines);
   assert.equal(st.isError, false);
-  assert.match(st.content[0].text, /^xeon: Munder DOWN/);
+  assert.match(st.content[0].text, /^xeon: ISyCo Worlds DOWN/);
   const up = await MCP.handle({ id: 4, method: 'tools/call', params: { name: 'munder_start', arguments: { machine: 'xeon' } } }, machines);
   track(up.structuredContent);
   assert.equal(up.isError, false, up.content[0].text);
@@ -565,6 +565,6 @@ test('MCP adapter over real stdio: initialize, list, call', { timeout: 60_000 },
   p.stdin.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n');
   assert.equal((await rpc(2, 'tools/list', {})).result.tools.length, 3);
   const st = await rpc(3, 'tools/call', { name: 'munder_status', arguments: { machine: 'victus' } });
-  assert.match(st.result.content[0].text, /^victus: Munder DOWN/);
+  assert.match(st.result.content[0].text, /^victus: ISyCo Worlds DOWN/);
   assert.equal((await rpc(4, 'tools/call', { name: 'munder_status', arguments: { machine: 'nope' } })).error.code, -32602);
 });

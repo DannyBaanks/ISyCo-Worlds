@@ -68,7 +68,7 @@ async function authorize(client, { scope, verifier = b64u(crypto.randomBytes(32)
   assert.equal(page.status, 200);
   const html = await page.text();
   const rid = html.match(/const rid=("[^"]+")/)[1];
-  const code6 = html.match(/munder gpt aprobar (\d{6})/)[1];
+  const code6 = html.match(/worlds gpt aprobar (\d{6})/)[1];
   // Before the operator acts, the page can only wait.
   assert.equal((await (await fetch(`${base}/authorize/status?request=${encodeURIComponent(JSON.parse(rid))}`)).json()).status, 'pending');
   if (approve === 'skip') return { code6 };
@@ -110,10 +110,10 @@ const call = async (tok, name, args = {}) => {
 };
 
 // ─── discovery and inventory ─────────────────────────────────────────────────
-test('munder gpt is discoverable from the munder CLI', () => {
+test('Worlds GPT is discoverable from the Worlds CLI', () => {
   const r = spawnSync(process.execPath, [path.join(__dirname, 'munder'), 'gpt', 'help'], { encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /munder gpt perfil lectura\|operador\|full/);
+  assert.match(r.stdout, /worlds gpt perfil lectura\|operador\|full/);
   const help = spawnSync(process.execPath, [path.join(__dirname, 'munder'), 'help'], { encoding: 'utf8' });
   assert.match(help.stdout, /gpt …/);
 });

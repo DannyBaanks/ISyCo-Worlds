@@ -4,7 +4,7 @@
  * worlds — CLI de control dev para ISyCo Worlds (v3 interactivo).
  *
  * Fuente de verdad: tools/munder/munder (dentro de este repo).
- * Instala: ln -sf "$PWD/tools/munder/munder" ~/.local/bin/munder
+ * Instala: ./tools/munder/install.sh (worlds + alias histórico munder)
  * Uso: worlds [comando] · sin args abre el menú interactivo (si hay TTY).
  *
  * HEREDADO del launcher bash 2026-09-21 (conservado en munder.bash-legacy):
@@ -226,7 +226,7 @@ function expandTilde(p) {
 
 // ─── .gitignore del harness (misma lista que ensureHarnessGitignore) ─────────
 const HARNESS_GITIGNORE = ['hive/', 'palace/', 'roster.json', 'roster-backups/'];
-const GITIGNORE_MARK = '# munder-difflin harness runtime (auto-generated — safe to edit)';
+const GITIGNORE_MARK = '# isyco-worlds harness runtime (auto-generated — safe to edit)';
 function ensureHarnessGitignore(dir) {
   const p = path.join(dir, '.gitignore');
   let cur = '';
@@ -526,9 +526,9 @@ async function cmdSesionProveedor(args) {
         else {
           pastedKey = key; // memoria volátil: solo se usa si abres el chat abajo
           const r = linkKeyToCli(cliId, key);
-          if (r.ok) { linkedWhere = r.where; console.log(st(`  ✓ vinculada en ${r.where} (+ .bak-munder de respaldo)`, C.green)); }
+          if (r.ok) { linkedWhere = r.where; console.log(st(`  ✓ vinculada en ${r.where} (+ .bak-worlds de respaldo)`, C.green)); }
           else if (r.manual) console.log(st(`  No la guardé en ningún lado. Hazlo así: ${r.manual}`, C.yellow));
-          else console.log(st(`  No se pudo vincular (${r.error}). Nada quedó a medias: la key no está en ningún archivo de munder.`, C.yellow));
+          else console.log(st(`  No se pudo vincular (${r.error}). Nada quedó a medias: la key no está en ningún archivo de Worlds.`, C.yellow));
         }
       }
     }
@@ -604,7 +604,7 @@ async function cmdSesionProveedor(args) {
     if (personajeAvatar) console.log(`    avatar:    ${personajeAvatar}`);
   }
   console.log(`    comando:  ${assembled}`);
-  console.log(st('  OJO: "armar" crea un agente VIVO con PTY en tu sesión de munder. "Solo mostrar" únicamente imprime el comando y no crea nada.', C.yellow));
+  console.log(st('  OJO: "armar" crea un agente VIVO con PTY en tu sesión de Worlds. "Solo mostrar" únicamente imprime el comando y no crea nada.', C.yellow));
   const i = await select('¿Armamos el agente con esto?', [
     { label: 'Sí, armar ahora (crea el agente vivo)', value: 'go' },
     { label: 'Solo mostrar el comando (no crea nada)', value: 'show' },
@@ -646,7 +646,7 @@ async function cmdSesionArmar(args) {
   if (!comando) comando = (await ask('  Comando (p. ej. claude --model opus): ')).trim();
   if (!cwd) {
     const pick = await pedirCarpeta(
-      'Munder — carpeta de trabajo del agente',
+      'ISyCo Worlds — carpeta de trabajo del agente',
       'Carpeta de trabajo', os.homedir());
     if (!pick) die('sin carpeta, cancelado.');
     cwd = pick;
@@ -837,7 +837,7 @@ async function cmdCreateHarness(parentArg, nameArg) {
   let parent = parentArg || null;
   if (!parent) {
     const pick = await pedirCarpeta(
-      'Munder — elige la carpeta PADRE del harness nuevo',
+      'ISyCo Worlds — elige la carpeta PADRE del harness nuevo',
       'Carpeta padre', os.homedir());
     if (!pick) { say('cancelado por el usuario.'); return; }
     parent = pick;
@@ -1698,7 +1698,7 @@ function linkKeyToCli(cliId, keyValue) {
   }
   try {
     fs.mkdirSync(path.dirname(dest), { recursive: true });
-    if (fs.existsSync(dest)) fs.copyFileSync(dest, dest + '.bak-munder');
+    if (fs.existsSync(dest)) fs.copyFileSync(dest, dest + '.bak-worlds');
     current.OPENAI_API_KEY = keyValue;
     fs.writeFileSync(dest, JSON.stringify(current, null, 2) + '\n', { mode: 0o600 });
     return { ok: true, where: dest };
@@ -1725,7 +1725,7 @@ async function interactiveMenu() {
       { label: '◈ Proveedores y modelos…', value: 'proveedor' },
       { label: '◍ Avatar (lienzo/editar)…', value: 'avatar' },
       { label: '✦ Repintar interfaz', value: 'repaint' },
-      { label: '⇄ Oficinas enlazadas (Munder Link)…', value: 'link' },
+      { label: '⇄ Oficinas enlazadas (World Link)…', value: 'link' },
       { label: 'Salir', value: 'quit' },
     ]);
     console.log('');
@@ -1791,18 +1791,17 @@ Comandos:
                   Estilo connect: detecta tus CLIs, lista endpoints top-10 y
                   modelos por key. Solo vincula keys al auth propio del CLI.
   repaint           Pide a la app viva repintar su interfaz (sin reiniciar).
-  repaint           Pide a la app viva repintar su interfaz (sin reiniciar).
   ctl ping          Prueba el canal de control de la app viva (M0).
   ctl limpiar       Borra munder-control.json huérfano (puerto cerrado + sin procesos).
-  link conectar     Enlaza esta oficina con otra (misma red o Tailscale): busca,
+  link conectar     Enlaza esta oficina Worlds con otra (misma red o Tailscale): busca,
                     muestra un código de 6 dígitos y empareja. Luego:
-                    link enviar <oficina> "tarea" · link estado · link ayuda
+                    World Link: link enviar <oficina> "tarea" · link estado · link ayuda
   gpt …             ChatGPT como principal «gpt»: perfil (lectura/operador/full),
                     encender con URL fija, aprobar, revocar, auditoría. Ver GPT.md
   harness …         Mandar una tarea a un harness externo (codex, deepseek/ACP) y
                     recibir un recibo. Ver EXTERNAL_HARNESS_AUDIT.md
-  panel             Munder Panel: todo esto con botones, en el navegador
-  reviver …         El Reviver: arranca y revive Munder aunque Munder esté muerto
+  panel             Worlds Panel: todo esto con botones, en el navegador
+  reviver …         El Reviver: arranca y revive ISyCo Worlds si se cierra
                     (init · instalar · status · start · restart · stop). Ver REVIVER.md
   ps              Lista PIDs del dev (sin matar nada)
   check           Verifica checkout: package.json + node_modules
@@ -1824,10 +1823,10 @@ Ejemplos:
   worlds restart
   worlds create-harness ~/Development harness-isYco
 
-Compatibilidad: el lanzador histórico \`munder\` sigue disponible.`);
+Compatibilidad: el lanzador histórico \`munder\` sigue disponible como alias de \`worlds\`.`);
 }
 
-// ─── link (Munder Link: oficinas enlazadas; ver LINK.md) ────────────────────
+// ─── link (World Link: oficinas enlazadas; ver LINK.md) ─────────────────────
 async function cmdLink(args) {
   let version = 'dev';
   try { version = JSON.parse(fs.readFileSync(path.join(MUNDER_DIR, 'package.json'), 'utf8')).version; } catch { /* sin checkout */ }
@@ -1860,7 +1859,7 @@ async function main() {
       break;
     }
     // Buttons for everything above, in the browser; its own process so it
-    // outlives this one and works while Munder is closed.
+    // outlives this one and works while ISyCo Worlds is closed.
     case 'panel': {
       const r = spawnSync(process.execPath, [path.join(__dirname, 'panel.cjs'), ...rest], { stdio: 'inherit' });
       process.exitCode = r.status ?? 1;

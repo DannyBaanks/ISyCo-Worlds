@@ -66,9 +66,9 @@ function loadTargets(file = process.env.MUNDER_REVIVER_TARGETS) {
 }
 
 const TOOLS = [
-  ['munder_status', 'status', 'Is Munder alive and healthy on this machine? Reports pid, health, verified office identity, watchdog and the last recovery action. Read-only.'],
-  ['munder_start', 'start', 'Start Munder on this machine if it is not healthy. A no-op when it already is. Waits for health and office identity, and returns a receipt.'],
-  ['munder_restart', 'restart', 'Restart Munder on this machine: stops only the verified Munder instance, starts it again, waits for health and office identity, and returns a receipt. Fails closed if the target is ambiguous.'],
+  ['munder_status', 'status', 'Is ISyCo Worlds alive and healthy on this machine? Reports pid, health, verified office identity, watchdog and the last recovery action. Read-only.'],
+  ['munder_start', 'start', 'Start ISyCo Worlds on this machine if it is not healthy. A no-op when it already is. Waits for health and office identity, and returns a receipt.'],
+  ['munder_restart', 'restart', 'Restart ISyCo Worlds on this machine: stops only the verified Worlds instance, starts it again, waits for health and office identity, and returns a receipt. Fails closed if the target is ambiguous.'],
 ];
 
 function toolList(machines) {
@@ -90,7 +90,7 @@ function toolList(machines) {
 function summarize(op, machine, r) {
   if (op === 'status') {
     const m = r.munder;
-    return `${machine}: Munder ${r.healthy ? 'HEALTHY' : m.state.toUpperCase()}${m.pids.length ? ` (pid ${m.pids.join(', ')})` : ''}; identity ${m.identity_verified ? 'verified' : 'NOT verified'}; watchdog ${r.watchdog.state}${r.last ? `; last ${r.last.action} → ${r.last.verdict}` : ''}`;
+    return `${machine}: ISyCo Worlds ${r.healthy ? 'HEALTHY' : m.state.toUpperCase()}${m.pids.length ? ` (pid ${m.pids.join(', ')})` : ''}; identity ${m.identity_verified ? 'verified' : 'NOT verified'}; watchdog ${r.watchdog.state}${r.last ? `; last ${r.last.action} → ${r.last.verdict}` : ''}`;
   }
   return `${machine}: ${r.action} → ${r.verdict}${r.reason ? ` (${r.reason})` : ''}; receipt ${r.receipt_id}`;
 }

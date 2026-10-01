@@ -1,49 +1,51 @@
-# munder — CLI de control (sin `npm run dev`)
+# ISyCo Worlds — CLI de control (sin `npm run dev`)
 
-`munder` arranca, para y observa la app sin tocar Electron a mano.
+`worlds` arranca, para y observa la app sin tocar Electron a mano.
 Node puro, cero dependencias. Linux-first.
 
 ## Instala
 
 ```bash
-./tools/munder/install.sh   # symlink en ~/.local/bin + munder check
+./tools/munder/install.sh   # instala worlds y el alias histórico munder
 ```
 
-(Sin script: `ln -sf "$PWD/tools/munder/munder" ~/.local/bin/munder`.)
+Se conserva el alias histórico `munder` por compatibilidad. Para una instalación manual:
+`ln -sf "$PWD/tools/munder/munder" ~/.local/bin/worlds`.
 
 Sin args (con TTY) abre el menú interactivo. Sin TTY imprime la ayuda.
 
 ## Uso diario
 
 ```bash
-munder start          # dev despegado anti-freeze (setsid, log a ~/.local/state/munder/)
-munder status         # PIDs, uptime, puerto 5173, tail del log
-munder logs -f        # seguir el log
-munder stop           # TERM, espera 5s, KILL a lo que quede
-munder restart        # stop + start
-munder check          # verifica package.json + node_modules
+worlds start          # dev despegado anti-freeze (setsid, log a ~/.local/state/munder/)
+worlds status         # PIDs, uptime, puerto 5173, tail del log
+worlds logs -f        # seguir el log
+worlds stop           # TERM, espera 5s, KILL a lo que quede
+worlds restart        # stop + start
+worlds check          # verifica package.json + node_modules
 ```
 
-`MUNDER_DIR` apunta al checkout (defecto: la raíz de este repo).
-`MUNDER_STATE_DIR` apunta a estado/logs/pid (defecto: `~/.local/state/munder`).
+`WORLDS_DIR` apunta al checkout (defecto: la raíz de este repo).
+`WORLDS_STATE_DIR` apunta a estado/logs/pid (defecto: `~/.local/state/munder`).
 
 ```bash
-MUNDER_DIR=/ruta/a/otro/checkout munder status
+WORLDS_DIR=/ruta/a/otro/checkout worlds status
 ```
 
-Regla de oro: **nunca build (`./start.sh`) + `munder start` a la vez** —
-comparten `~/.config/munder-difflin` y la segunda instancia muere por singleton.
+`MUNDER_DIR` sigue aceptado como alias antiguo de `WORLDS_DIR`. Regla de oro:
+**nunca build (`./start.sh`) + `worlds start` a la vez** — comparten el userData
+existente y la segunda instancia muere por singleton.
 
 ## Sesión viva
 
 ```bash
-munder sesion ver                  # tabla de agentes
-munder sesion armar --nombre X --comando "..." --cwd ...  # crea un agente
-munder sesion quitar <id>          # elimina un agente (id o pty)
-munder ctl ping                    # prueba el canal de control (M0)
-munder repaint                     # repintado sin reiniciar
-munder sesion proveedor            # wizard connect: CLIs, endpoints, modelos
-munder create-harness ~/Dev harness-1  # carpeta de harness completa
+worlds sesion ver                  # tabla de agentes
+worlds sesion armar --nombre X --comando "..." --cwd ...  # crea un agente
+worlds sesion quitar <id>          # elimina un agente (id o pty)
+worlds ctl ping                    # prueba el canal de control (M0)
+worlds repaint                     # repintado sin reiniciar
+worlds sesion proveedor            # wizard connect: CLIs, endpoints, modelos
+worlds create-harness ~/Dev harness-1  # carpeta de harness completa
 ```
 
 Si `ctl ping` dice `ECONNREFUSED`, la app murió dejando
@@ -52,18 +54,18 @@ Si `ctl ping` dice `ECONNREFUSED`, la app murió dejando
 ## Avatares solo con texto (sin keys)
 
 ```bash
-munder avatar compilar "piel morena, pelo castaño largo, blusa rosa, gafas"
-munder avatar compilar "piel morena, traje azul" --motor spec --pelo "corto castaño" --salida ./yo.png
-munder avatar inspect ./yo.png     # matriz textual para que el modelo la "vea"
-munder avatar lienzo ./base.png    # lienzo 18×28 para editar con modelo
+worlds avatar compilar "piel morena, pelo castaño largo, blusa rosa, gafas"
+worlds avatar compilar "piel morena, traje azul" --motor spec --pelo "corto castaño" --salida ./yo.png
+worlds avatar inspect ./yo.png     # matriz textual para que el modelo la "vea"
+worlds avatar lienzo ./base.png    # lienzo 18×28 para editar con modelo
 ```
 
 ## Inyectar tu avatar al piso (persistente)
 
 ```bash
-munder avatar inyectar "piel morena, blusa rosa, gafas" --slot auto
-munder avatar inyectar --ver          # lo guardado
-munder avatar inyectar --quitar --slot kelly
+worlds avatar inyectar "piel morena, blusa rosa, gafas" --slot auto
+worlds avatar inyectar --ver          # lo guardado
+worlds avatar inyectar --quitar --slot kelly
 ```
 
 Guarda tu receta en `~/.config/munder-difflin/avatar-overrides.json`;
@@ -79,10 +81,10 @@ Mismo texto = mismo PNG. `INVALID_ENUM` + lista = corrige y reintenta.
 Detalle del formato para modelos: `AVATAR_AGENTES.md`.
 Spec congelado v1: `AVATAR_SPEC.md` + `avatar-spec.schema.json`.
 
-## Oficinas enlazadas (Munder Link)
+## Oficinas enlazadas (World Link)
 
-Enlaza esta oficina con otra máquina (misma red o Tailscale) para que un Michael le
-delegue trabajo al otro. En las dos: `munder link conectar`. Guía completa: [LINK.md](LINK.md).
+Enlaza esta oficina con otra máquina (misma red o Tailscale) para que un agente le
+delegue trabajo al otro. En las dos: `worlds link conectar`. Guía completa: [LINK.md](LINK.md).
 
 ## Tests
 

@@ -1,7 +1,7 @@
 'use strict';
 // node --test tools/munder/panel.test.cjs
 //
-// Munder Panel: the button page for people who never open a terminal. What
+// Worlds Panel: the button page for people who never open a terminal. What
 // matters: only this machine can drive it (127.0.0.1, its own Host, a token),
 // the page can only press buttons that exist, and the buttons do the same
 // thing the CLI does (same pid files, same pending requests).
@@ -40,7 +40,7 @@ test('the page and its assets load without a token; the API does not', async () 
   try {
     const page = await fetch(`${s.base}/`);
     assert.equal(page.status, 200);
-    assert.match(await page.text(), /MUNDER PANEL/);
+    assert.match(await page.text(), /WORLDS PANEL/);
     assert.match(page.headers.get('content-security-policy'), /default-src 'self'/);
     assert.equal((await fetch(`${s.base}/panel.js`)).status, 200);
     assert.equal((await fetch(`${s.base}/api/state`)).status, 401);
@@ -103,13 +103,13 @@ test('the real buttons are a closed list, and codes are 6 digits', async () => {
   }
 });
 
-test('Munder closed reads as closed, not as an error', async () => {
+test('ISyCo Worlds closed reads as closed, not as an error', async () => {
   assert.deepEqual(await P.appStatus(), { running: false });
   fs.writeFileSync(path.join(process.env.MUNDER_USER_DATA, 'munder-control.json'), JSON.stringify({ port: 1, token: 'x' }));
   assert.deepEqual(await P.appStatus({ timeoutMs: 500 }), { running: false });
 });
 
-test('Munder running is read from its own /salud, with its token', async () => {
+test('ISyCo Worlds running is read from its own /salud, with its token', async () => {
   const http = require('node:http');
   const srv = http.createServer((req, res) => {
     const ok = req.headers.authorization === 'Bearer tok' && req.url === '/salud';
@@ -149,7 +149,7 @@ test('Link buttons share the CLI state: accept a phone, see it, forget it', asyn
 test('the menu entry opens the panel, with paths quoted', () => {
   const d = P.desktopEntry({ cmd: '/opt/ISyCo Worlds/isyco-worlds', args: ['--panel'] });
   assert.match(d, /^Exec="\/opt\/ISyCo Worlds\/isyco-worlds" --panel$/m);
-  assert.match(d, /^Name=ISyCo Worlds Panel$/m);
+  assert.match(d, /^Name=Worlds Panel$/m);
   process.env.APPIMAGE = '/home/x/Munder.AppImage';
   try { assert.deepEqual(P.panelCommand(), { cmd: '/home/x/Munder.AppImage', args: ['--panel'] }); } finally { delete process.env.APPIMAGE; }
 });
@@ -172,8 +172,8 @@ test('the packaged app ships every panel file it loads', () => {
   assert.match(boot, /join\(__dirname, 'index\.js'\)/);
 });
 
-test('munder panel is reachable from the CLI help', () => {
+test('worlds panel is reachable from the CLI help', () => {
   const { spawnSync } = require('node:child_process');
   const r = spawnSync(process.execPath, [path.join(__dirname, 'munder'), 'help'], { encoding: 'utf8' });
-  assert.match(r.stdout, /panel +Munder Panel/);
+  assert.match(r.stdout, /panel +Worlds Panel/);
 });

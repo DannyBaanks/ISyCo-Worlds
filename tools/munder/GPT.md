@@ -1,9 +1,9 @@
-# Munder GPT
+# ISyCo Worlds GPT
 
-ChatGPT entra a tu oficina como un **principal** de Munder, llamado `gpt`, con la autoridad que tú le das. No es un conjunto de excepciones del MCP: es un usuario de Munder, con permisos explícitos, con auditoría y revocable.
+ChatGPT entra a tu oficina como un **principal** de ISyCo Worlds, llamado `gpt`, con la autoridad que tú le das. No es un conjunto de excepciones del MCP: es un usuario de ISyCo Worlds, con permisos explícitos, con auditoría y revocable.
 
 ```text
-transporte  dice DÓNDE está Munder          (una URL; no da ningún permiso)
+transporte  dice DÓNDE está ISyCo Worlds          (una URL; no da ningún permiso)
 OAuth       dice QUIÉN llama                (un token que tú aprobaste)
 el permiso  dice QUÉ puede hacer            (scopes, con el perfil como tope)
 ```
@@ -11,15 +11,15 @@ el permiso  dice QUÉ puede hacer            (scopes, con el perfil como tope)
 ## En tres pasos
 
 ```bash
-munder gpt perfil full                  # te muestra TODO lo que tendrá y te pide confirmar
-munder gpt encender --transporte ngrok --dominio tu-dominio.ngrok-free.dev
-munder gpt aprobar 123456               # el código que te muestra ChatGPT al conectar
+worlds gpt perfil full                  # te muestra TODO lo que tendrá y te pide confirmar
+worlds gpt encender --transporte ngrok --dominio tu-dominio.ngrok-free.dev
+worlds gpt aprobar 123456               # el código que te muestra ChatGPT al conectar
 ```
 
 `encender` imprime algo así:
 
 ```text
-MUNDER GPT
+WORLDS GPT
 
 Principal:  gpt
 Autoridad:  FULL (munder.read munder.operate munder.admin)
@@ -34,10 +34,10 @@ Conexión en ChatGPT (Settings → Apps & Connectors → Advanced → Developer 
   Authentication: OAuth
 ```
 
-Al crear el conector, ChatGPT abre una página de Munder con un **código de 6 dígitos**:
+Al crear el conector, ChatGPT abre una página de ISyCo Worlds con un **código de 6 dígitos**:
 
-1. En la computadora, `munder gpt solicitudes` muestra la solicitud y a qué host regresa. Debe ser `chatgpt.com`.
-2. Apruébala con `munder gpt aprobar <código>`.
+1. En la computadora, `worlds gpt solicitudes` muestra la solicitud y a qué host regresa. Debe ser `chatgpt.com`.
+2. Apruébala con `worlds gpt aprobar <código>`.
 3. La página regresa sola a ChatGPT.
 
 Nadie puede aprobar desde la web: solo tú, en tu terminal.
@@ -54,7 +54,7 @@ Nadie puede aprobar desde la web: solo tú, en tu terminal.
 - **Qué muestra ChatGPT:** `tools/list` solo lista lo que el permiso deja usar.
 - **Si pide algo fuera de su scope:** la llamada se rechaza y queda en la auditoría como `tool_denied`.
 
-`munder gpt capacidades full` lista las 25 herramientas. Esta es la lista de **Full**, que es todo lo que este operador puede delegar:
+`worlds gpt capacidades full` lista las 25 herramientas. Esta es la lista de **Full**, que es todo lo que este operador puede delegar:
 
 | Scope | Herramientas |
 |---|---|
@@ -70,29 +70,29 @@ Nadie puede aprobar desde la web: solo tú, en tu terminal.
 
 ### De dónde sale la lista
 
-Munder no tiene un registro único de operaciones. Tiene cuatro superficies:
-- el `dispatch` de Munder Remote;
-- las operaciones de Munder Link;
+ISyCo Worlds no tiene un registro único de operaciones. Tiene cuatro superficies:
+- el `dispatch` de Worlds Remote;
+- las operaciones de World Link;
 - las rutas del canal de control de la app;
 - las operaciones del Reviver.
 
-`INVENTORY` en `lib-gpt.cjs` clasifica cada una como **expuesta** (con qué herramienta) o **excluida** (y por qué). El test `inventory` **lee esas cuatro fuentes** y falla si aparece una operación nueva sin clasificar. Una operación nueva de Munder no puede quedarse fuera de Full en silencio, ni colarse sin scope.
+`INVENTORY` en `lib-gpt.cjs` clasifica cada una como **expuesta** (con qué herramienta) o **excluida** (y por qué). El test `inventory` **lee esas cuatro fuentes** y falla si aparece una operación nueva sin clasificar. Una operación nueva de ISyCo Worlds no puede quedarse fuera de Full en silencio, ni colarse sin scope.
 
 ## El buzón de GPT: «¿ya me contestó Michael?»
 
 - **De Michael a ChatGPT:** Michael (o cualquier agente) escribe un mensaje con `"to": "gpt"`. El router del hive lo deja en `<hive>/gpt/inbox`.
 - **Cómo lo encuentra ChatGPT:** `gpt_inbox` lista lo que le llegó, sin que tú le pases ningún id. Luego `gpt_inbox_read` lo lee, `gpt_inbox_reply` contesta en el mismo hilo (`in_reply_to` y `conversation`) y `gpt_inbox_mark_read` lo archiva.
-- **Cuándo existe el buzón:** solo mientras `munder gpt` lo configuró. Sin él, `"to": "gpt"` rebota a Michael como cualquier destinatario desconocido, igual que antes.
+- **Cuándo existe el buzón:** solo mientras `worlds gpt` lo configuró. Sin él, `"to": "gpt"` rebota a Michael como cualquier destinatario desconocido, igual que antes.
 - **Qué no es:** `gpt` no es un agente. No tiene terminal, no está en el roster y no recibe los broadcasts.
 - **Qué no ve:** los buzones de otros agentes nunca pasan por aquí.
 
 ## Oficinas enlazadas: Full aquí no es Full allá
 
-Por Munder Link, ChatGPT es **esta oficina** actuando como peer:
+Por World Link, ChatGPT es **esta oficina** actuando como peer:
 - Delega, sigue, manda mensajes y cancela **lo que esta oficina delegó**.
 - Nunca ve el tablero de la otra oficina. Esa es la regla de propiedad de Link, y no se toca.
 
-Para tener Full en el Xeon, corre `munder gpt` **en el Xeon**. Cada oficina decide sobre sí misma.
+Para tener Full en el Xeon, corre `worlds gpt` **en el Xeon**. Cada oficina decide sobre sí misma.
 
 ## Seguridad
 
@@ -110,9 +110,9 @@ Para tener Full en el Xeon, corre `munder gpt` **en el Xeon**. Cada oficina deci
   - el mensaje sale `from: "gpt"`;
   - la bitácora del hive registra `principal: "gpt"` y `grant_id`;
   - el recibo es `{ id, kind, correlation_id, principal: "gpt", grant_id }`;
-  - `munder gpt auditoria` registra cada solicitud, aprobación, token, llamada, rechazo y revocación.
-- **Revocar:** `munder gpt revocar <permiso|cliente|todo>` funciona desde la siguiente llamada, y el refresh token también deja de servir.
-- **Apagar:** `munder gpt apagar` apaga el gateway. Los permisos se quedan (para quitarlos, `revocar todo`), y el hive, Link, Remote y el Reviver no se tocan.
+  - `worlds gpt auditoria` registra cada solicitud, aprobación, token, llamada, rechazo y revocación.
+- **Revocar:** `worlds gpt revocar <permiso|cliente|todo>` funciona desde la siguiente llamada, y el refresh token también deja de servir.
+- **Apagar:** `worlds gpt apagar` apaga el gateway. Los permisos se quedan (para quitarlos, `revocar todo`), y el hive, Link, Remote y el Reviver no se tocan.
 - **Estado en disco:** todo vive en `~/.local/state/munder/gpt/`. Borrar esa carpeta quita GPT por completo sin tocar nada más.
 
 ## Transportes
@@ -129,17 +129,17 @@ La URL que imprime `encender` es la que respondió de verdad: el CLI llama a `<u
 ## Comandos
 
 ```text
-munder gpt                        estado y menú
-munder gpt perfil lectura|operador|full [--si]
-munder gpt capacidades [perfil]
-munder gpt encender [--transporte …] [--dominio D] [--url U] [--puerto N]
-munder gpt apagar | estado [--json]
-munder gpt solicitudes | aprobar CÓDIGO | rechazar CÓDIGO
-munder gpt permisos | revocar ID|CLIENTE|todo
-munder gpt auditoria [N] | buzon | reviver
+worlds gpt                        estado y menú
+worlds gpt perfil lectura|operador|full [--si]
+worlds gpt capacidades [perfil]
+worlds gpt encender [--transporte …] [--dominio D] [--url U] [--puerto N]
+worlds gpt apagar | estado [--json]
+worlds gpt solicitudes | aprobar CÓDIGO | rechazar CÓDIGO
+worlds gpt permisos | revocar ID|CLIENTE|todo
+worlds gpt auditoria [N] | buzon | reviver
 ```
 
-`munder gpt reviver` le da a GPT su propio cliente del Reviver: sus recibos dicen `gpt`, no `local`.
+`worlds gpt reviver` le da a GPT su propio cliente del Reviver: sus recibos dicen `gpt`, no `local`.
 
 ## Pruebas
 

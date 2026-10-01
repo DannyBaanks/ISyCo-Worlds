@@ -14,7 +14,7 @@
       headers: { 'x-munder-panel': TOKEN, ...(body ? { 'content-type': 'application/json' } : {}) },
       body: body ? JSON.stringify(body) : undefined,
     });
-    if (r.status === 401) throw new Error('Esta pestaña ya no es válida: abre Munder Panel otra vez.');
+    if (r.status === 401) throw new Error('Esta pestaña ya no es válida: abre Worlds Panel otra vez.');
     return r.json();
   }
 
@@ -55,7 +55,7 @@
     $('link-peers').innerHTML = (L.peers || []).length ? L.peers.map((p) => `
       <li><span class="dot ${p.online ? 'on' : 'off'}"></span><span class="grow"><strong>${esc(p.name)}</strong>
       <small>${p.online ? `en línea · ${p.workers_idle ?? '?'}/${p.workers_total ?? '?'} libres · ${p.latency_ms} ms` : esc(p.reason)}</small></span></li>`).join('')
-      : '<li class="empty">Ninguna todavía. Enciende el enlace en las dos computadoras y empareja desde Munder → Configuración → Munder Link.</li>';
+      : '<li class="empty">Ninguna todavía. Enciende el enlace en las dos computadoras y empareja desde ISyCo Worlds → Configuración → World Link.</li>';
     $('link-urls').innerHTML = (L.urls || []).length ? L.urls.map((u) => `<li><span class="grow">${esc(u.url)}</span><small>${esc(u.via)}</small></li>`).join('')
       : '<li class="empty">Esta computadora no tiene red local ni Tailscale.</li>';
     $('link-phones').innerHTML = (L.phones || []).length ? L.phones.map((p) => `

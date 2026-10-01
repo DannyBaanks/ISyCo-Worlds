@@ -1,20 +1,20 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * munder-reviver: the maintenance plane's CLI and daemon (lib-reviver.cjs).
+ * worlds reviver: the maintenance plane's CLI and daemon (lib-reviver.cjs).
  *
- *   munder-reviver init [opciones]     pin the target and this office, make the keys
- *   munder-reviver servir              run the daemon in the foreground (what the service runs)
- *   munder-reviver instalar            systemd --user (Linux) / logon task (Windows), then start it
- *   munder-reviver desinstalar
- *   munder-reviver status | start | restart | stop | recibos      (through the local daemon)
- *   munder-reviver cliente nuevo NOMBRE [--direccion HOST:PUERTO] [--salida ARCHIVO]
- *   munder-reviver cliente autorizar NOMBRE LLAVE_PUBLICA
- *   munder-reviver cliente quitar ID|NOMBRE
- *   munder-reviver clientes
- *   munder-reviver llamar CREDENCIAL OPERACION [--direccion HOST:PUERTO]   (from another machine)
+ *   worlds reviver init [opciones]     pin the target and this office, make the keys
+ *   worlds reviver servir              run the daemon in the foreground (what the service runs)
+ *   worlds reviver instalar            systemd --user (Linux) / logon task (Windows), then start it
+ *   worlds reviver desinstalar
+ *   worlds reviver status | start | restart | stop | recibos      (through the local daemon)
+ *   worlds reviver cliente nuevo NOMBRE [--direccion HOST:PUERTO] [--salida ARCHIVO]
+ *   worlds reviver cliente autorizar NOMBRE LLAVE_PUBLICA
+ *   worlds reviver cliente quitar ID|NOMBRE
+ *   worlds reviver clientes
+ *   worlds reviver llamar CREDENCIAL OPERACION [--direccion HOST:PUERTO]   (from another machine)
  *
- * Builtins only, and it never loads Munder's app code: it must work while Munder is gone.
+ * Builtins only, and it never loads ISyCo Worlds's app code: it must work while ISyCo Worlds is gone.
  */
 const fs = require('node:fs');
 const os = require('node:os');
@@ -22,8 +22,8 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const R = require('./lib-reviver.cjs');
 
-const say = (m) => console.log(`munder-reviver: ${m}`);
-const die = (m, code = 1) => { console.error(`munder-reviver: ${m}`); process.exit(code); };
+const say = (m) => console.log(`worlds reviver: ${m}`);
+const die = (m, code = 1) => { console.error(`worlds reviver: ${m}`); process.exit(code); };
 
 const OP_ALIASES = { estado: 'status', status: 'status', start: 'start', arrancar: 'start', restart: 'restart', reiniciar: 'restart', stop: 'stop', parar: 'stop', recibos: 'receipts', receipts: 'receipts' };
 
@@ -87,7 +87,7 @@ function cmdInit(f) {
   } else {
     const root = path.resolve(f.app || path.join(__dirname, '..', '..'));
     const exe = electronIn(root);
-    if (!fs.existsSync(path.join(root, 'package.json'))) die(`${root} no parece un checkout de Munder (sin package.json). Usa --app o --exe`);
+    if (!fs.existsSync(path.join(root, 'package.json'))) die(`${root} no parece un checkout de ISyCo Worlds (sin package.json). Usa --app o --exe`);
     if (!fs.existsSync(exe)) die(`no encuentro Electron en ${exe}: corre npm install en ${root}`);
     if (!fs.existsSync(path.join(root, 'out', 'main', 'index.js'))) say(`AVISO: no hay build en ${root}/out: corre npm run build antes de usar start`);
     const args = [];
@@ -124,8 +124,8 @@ function cmdInit(f) {
   console.log(`  destino:   ${target.exe} ${target.args.join(' ')}`);
   console.log(`  carpeta:   ${target.cwd}`);
   console.log(`  userData:  ${userData}`);
-  console.log(`  escucha:   ${config.bind}:${config.port}${config.autostart ? '  · arranca Munder al iniciar' : ''}`);
-  console.log('Siguiente: munder-reviver instalar   (o munder-reviver servir para probar)');
+  console.log(`  escucha:   ${config.bind}:${config.port}${config.autostart ? '  · arranca ISyCo Worlds al iniciar' : ''}`);
+  console.log('Siguiente: worlds reviver instalar   (o worlds reviver servir para probar)');
 }
 
 // ─── the daemon ──────────────────────────────────────────────────────────────
@@ -177,7 +177,7 @@ function show(op, result, asJson) {
     console.log(`reviver:  ${result.reviver.name} (${result.reviver.reviver_id}) en ${result.reviver.host}`);
     console.log(`oficina:  esperada ${result.office.expected}${result.office.seen ? `, contesta ${result.office.seen}` : ''}`);
     console.log(`destino:  ${result.target.exe}${result.target.exists ? '' : '  (¡NO EXISTE!)'}`);
-    console.log(`munder:   ${m.state}${m.pids.length ? `  pid ${m.pids.join(', ')}` : ''}${m.version ? `  v${m.version}` : ''}`);
+    console.log(`worlds:   ${m.state}${m.pids.length ? `  pid ${m.pids.join(', ')}` : ''}${m.version ? `  v${m.version}` : ''}`);
     console.log(`salud:    canal ${m.health.channel}, ${m.health_ok ? 'contesta' : `no contesta${m.health.detail ? ` (${m.health.detail})` : ''}`}; identidad ${m.identity_verified ? 'verificada' : 'NO verificada'}`);
     console.log(`watchdog: ${result.watchdog.enabled ? result.watchdog.state : 'apagado'}; deseado: ${result.desired || '—'}${result.busy ? `; ocupado: ${result.busy}` : ''}`);
     if (result.last) console.log(`último:   ${result.last.action} → ${result.last.verdict}${result.last.reason ? ` (${result.last.reason})` : ''} ${result.last.at}`);
@@ -204,7 +204,7 @@ async function cmdOp(op, f) {
   try {
     show(op, await R.call(cred, op, { address: f.direccion }), f.json);
   } catch (e) {
-    if (e.cause && e.cause.code === 'ECONNREFUSED') die('el reviver no está corriendo: munder-reviver instalar (o servir)');
+    if (e.cause && e.cause.code === 'ECONNREFUSED') die('el reviver no está corriendo: worlds reviver instalar (o servir)');
     die(e.message);
   }
 }
@@ -218,26 +218,26 @@ async function cmdRemote(credFile, op, f) {
 function cmdClient(sub, rest, f) {
   const dir = R.stateDir();
   if (sub === 'nuevo') {
-    const name = rest[0] || die('uso: munder-reviver cliente nuevo NOMBRE [--direccion HOST:PUERTO] [--salida ARCHIVO]');
+    const name = rest[0] || die('uso: worlds reviver cliente nuevo NOMBRE [--direccion HOST:PUERTO] [--salida ARCHIVO]');
     const cred = R.newClientCredential(dir, name, f.direccion);
     if (f.salida) { R.writePrivate(path.resolve(f.salida), cred); say(`credencial de «${name}» (${cred.client_id}) en ${f.salida}: trátala como una contraseña`); }
-    else { console.log(JSON.stringify(cred, null, 2)); console.error('munder-reviver: esta es la única copia de la llave privada: guárdala como una contraseña.'); }
+    else { console.log(JSON.stringify(cred, null, 2)); console.error('worlds reviver: esta es la única copia de la llave privada: guárdala como una contraseña.'); }
     return;
   }
   if (sub === 'autorizar') {
     const [name, pub] = rest;
-    if (!name || !pub) die('uso: munder-reviver cliente autorizar NOMBRE LLAVE_PUBLICA');
+    if (!name || !pub) die('uso: worlds reviver cliente autorizar NOMBRE LLAVE_PUBLICA');
     const c = R.authorizeClient(dir, name, pub);
     say(`autorizado «${c.name}» (${c.client_id})`);
     return;
   }
   if (sub === 'quitar') {
-    const c = R.revokeClient(dir, rest[0] || die('uso: munder-reviver cliente quitar ID|NOMBRE'));
+    const c = R.revokeClient(dir, rest[0] || die('uso: worlds reviver cliente quitar ID|NOMBRE'));
     if (!c) die(`no hay cliente «${rest[0]}»`);
     say(`quitado «${c.name}» (${c.client_id})`);
     return;
   }
-  die('uso: munder-reviver cliente nuevo|autorizar|quitar …');
+  die('uso: worlds reviver cliente nuevo|autorizar|quitar …');
 }
 
 function cmdClients() {
@@ -262,7 +262,7 @@ function systemdUnit() {
   const q = (s) => `"${String(s).replace(/(["\\])/g, '\\$1')}"`;
   return [
     '[Unit]',
-    'Description=Munder Reviver (arranca y revive Munder)',
+    'Description=Worlds Reviver (arranca y revive ISyCo Worlds)',
     'Documentation=https://github.com/DannyBaanks/munder-difflin/blob/main/tools/munder/REVIVER.md',
     '',
     '[Service]',
@@ -272,7 +272,7 @@ function systemdUnit() {
     'Restart=on-failure',
     'RestartSec=5',
     // Only the reviver belongs to this unit's lifetime: restarting or stopping
-    // the reviver must never take the Munder it launched down with it.
+    // the reviver must never take the ISyCo Worlds it launched down with it.
     'KillMode=process',
     '',
     '[Install]',
@@ -286,7 +286,7 @@ function windowsTaskXml(vbs) {
   const x = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   return `<?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
-  <RegistrationInfo><Description>Munder Reviver: arranca y revive Munder aunque Munder se caiga.</Description></RegistrationInfo>
+  <RegistrationInfo><Description>Worlds Reviver: arranca y revive ISyCo Worlds aunque ISyCo Worlds se caiga.</Description></RegistrationInfo>
   <Triggers><LogonTrigger><Enabled>true</Enabled><UserId>${x(user)}</UserId></LogonTrigger></Triggers>
   <Principals><Principal id="Author"><UserId>${x(user)}</UserId><LogonType>InteractiveToken</LogonType><RunLevel>LeastPrivilege</RunLevel></Principal></Principals>
   <Settings>
@@ -319,11 +319,11 @@ function windowsLauncherVbs() {
   ].join('\r\n');
 }
 
-const TASK_NAME = 'Munder Reviver';
+const TASK_NAME = 'Worlds Reviver';
 
 function cmdInstall(f) {
   const dir = R.stateDir();
-  try { R.loadConfig(dir); } catch (e) { die(`${e.message}\nPrimero: munder-reviver init`); }
+  try { R.loadConfig(dir); } catch (e) { die(`${e.message}\nPrimero: worlds reviver init`); }
   if (process.platform === 'linux') {
     const unitDir = path.join(process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config'), 'systemd', 'user');
     const unit = path.join(unitDir, 'munder-reviver.service');
@@ -335,7 +335,7 @@ function cmdInstall(f) {
       const r = spawnSync('systemctl', args, { stdio: 'inherit' });
       if (r.status !== 0) die(`systemctl ${args.join(' ')} falló`);
     }
-    say('instalado y corriendo (systemctl --user status munder-reviver). Para que siga vivo sin sesión abierta: loginctl enable-linger');
+    say('instalado y corriendo (systemctl --user status worlds reviver). Para que siga vivo sin sesión abierta: loginctl enable-linger');
     return;
   }
   if (process.platform === 'win32') {
@@ -352,7 +352,7 @@ function cmdInstall(f) {
     say(`instalado como tarea «${TASK_NAME}» (arranca al iniciar sesión y se reinicia si se cae)`);
     return;
   }
-  die(`instalar no está soportado en ${process.platform}: corre munder-reviver servir con tu supervisor`);
+  die(`instalar no está soportado en ${process.platform}: corre worlds reviver servir con tu supervisor`);
 }
 
 function cmdUninstall() {
@@ -361,19 +361,19 @@ function cmdUninstall() {
     const unit = path.join(process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config'), 'systemd', 'user', 'munder-reviver.service');
     try { fs.unlinkSync(unit); } catch { /* gone */ }
     spawnSync('systemctl', ['--user', 'daemon-reload'], { stdio: 'inherit' });
-    say('desinstalado (Munder, si corre, sigue corriendo)');
+    say('desinstalado (ISyCo Worlds, si corre, sigue corriendo)');
     return;
   }
   if (process.platform === 'win32') {
     spawnSync('schtasks', ['/End', '/TN', TASK_NAME], { stdio: 'inherit', windowsHide: true });
     spawnSync('schtasks', ['/Delete', '/F', '/TN', TASK_NAME], { stdio: 'inherit', windowsHide: true });
-    say('desinstalado (Munder, si corre, sigue corriendo)');
+    say('desinstalado (ISyCo Worlds, si corre, sigue corriendo)');
     return;
   }
   die(`no hay nada que desinstalar en ${process.platform}`);
 }
 
-const HELP = `munder-reviver — arranca y revive Munder aunque Munder esté muerto
+const HELP = `worlds reviver — recupera ISyCo Worlds si se cierra
 
   init [--app DIR | --exe RUTA --arg A …] [--user-data DIR] [--bind IP] [--port N] [--autostart] [--force]
   servir                  el daemon, en primer plano (lo que corre el servicio)
@@ -386,7 +386,7 @@ const HELP = `munder-reviver — arranca y revive Munder aunque Munder esté mue
   clientes
   llamar CREDENCIAL OPERACION [--direccion HOST:PUERTO]   desde otra máquina
 
-Solo hace status, start, restart y stop de UN Munder configurado en init.
+Solo hace status, start, restart y stop de UN ISyCo Worlds configurado en init.
 Nunca ejecuta comandos, rutas ni argumentos que mande quien llama.
 Guía: tools/munder/REVIVER.md`;
 
@@ -402,7 +402,7 @@ async function main(argv) {
   if (cmd === 'clientes') return cmdClients();
   if (cmd === 'llamar') {
     const [cred, op] = f._;
-    if (!cred || !OP_ALIASES[op]) die('uso: munder-reviver llamar CREDENCIAL status|start|restart|stop|recibos');
+    if (!cred || !OP_ALIASES[op]) die('uso: worlds reviver llamar CREDENCIAL status|start|restart|stop|recibos');
     return cmdRemote(cred, OP_ALIASES[op], f);
   }
   if (OP_ALIASES[cmd]) return cmdOp(OP_ALIASES[cmd], f);

@@ -1,24 +1,24 @@
 'use strict';
 /**
- * Munder GPT: ChatGPT as a first-class Munder principal (`gpt`).
+ * ISyCo Worlds GPT: ChatGPT as a first-class ISyCo Worlds principal (`gpt`).
  *
- *   transport  tells ChatGPT WHERE Munder is      (a URL; grants nothing)
- *   OAuth      tells Munder WHO is calling         (a token the operator approved)
- *   the grant  tells Munder WHAT it may do         (scopes, capped by the profile)
+ *   transport  tells ChatGPT WHERE ISyCo Worlds is      (a URL; grants nothing)
+ *   OAuth      tells ISyCo Worlds WHO is calling         (a token the operator approved)
+ *   the grant  tells ISyCo Worlds WHAT it may do         (scopes, capped by the profile)
  *
  * Authority path:
- *   Danny ─ munder gpt perfil ─▶ profile (read | operator | full)
- *         ─ munder gpt aprobar ─▶ grant for one ChatGPT client (scopes ∩ profile,
+ *   Danny ─ worlds gpt perfil ─▶ profile (read | operator | full)
+ *         ─ worlds gpt aprobar ─▶ grant for one ChatGPT client (scopes ∩ profile,
  *                                  expiry, revocable)
  *   ChatGPT ─ OAuth (DCR + PKCE S256 + operator approval) ─▶ short-lived token
  *           ─ MCP /mcp ─▶ only the tools the grant's scopes allow ─▶ this office
- *             (L.Office as principal `gpt`) or a Munder Link peer (Link's own
+ *             (L.Office as principal `gpt`) or a World Link peer (Link's own
  *             ownership rules, unchanged).
  *
  * Full = everything this office's operator can legitimately delegate. It never
  * reaches into another office's board: over Link, GPT is this office acting as a
  * peer, and a peer sees only what it delegated. Another office gets its own
- * `munder gpt`.
+ * `worlds gpt`.
  *
  * Builtins only (like lib-link, lib-remote, lib-reviver). Nothing secret is
  * stored in the clear: tokens and codes are kept as SHA-256 hashes, and nothing
@@ -211,7 +211,7 @@ function authenticate(dir, bearer) {
   if (typeof bearer !== 'string' || !bearer.startsWith('mga_')) throw new GptError('invalid_token', 'falta un token válido', 401);
   const h = sha(bearer);
   const config = loadConfig(dir);
-  if (!config.enabled) throw new GptError('invalid_token', 'el gateway de GPT está apagado (munder gpt encender)', 401);
+  if (!config.enabled) throw new GptError('invalid_token', 'el gateway de GPT está apagado (worlds gpt encender)', 401);
   const grants = loadGrants(dir);
   for (const [id, g] of Object.entries(grants)) {
     const a = (g.access || []).find((x) => x.hash === h);
@@ -329,7 +329,7 @@ function userDataDir() {
 
 async function control(method, p, body) {
   const cfg = readJson(path.join(userDataDir(), 'munder-control.json'), null);
-  if (!cfg || typeof cfg.port !== 'number') throw new GptError('app_down', 'Munder no está abierto en esta computadora (sin canal de control)', 503);
+  if (!cfg || typeof cfg.port !== 'number') throw new GptError('app_down', 'ISyCo Worlds no está abierto en esta computadora (sin canal de control)', 503);
   const res = await fetch(`http://127.0.0.1:${cfg.port}${p}`, {
     method, headers: { authorization: `Bearer ${cfg.token}`, ...(body ? { 'content-type': 'application/json' } : {}) },
     body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(60_000),
@@ -360,7 +360,7 @@ function existingDir(v) {
 // ─── Reviver (its own principal: a reviver client credential named gpt) ──────
 function reviverCall(dir, op) {
   const cred = readJson(files(dir).reviver, null);
-  if (!cred) throw new GptError('no_reviver', 'el Reviver no está enlazado a GPT (munder gpt reviver, tras munder reviver init)', 503);
+  if (!cred) throw new GptError('no_reviver', 'el Reviver no está enlazado a GPT (worlds gpt reviver, tras worlds reviver init)', 503);
   return require('./lib-reviver.cjs').call(cred, op);
 }
 
@@ -392,7 +392,7 @@ const CAPABILITIES = [
   { name: 'gpt_inbox_read', scope: 'munder.read', title: 'Leer un mensaje del buzón de GPT',
     input: S({ message_id: str('id del mensaje') }, ['message_id']),
     run: (_c, a) => { const { file, done } = inboxFile(a.message_id); return { message: readJson(file, null), read: done }; } },
-  { name: 'link_offices', scope: 'munder.read', title: 'Oficinas: esta y las enlazadas por Munder Link',
+  { name: 'link_offices', scope: 'munder.read', title: 'Oficinas: esta y las enlazadas por World Link',
     input: S({}),
     run: () => {
       const id = L.loadIdentity();
@@ -414,7 +414,7 @@ const CAPABILITIES = [
   { name: 'gpt_audit', scope: 'munder.read', title: 'Tu propia auditoría: lo que GPT hizo y recibió',
     input: S({ limit: int('cuántas entradas (máx. 200)') }),
     run: (c, a) => ({ entries: readAudit(c.dir, a.limit || 30) }) },
-  { name: 'reviver_status', scope: 'munder.read', title: 'Reviver: ¿Munder vivo y sano en esta máquina?',
+  { name: 'reviver_status', scope: 'munder.read', title: 'Reviver: ¿ISyCo Worlds vivo y sano en esta máquina?',
     input: S({}), run: (c) => reviverCall(c.dir, 'status') },
 
   // ── munder.operate ──
@@ -465,7 +465,7 @@ const CAPABILITIES = [
       ].join('\n') });
       return { task_id: t.id, message_id: m.id, receipt: receipt('gpt_question_answered', t.id, c) };
     } },
-  { name: 'link_delegate', scope: 'munder.operate', mutating: true, title: 'Delegar trabajo a una oficina enlazada (Munder Link)',
+  { name: 'link_delegate', scope: 'munder.operate', mutating: true, title: 'Delegar trabajo a una oficina enlazada (World Link)',
     input: S({ office: str('oficina destino'), text: str('qué hay que hacer'), title: str('título corto (opcional)') }, ['office', 'text']),
     run: async (c, a) => {
       const compose = text(a.text, 'la tarea');
@@ -507,11 +507,11 @@ const CAPABILITIES = [
       try { office().log({ event: 'gpt_pack_started', principal: PRINCIPAL, grant_id: c.grant_id, pack: a.pack }); } catch { /* no hive */ }
       return { ...out, receipt: receipt('gpt_pack_started', a.pack, c) };
     } },
-  { name: 'reviver_start', scope: 'munder.admin', mutating: true, title: 'Reviver: arrancar Munder si no está sano',
+  { name: 'reviver_start', scope: 'munder.admin', mutating: true, title: 'Reviver: arrancar ISyCo Worlds si no está sano',
     input: S({}), run: (c) => reviverCall(c.dir, 'start') },
-  { name: 'reviver_restart', scope: 'munder.admin', mutating: true, title: 'Reviver: reiniciar Munder (solo el proceso verificado)',
+  { name: 'reviver_restart', scope: 'munder.admin', mutating: true, title: 'Reviver: reiniciar ISyCo Worlds (solo el proceso verificado)',
     input: S({}), run: (c) => reviverCall(c.dir, 'restart') },
-  { name: 'reviver_stop', scope: 'munder.admin', mutating: true, title: 'Reviver: parar Munder a propósito',
+  { name: 'reviver_stop', scope: 'munder.admin', mutating: true, title: 'Reviver: parar ISyCo Worlds a propósito',
     input: S({}), run: (c) => reviverCall(c.dir, 'stop') },
 ];
 
@@ -519,7 +519,7 @@ const CAPABILITIES = [
  * Every operation of the underlying surfaces, classified. The tests read the
  * real sources (lib-remote's dispatch, lib-link's call switch, the control
  * channel's routes, the Reviver's ops) and fail when one appears here as
- * neither exposed nor excluded: a new Munder operation can't be silently left
+ * neither exposed nor excluded: a new ISyCo Worlds operation can't be silently left
  * out of Full, and can't slip in without a scope either.
  */
 const INVENTORY = {
@@ -560,7 +560,7 @@ const INVENTORY = {
   never: {
     'link pair/accept/forget': 'cambia en quién confía la oficina: solo el operador, con el código de 6 dígitos',
     'remote pair/forget': 'emparejar celulares: solo el operador',
-    'munder gpt perfil/aprobar/revocar': 'GPT no puede darse ni quitarse permisos',
+    'worlds gpt perfil/aprobar/revocar': 'GPT no puede darse ni quitarse permisos',
     'reviver init/clientes': 'configurar el Reviver: solo el operador',
     'comando libre al contratar': 'sería una shell remota; se contrata solo con CLIs conocidos',
   },
@@ -596,7 +596,7 @@ async function mcp(dir, auth, msg) {
       protocolVersion: MCP_VERSIONS.includes(asked) ? asked : MCP_VERSIONS[0],
       capabilities: { tools: { listChanged: false } },
       serverInfo: { name: 'munder-gpt', version: '1' },
-      instructions: `Eres el principal "gpt" de la oficina Munder de Danny, con scopes: ${auth.scopes.join(', ')}. Para saber si Michael te contestó, usa gpt_inbox. Cada acción queda auditada a tu nombre.`,
+      instructions: `Eres el principal "gpt" de la oficina ISyCo Worlds de Danny, con scopes: ${auth.scopes.join(', ')}. Para saber si Michael te contestó, usa gpt_inbox. Cada acción queda auditada a tu nombre.`,
     });
   }
   if (method === 'ping') return ok({});
@@ -657,7 +657,7 @@ function asMetadata(dir) {
 
 function prMetadata(dir) {
   const base = baseUrl(dir);
-  return { resource: `${base}/mcp`, authorization_servers: [base], scopes_supported: Object.keys(SCOPES), bearer_methods_supported: ['header'], resource_name: 'Munder (principal gpt)' };
+  return { resource: `${base}/mcp`, authorization_servers: [base], scopes_supported: Object.keys(SCOPES), bearer_methods_supported: ['header'], resource_name: 'ISyCo Worlds (principal gpt)' };
 }
 
 function validRedirect(u) {
@@ -680,7 +680,7 @@ function register(dir, body) {
       // drop the oldest client that has no live grant
       const grants = loadGrants(dir);
       const idle = ids.filter((id) => !Object.values(grants).some((g) => g.client_id === id && !g.revoked_at)).sort((a, b) => String(clients[a].created_at).localeCompare(String(clients[b].created_at)));
-      if (!idle.length) throw new GptError('too_many_clients', 'demasiados clientes registrados; revoca alguno con munder gpt revocar', 429);
+      if (!idle.length) throw new GptError('too_many_clients', 'demasiados clientes registrados; revoca alguno con worlds gpt revocar', 429);
       delete clients[idle[0]];
     }
     const client_id = `mgc_${crypto.randomBytes(12).toString('base64url')}`;
@@ -877,13 +877,13 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 function approvalPage(dir, r) {
   const d = describeProfile(loadConfig(dir).profile);
   const tools = d.tools.filter((t) => r.scopes.includes(t.scope));
-  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Munder · autorizar a ${esc(r.client_name)}</title>
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ISyCo Worlds · autorizar a ${esc(r.client_name)}</title>
 <style>body{margin:0;background:#FFF8E7;color:#1A1320;font:15px/1.5 system-ui,sans-serif;padding:24px;max-width:640px}h1{font-size:18px}code,.code{font-family:ui-monospace,monospace}.code{font-size:34px;letter-spacing:6px;background:#1A1320;color:#FFF8E7;padding:8px 16px;display:inline-block;margin:8px 0}li{margin:2px 0}.muted{color:#6B5878}</style></head>
-<body><h1>${esc(r.client_name)} pide entrar a tu oficina Munder</h1>
+<body><h1>${esc(r.client_name)} pide entrar a tu oficina ISyCo Worlds</h1>
 <p>Como principal <b>gpt</b>, perfil <b>${esc(r.profile.toUpperCase())}</b>, con: <code>${esc(r.scopes.join(' '))}</code></p>
-<p>Para aprobarlo, en la computadora donde corre Munder escribe:</p>
+<p>Para aprobarlo, en la computadora donde corre ISyCo Worlds escribe:</p>
 <div class="code">${esc(r.approval_code.replace(/(\d{3})(\d{3})/, '$1 $2'))}</div>
-<p><code>munder gpt aprobar ${esc(r.approval_code)}</code></p>
+<p><code>worlds gpt aprobar ${esc(r.approval_code)}</code></p>
 <p class="muted" id="st">Esperando tu aprobación… (caduca en 10 minutos)</p>
 <details><summary>Qué podrá hacer (${tools.length} herramientas)</summary><ul>${tools.map((t) => `<li><code>${esc(t.name)}</code>: ${esc(t.title)}</li>`).join('')}</ul></details>
 <p class="muted">Nadie puede aprobar esto desde esta página: solo tú, en tu terminal.</p>
@@ -950,7 +950,7 @@ function createGatewayServer({ dir = stateDir(), log = () => {} } = {}) {
         let r;
         try { r = authorizeRequest(dir, q, ip); } catch (e) { return send(res, e.status || 400, `<!doctype html><meta charset="utf-8"><p>${esc(e.message)}</p>`); }
         if (r.redirect) { res.writeHead(302, { location: r.redirect }); return res.end(); }
-        log(`solicitud de acceso de «${r.client_name}»: código ${r.approval_code} (munder gpt aprobar ${r.approval_code})`);
+        log(`solicitud de acceso de «${r.client_name}»: código ${r.approval_code} (worlds gpt aprobar ${r.approval_code})`);
         return send(res, 200, approvalPage(dir, r), { 'content-security-policy': "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'", 'x-frame-options': 'DENY' });
       }
       if (req.method === 'GET' && p === '/authorize/status') return send(res, 200, requestStatus(dir, url.searchParams.get('request') || ''));

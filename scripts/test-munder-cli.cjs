@@ -22,6 +22,6 @@ const files = fs.readdirSync(path.join(root, 'tools', 'munder'))
   .filter((f) => f.endsWith('.test.cjs') && !EXCLUDE.includes(f))
   .sort()
   .map((f) => path.join('tools', 'munder', f));
-console.log(`munder CLI suites (${files.length}): ${files.join(' ')}`);
+console.log(`Worlds CLI suites (${files.length}): ${files.join(' ')}`);
 const r = spawnSync(process.execPath, ['--test', ...files], { cwd: root, stdio: 'inherit' });
 process.exit(r.status ?? 1);
