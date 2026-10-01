@@ -2,7 +2,7 @@
 
 ## Scope
 
-Munder Difflin is a **local-first desktop app**, not a network-free app. It spawns
+ISyCo Worlds is a **local-first desktop app**, not a network-free app. It spawns
 local processes in PTYs and reads/writes workspace files using the user's OS permissions.
 Its main process has several optional network surfaces:
 
@@ -18,8 +18,8 @@ Its main process has several optional network surfaces:
   guarantee: exhausting multiple endpoints or the global authenticated budget can
   still limit service.
 - Provider API calls, downloads, analytics when opted in, and update checks are
-  outbound network activity. CLI servers under `tools/munder/` are additional
-  opt-in surfaces with their own configuration/authentication; consult their guides.
+  outbound network activity. Optional CLI and mobile companion services add
+  separate surfaces with their own configuration and authentication; consult their guides.
 
 Do not expose a listener or tunnel without reviewing its authentication and the
 authority of the agents receiving its messages.
@@ -35,12 +35,8 @@ This is an early prototype. Security fixes target the `main` branch only.
 
 ## Reporting a vulnerability
 
-Please **do not** open a public issue for security problems.
-
-- Use GitHub's **private vulnerability reporting**: the *Security → Report a
-  vulnerability* tab on https://github.com/chaitanyagiri/munder-difflin, **or**
-- Email **girichaitanya11@gmail.com** with a description, reproduction steps, and
-  impact.
+Please **do not** open a public issue for security problems. Use GitHub's
+[private vulnerability reporting form](https://github.com/DannyBaanks/ISyCo-Worlds/security/advisories/new).
 
 You can expect an acknowledgement within a few days. Once a fix is available we'll
 credit you (unless you prefer to stay anonymous).

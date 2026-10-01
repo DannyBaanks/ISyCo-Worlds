@@ -66,9 +66,9 @@ body:
   - type: input
     id: app-version
     attributes:
-      label: Munder Difflin version
-      description: Settings → the version is on the hero card. Or `Munder Difflin → About`.
-      placeholder: e.g. 0.4.5
+      label: ISyCo Worlds version
+      description: Find the app version in Settings → About.
+      placeholder: e.g. 0.5.2-ISyCo.2
     validations:
       required: true
   - type: input

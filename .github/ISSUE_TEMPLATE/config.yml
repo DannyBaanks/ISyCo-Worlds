@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Questions & ideas
-    url: https://github.com/chaitanyagiri/munder-difflin/discussions
-    about: Ask questions, share setups, or float ideas before filing an issue.
+    url: https://github.com/DannyBaanks/ISyCo-Worlds/issues
+    about: Ask questions, share setups, or suggest ideas for ISyCo Worlds.
   - name: Security report
-    url: https://github.com/chaitanyagiri/munder-difflin/security/advisories/new
+    url: https://github.com/DannyBaanks/ISyCo-Worlds/security/advisories/new
     about: Report a vulnerability privately (do not open a public issue).
