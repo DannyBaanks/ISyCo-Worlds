@@ -2,7 +2,7 @@
 
 Auditoría inicial: 2026-10-01
 
-Estado: inventario y plan; **no se eliminaron ni renombraron archivos en esta auditoría**.
+Estado: saneamiento de archivos públicos de GitHub completado en una primera tanda; quedan pendientes las superficies de producto, CLI, móvil, assets y documentación editorial.
 
 ## Objetivo acordado
 
@@ -27,11 +27,10 @@ Medidos en este checkout de `main`; son conteos de archivos versionados, no una 
 |---|---|---|
 | 468 rutas versionadas contienen `munder` o `dunder` en su nombre | `git ls-files | rg -i 'munder|dunder' | wc -l` | La limpieza requiere lotes por dominio y no un rename masivo. |
 | 876 archivos de texto versionados contienen una mención | `git grep -Il -i -E 'munder|dunder mifflin' | wc -l` | Hay menciones activas, históricas y de licencia mezcladas. |
-| El listado actual de contribuyentes dice 52 personas y 162 PR del upstream | `CONTRIBUTORS.md`; sus enlaces apuntan a `chaitanyagiri/munder-difflin` | No representa contribuciones a ISyCo Worlds. Debe reemplazarse por un registro del repo actual y un crédito separado de origen. |
-| El generador de contribuyentes usa el upstream como repositorio predeterminado | `scripts/generate-contributors.mjs` | No basta con editar el Markdown: generador, datos extra y workflow deben cambiar coordinadamente. |
-| El workflow de contribuyentes corre únicamente en el upstream | `.github/workflows/contributors.yml` | No produce un registro correcto para Worlds. Revisar permisos, disparadores y flujo de PR antes de reactivarlo. |
-| CODEOWNERS apunta al mantenedor upstream | `.github/CODEOWNERS` | Enrutamiento de revisión heredado; sustituir por responsables actuales cuando se confirme quiénes son. |
-| Hay configuraciones/templates de GitHub con enlaces y texto del upstream | `.github/FUNDING.yml`, `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, `CONTRIBUTING.md`, `SECURITY.md` | Actualizar destinos y lenguaje. Eliminar el enlace de donación de Munder, conservando el archivo de funding si tendrá destinos propios. |
+| El registro heredado contaba PR del upstream como contribuciones del proyecto | `CONTRIBUTORS.md` y archivos de generación heredados (retirados en `d428ffa3`) | Reemplazado por contribuciones verificadas de `DannyBaanks/ISyCo-Worlds` y un crédito de provenance separado. |
+| El scaffolding de contribuyentes y rol de Discord estaba ligado al upstream | `.github/contributors-extra.json`, `scripts/generate-contributors.mjs`, `.github/workflows/contributors.yml`, `.github/workflows/contributor-role.yml` (retirados en `d428ffa3` y `c0dc7d64`) | Retirado; no se cuenta a personas ni actividad del upstream como contribución a Worlds. |
+| CODEOWNERS apuntaba al mantenedor upstream | `.github/CODEOWNERS` | Actualizado para enrutar al responsable actual y conservar reglas específicas de seguridad, CI, releases, licencias y provenance. |
+| Configuraciones/templates de GitHub usaban enlaces o marca upstream | `.github/FUNDING.yml`, `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, `CONTRIBUTING.md`, `SECURITY.md` | Templates y canales actualizados a ISyCo Worlds; se retiró el destino de donación de Munder. |
 | El producto todavía ofrece el mundo `office`/Munder | `src/shared/worlds.ts`, `src/shared/worldManifests/office.world.json`, pantalla de selección, registro de capacidades, locales y docs | Retirar de la lista activa y archivar su provenance; primero migrar `preferredWorldProfile: 'office'` y otros datos persistidos. |
 | Hay superficies de aplicación, CLI y móvil con identidades heredadas | `tools/munder/`, `src/mcp/munder-chatgpt-link`, `ios/MunderMobile`, `android/MunderMobile`, workflows móviles y configuración Electron | Distinguir etiqueta visible de IDs de paquete, protocolo, almacenamiento y rutas usadas por instalaciones existentes. |
 | Hay contenido editorial y sitio generado sobre Munder | `blog/src/posts/`, `blog/src/assets/media/`, `docs/blog/` | Decidir página por página si es historia, tutorial vigente o comparación obsoleta; preservar URLs útiles mediante actualización o redirección. |
@@ -40,20 +39,20 @@ Medidos en este checkout de `main`; son conteos de archivos versionados, no una 
 
 ### 1. Crédito, colaboradores y gobernanza
 
-- [ ] Rehacer `CONTRIBUTORS.md` usando exclusivamente PR y contribuciones verificables de `DannyBaanks/ISyCo-Worlds`.
-- [ ] Añadir un crédito de origen independiente y explícito para Munder Difflin / Chaitanya Giri; no mezclarlo con el conteo de contribuciones de Worlds.
-- [ ] Auditar `.github/contributors-extra.json`: separar datos de PR de upstream de las contribuciones propias; conservar una referencia histórica sólo si aporta contexto verificable.
-- [ ] Corregir `scripts/generate-contributors.mjs` para que su repositorio predeterminado sea ISyCo Worlds, y que no presente contribuciones upstream como trabajo de este proyecto.
-- [ ] Rediseñar `.github/workflows/contributors.yml` para el repositorio actual, revisar el manejo de PR creados por Actions y probarlo en modo seguro antes de habilitar escrituras.
-- [ ] Reemplazar `.github/CODEOWNERS` con responsables actuales confirmados; conservar a Chaitanya únicamente en el crédito de origen salvo que exista una función vigente acordada.
-- [ ] Verificar nombres, enlaces, fechas y conteos generados contra la API/PR de este repositorio antes de publicar el nuevo listado.
+- [x] Rehacer `CONTRIBUTORS.md` con PR verificables de `DannyBaanks/ISyCo-Worlds` (59 PR fusionados al 2026-10-01; verificado contra GitHub).
+- [x] Añadir un crédito de origen independiente y explícito para Munder Difflin / Chaitanya Giri; separado del conteo de contribuciones de Worlds.
+- [x] Auditar y retirar `.github/contributors-extra.json`, que contenía referencias a PR del upstream.
+- [x] Retirar `scripts/generate-contributors.mjs` y `.github/workflows/contributors.yml`, que fijaban el upstream como fuente de contribuciones.
+- [x] Actualizar `.github/CODEOWNERS` para el repositorio y responsable actuales.
+- [x] Verificar el registro propio de contribuciones contra la lista de PR fusionados del repositorio actual.
+- [x] Retirar `.github/workflows/contributor-role.yml`, automatización heredada que asignaba un rol en Discord ajeno al proyecto.
 
 ### 2. GitHub público y contribución
 
-- [ ] Actualizar `CONTRIBUTING.md`, incluyendo nombre, clone URL, desarrollo, pruebas y canales propios de Worlds.
-- [ ] Actualizar `.github/PULL_REQUEST_TEMPLATE.md` y todos los issue templates/configuración para que apunten a `DannyBaanks/ISyCo-Worlds`.
-- [ ] Actualizar `SECURITY.md` con el producto, alcance de versiones y canal de reporte vigente; retirar la instrucción de reportar al upstream.
-- [ ] Revisar `.github/FUNDING.yml` y retirar `razorpay.me/@munderdifflinfund`; mantener sólo destinos de financiación propios si se desean.
+- [x] Actualizar `CONTRIBUTING.md`, incluyendo nombre, clone URL, desarrollo, pruebas y canales propios de Worlds.
+- [x] Actualizar `.github/PULL_REQUEST_TEMPLATE.md` y todos los issue templates/configuración para el repositorio actual.
+- [x] Actualizar `SECURITY.md` con el producto y canal de reporte vigente; retirar las instrucciones heredadas del upstream.
+- [x] Retirar `.github/FUNDING.yml`, que sólo contenía el destino de donación de Munder.
 - [ ] Buscar reglas de etiquetas, releases y automatizaciones que todavía digan “Munder Difflin version” o usen el repositorio upstream.
 - [ ] Revisar badges, links de Discussions, releases y documentación externa en el README y el sitio.
 
@@ -116,7 +115,7 @@ Medidos en este checkout de `main`; son conteos de archivos versionados, no una 
 ## Orden sugerido
 
 1. [x] Criterio de identidad confirmado por el usuario: Munder sólo provenance/crédito.
-2. [ ] Corregir gobernanza pública y contributor generator con datos propios.
+2. [x] Corregir gobernanza pública y archivos de contribución de GitHub con datos propios.
 3. [ ] Preparar la migración del mundo `office` y probar perfiles existentes.
 4. [ ] Retirar Munder de la experiencia activa y de la identidad visible del desktop/CLI.
 5. [ ] Sanear las apps móviles con estrategia explícita para IDs y protocolos.
@@ -126,8 +125,9 @@ Medidos en este checkout de `main`; son conteos de archivos versionados, no una 
 
 ## Fuera de alcance de esta auditoría
 
-- No se borró ningún archivo ni asset.
+- Se retiraron cinco archivos rastreados de scaffolding de contribución, automatización Discord heredada y financiación de Munder; su historia permanece en Git.
 - No se cambiaron identificadores ni datos de usuario.
-- No se editaron workflows, contributor data, documentación pública o branding activo.
+- Se actualizaron nueve documentos/configuraciones públicos de contribución, soporte y seguridad; no se modificaron workflows operativos de apps ni branding/runtime.
+- No se tocaron el motor, mundos runtime, assets, datos persistidos ni protocolos.
 - No se hicieron afirmaciones legales sobre licencias; cada asset debe verificarse contra su licencia y su uso de distribución.
 - Los conteos de menciones son una fotografía del checkout y pueden cambiar con nuevos commits.
