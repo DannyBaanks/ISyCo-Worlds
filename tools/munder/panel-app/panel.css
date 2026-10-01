@@ -1,4 +1,4 @@
-@font-face { font-family: "Press Start 2P"; src: url("/font.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Press Start 2P"; src: url("./font.woff2") format("woff2"); font-display: swap; }
 :root {
   --cream50: #FFFDF5; --cream100: #FFF8E7; --cream200: #F4E9C7; --ink900: #1A1320; --ink700: #3D2E4A;
   --ink500: #6B5878; --ink300: #A899B5; --ink100: #D9CFE0; --lemon: #DCAB3C; --lemonLight: #F3E4BC;

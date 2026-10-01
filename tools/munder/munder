@@ -44,13 +44,29 @@ const USE_COLOR = IS_TTY && !process.env.NO_COLOR;
 const C = {
   reset: '\x1b[0m', bold: '\x1b[1m', dim: '\x1b[2m',
   cyan: '\x1b[36m', green: '\x1b[32m', yellow: '\x1b[33m',
-  red: '\x1b[31m', inverse: '\x1b[7m', hide: '\x1b[?25l', show: '\x1b[?25l'.replace('?25l', '?25h'),
+  red: '\x1b[31m', gold: '\x1b[38;5;220m', purple: '\x1b[38;5;141m',
+  inverse: '\x1b[7m', hide: '\x1b[?25l', show: '\x1b[?25l'.replace('?25l', '?25h'),
 };
 const st = (s, ...codes) => (USE_COLOR && codes.length ? codes.join('') + s + C.reset : s);
 const say = (m) => console.log(`worlds: ${m}`);
 const die = (m) => { console.error(`worlds: ${m}`); process.exit(1); };
 
-const BANNER = st('▚ ISYCO WORLDS', C.bold, C.cyan) + st('  dev control', C.dim);
+function brandHeader() {
+  const inner = 54;
+  const top = st(`╭${'─'.repeat(inner)}╮`, C.gold, C.bold);
+  const bottom = st(`╰${'─'.repeat(inner)}╯`, C.gold, C.bold);
+  const row = (text, ...codes) => {
+    const content = `  ${text}`;
+    return `${st('│', C.gold)}${st(content, ...codes)}${' '.repeat(Math.max(0, inner - content.length))}${st('│', C.gold)}`;
+  };
+  return [
+    top,
+    row('◆ ISYCO WORLDS', C.bold, C.cyan),
+    row('LOCAL-FIRST · MULTI-AGENT WORKSPACE', C.dim),
+    row('DEV CONTROL · WORLD LINK · GPT · REVIVER', C.bold, C.purple),
+    bottom,
+  ].join('\n');
+}
 
 // ─── procesos ──────────────────────────────────────────────────────────────
 function pids() {
@@ -102,7 +118,8 @@ function select(message, choices) {
   return new Promise((resolve) => {
     const stdin = process.stdin;
     let idx = 0, done = false, buf = '', escTimer = null;
-    const lines = () => choices.length + 2; // opciones + pie de ayuda
+    const groupCount = choices.reduce((n, c, i) => n + (c.group && c.group !== choices[i - 1]?.group ? 1 : 0), 0);
+    const lines = () => choices.length + 2 + groupCount; // título + grupos + opciones + pie
     const cleanup = () => {
       stdin.removeListener('data', onData);
       try { if (stdin.isTTY) stdin.setRawMode(false); } catch { /* noop */ }
@@ -127,7 +144,12 @@ function select(message, choices) {
       let out = '';
       if (!first) out += `\x1b[${lines()}A`;
       out += `${st(message, C.bold)}\n`;
+      let previousGroup = null;
       choices.forEach((c, i) => {
+        if (c.group && c.group !== previousGroup) {
+          out += `${st(`  ${c.group}`, C.bold, C.purple)}\n`;
+          previousGroup = c.group;
+        }
         const mark = i === idx ? st('❯', C.cyan, C.bold) : ' ';
         const lab = i === idx ? st(c.label, C.inverse) : c.label;
         const hint = c.hint ? st(`  ${c.hint}`, C.dim) : '';
@@ -1710,23 +1732,23 @@ function linkKeyToCli(cliId, keyValue) {
 // ─── menú interactivo ──────────────────────────────────────────────────────
 async function interactiveMenu() {
   console.log('');
-  console.log(BANNER);
-  console.log(st(`  dir: ${MUNDER_DIR}`, C.dim));
+  console.log(brandHeader());
   for (;;) {
     const running = pids().length > 0;
+    console.log(st(`  ${running ? '● DEV EN MARCHA' : '○ DEV DETENIDO'}  ·  ${path.basename(MUNDER_DIR)}`, running ? C.green : C.dim));
     const i = await select('¿Qué hacemos?', [
-      { label: `${running ? '● En marcha — ver estado' : '▶ Iniciar dev (despegado)'}`, value: 'go' },
-      { label: '■ Detener', value: 'stop' },
-      { label: '↻ Reiniciar', value: 'restart' },
-      { label: '≣ Ver logs (40)', value: 'logs' },
-      { label: '＋ Crear harness…', value: 'create' },
-      { label: '◉ Sesión (ver agentes)', value: 'sesion' },
-      { label: '＋ Agente (crear)…', value: 'armar' },
-      { label: '◈ Proveedores y modelos…', value: 'proveedor' },
-      { label: '◍ Avatar (lienzo/editar)…', value: 'avatar' },
-      { label: '✦ Repintar interfaz', value: 'repaint' },
-      { label: '⇄ Oficinas enlazadas (World Link)…', value: 'link' },
-      { label: 'Salir', value: 'quit' },
+      { group: 'MUNDO', label: `${running ? '● En marcha — ver estado' : '▶ Iniciar dev (despegado)'}`, hint: 'estado y arranque', value: 'go' },
+      { group: 'MUNDO', label: '■ Detener', hint: 'cierre seguro', value: 'stop' },
+      { group: 'MUNDO', label: '↻ Reiniciar', hint: 'reinicia el entorno', value: 'restart' },
+      { group: 'MUNDO', label: '≣ Ver logs (40)', hint: 'actividad reciente', value: 'logs' },
+      { group: 'EQUIPO', label: '◉ Sesión (ver agentes)', hint: 'agentes activos', value: 'sesion' },
+      { group: 'EQUIPO', label: '＋ Agente (crear)…', hint: 'nuevo compañero', value: 'armar' },
+      { group: 'EQUIPO', label: '＋ Crear harness…', hint: 'espacio de trabajo', value: 'create' },
+      { group: 'HERRAMIENTAS', label: '◈ Proveedores y modelos…', hint: 'conexiones', value: 'proveedor' },
+      { group: 'HERRAMIENTAS', label: '◍ Avatar (lienzo/editar)…', hint: 'pixel art', value: 'avatar' },
+      { group: 'HERRAMIENTAS', label: '✦ Repintar interfaz', hint: 'sin reiniciar', value: 'repaint' },
+      { group: 'CONEXIONES', label: '⇄ Oficinas enlazadas (World Link)…', hint: 'otra computadora', value: 'link' },
+      { group: 'SALIR', label: 'Salir', value: 'quit' },
     ]);
     console.log('');
     if (i < 0 || i === 11) { console.log(st('  nos vemos :p', C.dim)); return; }
@@ -1738,9 +1760,9 @@ async function interactiveMenu() {
         console.log(fs.readFileSync(LATEST_LOG, 'utf8').trimEnd().split('\n').slice(-40).join('\n'));
       } catch { console.log('(sin log todavía)'); }
     }
-    else if (i === 4) await cmdCreateHarness(null, null);
-    else if (i === 5) await cmdSesion(['ver']);
-    else if (i === 6) await cmdSesionArmar([]);
+    else if (i === 4) await cmdSesion(['ver']);
+    else if (i === 5) await cmdSesionArmar([]);
+    else if (i === 6) await cmdCreateHarness(null, null);
     else if (i === 7) await cmdSesionProveedor([]);
     else if (i === 8) await cmdAvatar([]);
     else if (i === 9) await cmdRepaint();
@@ -1756,9 +1778,11 @@ async function interactiveMenu() {
 }
 
 function printHelp() {
-  console.log(`Uso: worlds <comando> [opciones]
+  console.log(`${brandHeader()}
 
-Comandos:
+Uso: worlds <comando> [opciones]
+
+WORLD CONTROL
   start [--fg]    Arranca \`npm run dev\` despegado (setsid, anti-freeze).
                   --fg = adjunto a esta terminal, SOLO debug (puede congelarse)
   stop            Para el dev (TERM, espera 5s, KILL a lo que quede; poda canal huérfano)
@@ -1768,6 +1792,8 @@ Comandos:
   create-harness [padre] [nombre]
                   Crea una carpeta de harness completa (.gitignore incluido).
                   Sin args: ventana para la carpeta + prompt para el nombre.
+
+TEAM & TOOLS
   sesion armar [--nombre X --comando "..." --cwd ...]
   sesion armar --pack <id|pack.json> --cwd ... [--comando claude] [--solo a,b]
   sesion packs
@@ -1791,6 +1817,8 @@ Comandos:
                   Estilo connect: detecta tus CLIs, lista endpoints top-10 y
                   modelos por key. Solo vincula keys al auth propio del CLI.
   repaint           Pide a la app viva repintar su interfaz (sin reiniciar).
+
+WORLDS & CONNECTIONS
   ctl ping          Prueba el canal de control de la app viva (M0).
   ctl limpiar       Borra munder-control.json huérfano (puerto cerrado + sin procesos).
   link conectar     Enlaza esta oficina Worlds con otra (misma red o Tailscale): busca,
@@ -1798,11 +1826,14 @@ Comandos:
                     World Link: link enviar <oficina> "tarea" · link estado · link ayuda
   gpt …             ChatGPT como principal «gpt»: perfil (lectura/operador/full),
                     encender con URL fija, aprobar, revocar, auditoría. Ver GPT.md
+  reviver …         Recuperación (init · instalar · status · start · restart · stop). Ver REVIVER.md
+
+INTEGRATIONS
   harness …         Mandar una tarea a un harness externo (codex, deepseek/ACP) y
                     recibir un recibo. Ver EXTERNAL_HARNESS_AUDIT.md
   panel             Worlds Panel: todo esto con botones, en el navegador
-  reviver …         El Reviver: arranca y revive ISyCo Worlds si se cierra
-                    (init · instalar · status · start · restart · stop). Ver REVIVER.md
+
+SYSTEM
   ps              Lista PIDs del dev (sin matar nada)
   check           Verifica checkout: package.json + node_modules
   help            Esta ayuda

@@ -13,10 +13,23 @@ const run = (...args) => spawnSync(process.execPath, [cli, ...args], { cwd: root
 test('top-level Worlds CLI help uses Worlds names for its commands and products', () => {
   const result = run('help');
   assert.equal(result.status, 0);
+  assert.match(result.stdout, /╭─+╮[\s\S]*◆ ISYCO WORLDS[\s\S]*╰─+╯/);
   assert.match(result.stdout, /Uso: worlds <comando>/);
+  assert.match(result.stdout, /WORLD CONTROL/);
+  assert.match(result.stdout, /TEAM & TOOLS/);
+  assert.match(result.stdout, /WORLDS & CONNECTIONS/);
+  assert.doesNotMatch(result.stdout, /\x1b\[/, 'non-TTY help stays plain for scripts and pipes');
   assert.match(result.stdout, /Worlds Panel/);
   assert.match(result.stdout, /World Link/);
   assert.doesNotMatch(result.stdout, /Munder Difflin|Munder Link|Munder Panel/);
+});
+
+test('the Panel preview resolves its visual assets when opened as a local file', () => {
+  const page = fs.readFileSync(path.join(root, 'tools/munder/panel-app/index.html'), 'utf8');
+  const styles = fs.readFileSync(path.join(root, 'tools/munder/panel-app/panel.css'), 'utf8');
+  assert.match(page, /href="\.\/panel\.css"/);
+  assert.match(page, /src="\.\/panel\.js"/);
+  assert.match(styles, /url\("\.\/font\.woff2"\)/);
 });
 
 test('link and GPT subcommand help use the Worlds command prefix', () => {
