@@ -232,7 +232,7 @@ test('the query-param token fallback still works', async () => {
 test('one noisy endpoint cannot starve the others', async () => {
   const { server } = makeServer();
   let limited = 0;
-  for (let i = 0; i < 61; i++) {
+  for (let i = 0; i < 180; i++) {
     const r = await request(server, {
       url: '/alpha', headers: auth(SECRET_A), body: post({ message: `n${i}` })
     });
@@ -244,6 +244,33 @@ test('one noisy endpoint cannot starve the others', async () => {
     url: '/legacy', headers: auth(SECRET_B), body: post({ message: 'still fine' })
   });
   assert.equal(other.status, 200, 'a different endpoint keeps its own budget');
+});
+
+test('unauthenticated POST and GET floods never consume the global admission budget', async () => {
+  for (const method of ['POST', 'GET']) {
+    const { server } = makeServer();
+    for (let i = 0; i < 180; i++) {
+      await request(server, { method, url: '/alpha', body: post({ message: 'noise' }) });
+      await request(server, { method, url: `/unknown-${i}`, body: post({ message: 'noise' }) });
+    }
+    for (let i = 0; i < 60; i++) {
+      const other = await request(server, {
+        url: '/legacy', headers: auth(SECRET_B), body: post({ message: 'still fine' })
+      });
+      assert.equal(other.status, 200, 'another endpoint retains its entire admission budget');
+    }
+  }
+});
+
+test('the global budget still bounds authenticated admissions across endpoints', async () => {
+  const { server } = makeServer();
+  server.setEndpoints([...endpoints(), { id: 'third', name: 'Third', secret: 'c'.repeat(64), schema: SCHEMA }]);
+  for (const [url, secret] of [['/alpha', SECRET_A], ['/legacy', SECRET_B]]) {
+    for (let i = 0; i < 60; i++) {
+      assert.equal((await request(server, { url, headers: auth(secret), body: post({ message: 'work' }) })).status, 200);
+    }
+  }
+  assert.equal((await request(server, { url: '/third', headers: auth('c'.repeat(64)), body: post({ message: 'over budget' }) })).status, 429);
 });
 
 test('a secretless endpoint is never served', async () => {
