@@ -31,6 +31,12 @@ function setup(options = {}) {
   return { host, calls, state };
 }
 
+function deferred() {
+  let resolve;
+  const promise = new Promise((done) => { resolve = done; });
+  return { promise, resolve };
+}
+
 test('host configures, verifies, and exposes safe metadata but never secret bytes', async () => {
   const { host, state } = setup();
   const configured = await host.configure({ provider: 'nvidia-nim', model: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning', apiKey: 'secret-never-return-this' });
@@ -139,6 +145,129 @@ test('approval is bound to the reviewed workspace and fails closed if it changes
   const result = await host.approveProposal('proposal-one', ['Researcher']);
   assert.deepEqual(result, { ok: false, category: 'workspace-changed' });
   assert.equal(calls.some(([kind]) => kind === 'launch'), false);
+});
+
+test('concurrent approvals consume the same proposal once without throwing', async () => {
+  const context = { workspaceAvailable: true, workspace: '/safe/repo', workers: [], tasks: [], installedProviders: ['codex'], availableRoles: ['researcher'] };
+  const gates = [deferred(), deferred()];
+  let approvals = 0;
+  let deferContext = false;
+  const { host, calls } = setup({ context: () => deferContext && approvals < gates.length ? gates[approvals++].promise : context });
+  await host.configure({ provider: 'openai', model: 'gpt-5-mini', apiKey: 'secret' });
+  await host.chat('Build a team.');
+  deferContext = true;
+  const first = host.approveProposal('proposal-one', ['Researcher']);
+  const second = host.approveProposal('proposal-one', ['Researcher']);
+  assert.equal(approvals, 2);
+  gates[1].resolve(context);
+  assert.equal((await second).ok, true);
+  gates[0].resolve(context);
+  assert.deepEqual(await first, { ok: false, category: 'stale-proposal' });
+  assert.equal(calls.filter(([kind]) => kind === 'launch').length, 1);
+  assert.equal(host.getSnapshot().pendingProposal, undefined);
+});
+
+test('approval cannot authorize a replacement proposal even when its id and names match', async () => {
+  const context = { workspaceAvailable: true, workspace: '/safe/repo', workers: [], tasks: [], installedProviders: ['codex'], availableRoles: ['researcher'] };
+  const gate = deferred();
+  let deferNext = false;
+  const options = { context: () => {
+    if (deferNext) { deferNext = false; return gate.promise; }
+    return context;
+  } };
+  const { host, calls } = setup(options);
+  await host.configure({ provider: 'openai', model: 'gpt-5-mini', apiKey: 'secret' });
+  await host.chat('Build the original team.');
+  deferNext = true;
+  const approval = host.approveProposal('proposal-one', ['Researcher']);
+  options.response = { reply: 'A different team.', workers: [{ name: 'Researcher', provider: 'codex', role: 'researcher', purpose: 'A different task.' }] };
+  assert.equal((await host.chat('Replace the team.')).ok, true);
+  const replacement = host.getSnapshot().pendingProposal;
+  gate.resolve(context);
+  assert.deepEqual(await approval, { ok: false, category: 'stale-proposal' });
+  assert.equal(calls.some(([kind]) => kind === 'launch'), false);
+  assert.deepEqual(host.getSnapshot().pendingProposal, replacement);
+  assert.equal((await host.approveProposal(replacement.id, ['Researcher'])).ok, true);
+  assert.equal(calls.find(([kind]) => kind === 'launch')[1].purpose, 'A different task.');
+});
+
+test('starting a chat invalidates deferred approval even if the chat input is rejected', async () => {
+  const context = { workspaceAvailable: true, workspace: '/safe/repo', workers: [], tasks: [], installedProviders: ['codex'], availableRoles: ['researcher'] };
+  const gate = deferred();
+  let deferContext = false;
+  const { host, calls } = setup({ context: () => deferContext ? gate.promise : context });
+  await host.configure({ provider: 'openai', model: 'gpt-5-mini', apiKey: 'secret' });
+  await host.chat('Build a team.');
+  deferContext = true;
+  const approval = host.approveProposal('proposal-one', ['Researcher']);
+  assert.deepEqual(await host.chat(''), { ok: false, category: 'invalid-config' });
+  gate.resolve(context);
+  assert.deepEqual(await approval, { ok: false, category: 'stale-proposal' });
+  assert.equal(host.getSnapshot().pendingProposal, undefined);
+  assert.equal(calls.some(([kind]) => kind === 'launch'), false);
+});
+
+test('stop invalidates approval during either context await, including after re-enable', async () => {
+  for (const blockedCall of [2, 3]) {
+    const context = { workspaceAvailable: true, workspace: '/safe/repo', workers: [], tasks: [], installedProviders: ['codex'], availableRoles: ['researcher'] };
+    const gate = deferred();
+    const started = deferred();
+    let contextCalls = 0;
+    const { host, calls } = setup({ context: () => {
+      if (++contextCalls === blockedCall) { started.resolve(); return gate.promise; }
+      return context;
+    } });
+    await host.configure({ provider: 'openai', model: 'gpt-5-mini', apiKey: 'secret' });
+    await host.chat('Build a team.');
+    const approval = host.approveProposal('proposal-one', ['Researcher']);
+    await started.promise;
+    await host.stop();
+    assert.equal(host.getSnapshot().lifecycle, 'STOPPED');
+    await host.configure({ provider: 'openai', model: 'gpt-5-mini' });
+    gate.resolve(context);
+    assert.deepEqual(await approval, { ok: false, category: 'stale-proposal', ...(blockedCall === 3 ? { launched: [] } : {}) });
+    assert.equal(calls.some(([kind]) => kind === 'launch'), false);
+    assert.equal(host.getSnapshot().pendingProposal, undefined);
+  }
+});
+
+test('a new chat cancels a consumed approval waiting for its pre-launch context', async () => {
+  const context = { workspaceAvailable: true, workspace: '/safe/repo', workers: [], tasks: [], installedProviders: ['codex'], availableRoles: ['researcher'] };
+  const gate = deferred();
+  const started = deferred();
+  let contextCalls = 0;
+  const { host, calls } = setup({ context: () => {
+    if (++contextCalls === 3) { started.resolve(); return gate.promise; }
+    return context;
+  } });
+  await host.configure({ provider: 'openai', model: 'gpt-5-mini', apiKey: 'secret' });
+  await host.chat('Build the original team.');
+  const approval = host.approveProposal('proposal-one', ['Researcher']);
+  await started.promise;
+  assert.equal(host.getSnapshot().pendingProposal, undefined);
+  assert.equal((await host.chat('Review a new team.')).ok, true);
+  const replacement = host.getSnapshot().pendingProposal;
+  gate.resolve(context);
+  assert.deepEqual(await approval, { ok: false, category: 'stale-proposal', launched: [] });
+  assert.equal(calls.some(([kind]) => kind === 'launch'), false);
+  assert.deepEqual(host.getSnapshot().pendingProposal, replacement);
+});
+
+test('approval fails closed before consumption when provider or role catalogs disappear', async () => {
+  for (const [catalog, category] of [['installedProviders', 'unavailable-provider'], ['availableRoles', 'unavailable-role']]) {
+    for (const missing of [[], undefined]) {
+      const context = { workspaceAvailable: true, workspace: '/safe/repo', workers: [], tasks: [], installedProviders: ['codex'], availableRoles: ['researcher'] };
+      let contextCalls = 0;
+      const { host, calls } = setup({ context: () => { ++contextCalls; return context; } });
+      await host.configure({ provider: 'openai', model: 'gpt-5-mini', apiKey: 'secret' });
+      await host.chat('Build a team.');
+      context[catalog] = missing;
+      assert.deepEqual(await host.approveProposal('proposal-one', ['Researcher']), { ok: false, category });
+      assert.equal(contextCalls, 2, 'reject at approval validation, not after consuming the proposal');
+      assert.equal(host.getSnapshot().pendingProposal.id, 'proposal-one');
+      assert.equal(calls.some(([kind]) => kind === 'launch'), false);
+    }
+  }
 });
 
 test('change provider and stop preserve workforce owner and never call worker stop', async () => {

@@ -8,6 +8,7 @@ import {
 import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
 import { join, resolve, sep, basename, dirname, isAbsolute } from 'node:path';
 import { homedir } from 'node:os';
+import { pathToFileURL } from 'node:url';
 import { request as httpsRequest } from 'node:https';
 import { PtyManager, type SpawnOptions } from './pty';
 import { openTerminalAtFolder } from './openTerminal';
@@ -18,7 +19,8 @@ import {
   readConfig, writeConfig, setAgentTokenCap, resetConfig, onConfigWritten, ensureHarnessHome, ensureClaudePermissionsAccepted,
   modelForRole, OPS_STANDUP_MISSION, HEARTBEAT_MISSION, COMPACT_MAINTENANCE_MISSION, type HarnessConfig, type ScheduledMission
 } from './config';
-import { listDir, readFileText, readFileBinary, writeFileText, statAbs, expandTilde, isValidHarnessFolderName, validateHomeSwitch, ensureHarnessGitignore } from './fs';
+import { statAbs, expandTilde, isValidHarnessFolderName, validateHomeSwitch, ensureHarnessGitignore } from './fs';
+import { createFilesystemIpc, isWorkspaceDocument } from './filesystemIpc';
 import { normalizeWeekly, weeklyDelayMs } from '../shared/weeklySchedule';
 import {
   getBranch, getStatus, getLog, getBranches, getAheadBehind, isRepo, getDiff, mainRepoRoot,
@@ -120,6 +122,12 @@ import {
 } from '../shared/codexRemote';
 
 const isDev = !!process.env.ELECTRON_RENDERER_URL;
+
+function workspaceRendererUrl(): string {
+  return isDev && process.env.ELECTRON_RENDERER_URL
+    ? process.env.ELECTRON_RENDERER_URL
+    : pathToFileURL(join(__dirname, '../renderer/index.html')).href;
+}
 
 // Keep the main process alive on an unexpected throw/rejection. The harness is a
 // multi-agent supervisor — a single stray throw (e.g. node-pty's ConPTY console
@@ -2894,6 +2902,13 @@ function createWindow(opts: { floor?: boolean } = {}): BrowserWindow {
     if (/^https?:\/\//i.test(url)) shell.openExternal(url);
     return { action: 'deny' };
   });
+  // The full preload belongs only to our local workspace document. Opening a
+  // link must never navigate this privileged WebContents to remote content.
+  const guardWorkspaceNavigation = (event: Electron.Event, url: string): void => {
+    if (!isWorkspaceDocument(url, workspaceRendererUrl())) event.preventDefault();
+  };
+  win.webContents.on('will-navigate', guardWorkspaceNavigation);
+  win.webContents.on('will-redirect', guardWorkspaceNavigation);
 
   // Close interception when live PTYs exist. The red-X destroys the window;
   // intercept it the same way before-quit does so PTY users aren't surprised.
@@ -4068,29 +4083,36 @@ ipcMain.handle('config:createHome', (_evt, payload: unknown) => {
   return { ok: true as const, path: target };
 });
 
-// ─── IPC: filesystem (sandboxed to a root) ──────────────────────────────────
-ipcMain.handle('fs:listDir', (_evt, root: unknown, rel: unknown) => {
-  if (typeof root !== 'string' || typeof rel !== 'string') return { ok: false, error: 'invalid args' };
-  return listDir(root, rel);
+// ─── IPC: filesystem (main-owned workspaces, trusted main-window frames only) ─
+const filesystemIpc = createFilesystemIpc<Electron.IpcMainInvokeEvent>({
+  isTrustedSender(event) {
+    const owned = [...allWindows].some((win) => !win.isDestroyed() && win.webContents === event.sender);
+    if (!owned || event.sender.isDestroyed() || event.senderFrame !== event.sender.mainFrame) return false;
+    return isWorkspaceDocument(event.senderFrame.url, workspaceRendererUrl());
+  },
+  workspaceRoots() {
+    const config = readConfig();
+    const roots = [...(config.registeredRepos ?? []), ...ptyManager.list().map((pty) => pty.cwd)];
+    if (config.harnessHome) roots.push(config.harnessHome);
+    const profileHome = activeProfileHome();
+    if (profileHome) roots.push(profileHome);
+    // Persisted Hive working directories keep the IDE usable after a worker exits.
+    if (hive.enabled()) {
+      for (const agent of Object.values(hive.registry().agents)) {
+        if (agent.cwdValid !== false && agent.cwd) roots.push(agent.cwd);
+      }
+    }
+    return roots;
+  }
 });
-ipcMain.handle('fs:readFile', (_evt, root: unknown, rel: unknown) => {
-  if (typeof root !== 'string' || typeof rel !== 'string') return { ok: false, error: 'invalid args' };
-  return readFileText(root, rel);
-});
+ipcMain.handle('fs:listDir', filesystemIpc.listDir);
+ipcMain.handle('fs:readFile', filesystemIpc.readFile);
 // Raw bytes for files the text reader refuses (images). The renderer cannot
 // load them off disk itself — the CSP has no `file:` source and no file
 // protocol is registered — so the bytes come through here and become a `blob:`
 // URL on the other side. Same root confinement as every other fs handler.
-ipcMain.handle('fs:readBinary', (_evt, root: unknown, rel: unknown) => {
-  if (typeof root !== 'string' || typeof rel !== 'string') return { ok: false, error: 'invalid args' };
-  return readFileBinary(root, rel);
-});
-ipcMain.handle('fs:writeFile', (_evt, root: unknown, rel: unknown, content: unknown) => {
-  if (typeof root !== 'string' || typeof rel !== 'string' || typeof content !== 'string') {
-    return { ok: false, error: 'invalid args' };
-  }
-  return writeFileText(root, rel, content);
-});
+ipcMain.handle('fs:readBinary', filesystemIpc.readBinary);
+ipcMain.handle('fs:writeFile', filesystemIpc.writeFile);
 // v0.3.4: existence check for the terminal ⌘-click markdown flow (metadata only).
 ipcMain.handle('fs:statAbs', (_evt, p: unknown) => {
   if (typeof p !== 'string' || p.length > 4096 || p.includes('\0')) {

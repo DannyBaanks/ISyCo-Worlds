@@ -30,8 +30,9 @@
  *     not the endpoint record),
  *   - the capability token is unguessable (minted by the caller-side handler,
  *     192-bit) and a GET reveals only the single task it maps to — no listing,
- *   - a request body cap + fixed-window rate limits (GLOBAL *and* per-endpoint, so
- *     one noisy caller can't starve the others) bound abuse before parsing/crypto.
+ *   - a request body cap + per-endpoint pre-auth limits bound abuse before crypto;
+ *     the global admission budget counts only authenticated requests that clear
+ *     their endpoint budget, so rejected floods cannot starve other endpoints.
  *
  * Runs in the Electron main process. Deliberately free of any `electron` import so
  * it can be unit-/smoke-tested as a plain Node module. The actual card creation +
@@ -123,7 +124,7 @@ export interface WebhookServerOptions {
 const MAX_BODY_BYTES = 1024 * 1024; // 1 MB
 /** Cap how long we wait for the public tunnel before giving up (server stays up). */
 const TUNNEL_START_TIMEOUT_MS = 10_000;
-/** Basic abuse guard: at most this many requests per fixed window, globally. */
+/** At most this many authenticated admissions per window, globally. */
 const RATE_LIMIT = 120;
 /** …and this many per endpoint, so one noisy caller burns its own budget first
  *  instead of everyone's. Strictly below the global cap, or it would never bind. */
@@ -263,7 +264,7 @@ export class WebhookServer {
     });
   }
 
-  /** Fixed-window limiter — bounds total work before any parse/crypto runs. */
+  /** Fixed-window limiter for pre-auth endpoint work and global admissions. */
   private allowRequest(bucket: string, limit: number): boolean {
     const now = Date.now();
     const w = this.windows.get(bucket);
@@ -276,8 +277,6 @@ export class WebhookServer {
   }
 
   private handleRequest(req: IncomingMessage, res: ServerResponse): void {
-    // Rate limit first — cheapest possible rejection, ahead of any work.
-    if (!this.allowRequest('', RATE_LIMIT)) { json(res, 429, { ok: false, error: 'rate limited' }); return; }
     const id = readEndpointId(req);
     const endpoint = id !== null ? this.endpoints.get(id) ?? null : null;
     // Per-endpoint budget, with every unknown id sharing one bucket (see UNKNOWN_BUCKET).
@@ -307,6 +306,7 @@ export class WebhookServer {
     // 404 for an unknown token — identical to a malformed one and to an unknown
     // endpoint id, so a probe can't distinguish any of the three (no enumeration).
     if (!status || !endpoint) { json(res, 404, { ok: false, error: 'not found' }); return; }
+    if (!this.allowRequest('', RATE_LIMIT)) { json(res, 429, { ok: false, error: 'rate limited' }); return; }
     json(res, 200, { ok: true, status: status.status, title: status.title, result: status.result ?? null });
   }
 
@@ -316,6 +316,7 @@ export class WebhookServer {
     // make us buffer (within the size cap). 401 on any failure — no detail leaked,
     // and an unknown id lands here too so it is answered identically.
     if (!this.verifySecret(req, endpoint) || !endpoint) { json(res, 401, { ok: false, error: 'unauthorized' }); return; }
+    if (!this.allowRequest('', RATE_LIMIT)) { json(res, 429, { ok: false, error: 'rate limited' }); return; }
 
     const chunks: Buffer[] = [];
     let size = 0;
