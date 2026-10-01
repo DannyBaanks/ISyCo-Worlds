@@ -132,3 +132,16 @@ test('the Worlds selector shows the chosen world\'s credits, straight from its m
     assert.deepEqual(Object.keys(loc).sort(), Object.keys(en).sort(), code);
   }
 });
+
+test('each manifest name is the name the app shows for that world', () => {
+  // The credits box is titled with the manifest name, under a selector that
+  // reads the i18n label: if they drift, "ISyCo World" shows someone else's credits title.
+  const dir = path.join(root, 'src/renderer/src/i18n/locales');
+  const LABEL_KEYS = { office: 'office', 'monster-trainer': 'monsterTrainer' };
+  for (const code of ['en', 'es', 'zh-CN', 'ar', 'ja']) {
+    const worlds = JSON.parse(fs.readFileSync(path.join(dir, `${code}.json`), 'utf8')).settings.general.worlds;
+    for (const id of WORLD_IDS) {
+      assert.equal(worlds[LABEL_KEYS[id]], WORLD_MANIFESTS[id].name, `${code}: ${id}`);
+    }
+  }
+});

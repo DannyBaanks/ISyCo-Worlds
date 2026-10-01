@@ -11,9 +11,9 @@ de ponerla.
 En la app, los créditos del mundo elegido aparecen en **Configuración → General
 → Mundos**:
 
-| Munder Difflin | Monster Trainer |
+| Munder Difflin | ISyCo World |
 |---|---|
-| ![Créditos de Munder Difflin](creditos-munder-difflin.png) | ![Créditos de Monster Trainer](creditos-monster-trainer.png) |
+| ![Créditos de Munder Difflin](creditos-munder-difflin.png) | ![Créditos de ISyCo World](creditos-isyco-world.png) |
 
 ## Dónde viven
 
@@ -23,6 +23,10 @@ En la app, los créditos del mundo elegido aparecen en **Configuración → Gene
 - `src/shared/worldManifests.ts`: une cada id de mundo con su manifiesto. Si un
   mundo nuevo no tiene manifiesto, la app no compila.
 - `test/world-manifest.test.cjs`: lo que el CI exige.
+
+El `name` del manifiesto tiene que ser el mismo nombre que muestra la app para
+ese mundo (`settings.general.worlds.*` en los 5 idiomas). Si cambias uno,
+cambia el otro, o el CI falla.
 
 ## Los campos
 
@@ -81,7 +85,7 @@ idioma de quien la usa y, si no está, inglés.
   - Los tilesets son de LimeZu y están marcados como `restricted`.
   - Lleva un aviso de parodia sin fines de lucro y de no afiliación con
     NBCUniversal.
-- **Monster Trainer**:
+- **ISyCo World** (id interno `monster-trainer`):
   - Mundo original de DannyBaanks (ISyCo), con licencia MIT.
   - El arte de Starter Village es original. El detalle está en
     `src/renderer/src/assets/ATTRIBUTION.md`.
