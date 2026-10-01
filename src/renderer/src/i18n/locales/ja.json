@@ -269,7 +269,16 @@
         "confirmBody": "現在のプロフィールの端末とサービスを停止して {{world}} を起動します。現在のプロフィールデータは復旧用に保存されます。",
         "confirmRestart": "選択したワールドに再起動",
         "activationFailed": "プロフィールを起動できません",
-        "statusUnavailable": "アクティブなワールドプロフィールを読み込めません。設定を開き直して再試行してください。"
+        "statusUnavailable": "アクティブなワールドプロフィールを読み込めません。設定を開き直して再試行してください。",
+        "credits": {
+          "title": "クレジット：{{world}}",
+          "createdBy": "作成者",
+          "license": "ライセンス",
+          "source": "ソースコード",
+          "basedOn": "ベース",
+          "assets": "アートとリソース",
+          "restricted": "再配布に制限あり：条件を見る"
+        }
       }
     },
     "agentsModels": {

@@ -1,0 +1,70 @@
+{
+  "manifestVersion": 1,
+  "id": "office",
+  "name": "Munder Difflin",
+  "description": {
+    "en": "The original office: a pixel-art floor where your agents work at their desks, from the project this app grew out of.",
+    "es": "La oficina original: un piso en pixel art donde tus agentes trabajan en sus escritorios, del proyecto del que nació esta app."
+  },
+  "author": {
+    "name": "Chaitanya Giri",
+    "url": "https://github.com/chaitanyagiri"
+  },
+  "license": "MIT",
+  "source": "https://github.com/chaitanyagiri/munder-difflin",
+  "derivedFrom": [
+    {
+      "name": "the-office",
+      "author": {
+        "name": "shahar061",
+        "url": "https://github.com/shahar061"
+      },
+      "license": "ISC",
+      "source": "https://github.com/shahar061/the-office",
+      "note": {
+        "en": "The office tilesets and Tiled maps were vendored from this project.",
+        "es": "Los tilesets y mapas de Tiled de la oficina vienen de este proyecto."
+      }
+    }
+  ],
+  "assets": [
+    {
+      "path": "src/renderer/src/assets/tilesets/",
+      "author": {
+        "name": "LimeZu",
+        "url": "https://limezu.itch.io/"
+      },
+      "license": "LimeZu Complete Version",
+      "source": "https://limezu.itch.io/moderninteriors",
+      "redistribution": "restricted",
+      "terms": {
+        "en": "May be edited and used in commercial or non-commercial projects. May not be resold, or distributed to others as assets. Credit linking to https://limezu.itch.io/ is required. Licence purchased 2026-08-20 for the original project; see LIMEZUASSETS-LICENSE.txt.",
+        "es": "Se puede editar y usar en proyectos comerciales o no comerciales. No se puede revender ni distribuir a otros como assets. Es obligatorio dar crédito con enlace a https://limezu.itch.io/. Licencia comprada el 2026-08-20 para el proyecto original; ver LIMEZUASSETS-LICENSE.txt."
+      },
+      "credit": {
+        "en": "Modern Interiors tilesets by LimeZu — https://limezu.itch.io/",
+        "es": "Tilesets Modern Interiors por LimeZu — https://limezu.itch.io/"
+      }
+    },
+    {
+      "path": "src/renderer/src/assets/maps/",
+      "author": {
+        "name": "shahar061",
+        "url": "https://github.com/shahar061"
+      },
+      "license": "ISC",
+      "source": "https://github.com/shahar061/the-office",
+      "redistribution": "open",
+      "credit": {
+        "en": "Tiled maps of the office, drawn with the LimeZu tilesets above.",
+        "es": "Mapas de Tiled de la oficina, dibujados con los tilesets de LimeZu de arriba."
+      }
+    }
+  ],
+  "disclaimers": [
+    {
+      "en": "A non-commercial parody. Not affiliated with, endorsed by, or sponsored by NBCUniversal, \"The Office\", \"Brooklyn Nine-Nine\" or Dunder Mifflin. Character likenesses are original procedural pixel art.",
+      "es": "Parodia sin fines de lucro. No está afiliada, respaldada ni patrocinada por NBCUniversal, \"The Office\", \"Brooklyn Nine-Nine\" ni Dunder Mifflin. Los personajes son pixel art procedural original."
+    }
+  ]
+}

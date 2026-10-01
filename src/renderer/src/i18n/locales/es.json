@@ -269,7 +269,16 @@
         "confirmBody": "Esto detendrá las terminales y servicios activos del perfil actual y luego iniciará {{world}}. Los datos del perfil actual se conservan para recuperarlos.",
         "confirmRestart": "Reiniciar en el mundo elegido",
         "activationFailed": "No se pudo iniciar el perfil",
-        "statusUnavailable": "No se pudo leer el perfil de mundo activo. Vuelve a abrir Configuración para intentarlo de nuevo."
+        "statusUnavailable": "No se pudo leer el perfil de mundo activo. Vuelve a abrir Configuración para intentarlo de nuevo.",
+        "credits": {
+          "title": "Créditos: {{world}}",
+          "createdBy": "Creado por",
+          "license": "Licencia",
+          "source": "Código fuente",
+          "basedOn": "Basado en",
+          "assets": "Arte y recursos",
+          "restricted": "Redistribución restringida: ver términos"
+        }
       }
     },
     "agentsModels": {

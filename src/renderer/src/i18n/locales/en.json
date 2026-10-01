@@ -269,7 +269,16 @@
         "confirmBody": "This stops the current profile's live terminals and services, then starts {{world}}. The current profile data stays saved for recovery.",
         "confirmRestart": "Restart into selected world",
         "activationFailed": "Could not start profile",
-        "statusUnavailable": "Could not read the active world profile. Retry by reopening Settings."
+        "statusUnavailable": "Could not read the active world profile. Retry by reopening Settings.",
+        "credits": {
+          "title": "Credits: {{world}}",
+          "createdBy": "Created by",
+          "license": "License",
+          "source": "Source code",
+          "basedOn": "Based on",
+          "assets": "Art and resources",
+          "restricted": "Restricted redistribution: see terms"
+        }
       }
     },
     "agentsModels": {
