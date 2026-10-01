@@ -4,15 +4,15 @@
 
 ### Tu equipo de agentes de IA vive en un mundo: en tu computadora, en la de al lado y en tu celular
 
-[![CI](https://github.com/DannyBaanks/munder-difflin/actions/workflows/ci.yml/badge.svg)](https://github.com/DannyBaanks/munder-difflin/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/DannyBaanks/munder-difflin?include_prereleases&label=release)](https://github.com/DannyBaanks/munder-difflin/releases)
-[![Linux · Windows · macOS](https://img.shields.io/badge/probado%20en-Linux%20%C2%B7%20Windows%20%C2%B7%20macOS-5fb37a)](https://github.com/DannyBaanks/munder-difflin/actions/workflows/ci.yml)
+[![CI](https://github.com/DannyBaanks/ISyCo-Worlds/actions/workflows/ci.yml/badge.svg)](https://github.com/DannyBaanks/ISyCo-Worlds/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/DannyBaanks/ISyCo-Worlds?include_prereleases&label=release)](https://github.com/DannyBaanks/ISyCo-Worlds/releases)
+[![Linux · Windows · macOS](https://img.shields.io/badge/probado%20en-Linux%20%C2%B7%20Windows%20%C2%B7%20macOS-5fb37a)](https://github.com/DannyBaanks/ISyCo-Worlds/actions/workflows/ci.yml)
 [![Licencia MIT](https://img.shields.io/badge/licencia-MIT-blue)](./LICENSE)
 
 </div>
 
 <p align="center">
-  <img src="./docs/readme/isyco-inicio.png" alt="Pantalla de inicio de ISyCo Worlds: a la izquierda el mundo elegido, Munder Difflin, con una ilustración de una plaza de aldea, y los botones para elegir entre Munder Difflin e ISyCo World; a la derecha el espacio de trabajo y el botón Entrar a este mundo" width="860"><br>
+  <img src="./docs/readme/isyco-inicio.png" alt="Pantalla de inicio de ISyCo Worlds, con selección de mundo y espacio de trabajo" width="860"><br>
   <sub>Al abrir la app eliges tu mundo y la carpeta donde trabaja tu equipo.</sub>
 </p>
 
@@ -20,11 +20,13 @@
 
 Imagina un equipo donde cada integrante es una IA. **Tú hablas con el coordinador** y él reparte el trabajo: uno programa, otro investiga, otro revisa. Todo pasa dentro de un **mundo** en pixel art donde ves quién está trabajando, quién está libre y en qué va cada quien.
 
-ISyCo Worlds nació como fork de [Munder Difflin](https://github.com/chaitanyagiri/munder-difflin), de Chaitanya Giri. Esa oficina original sigue aquí como uno de los mundos, con su crédito.
+ISyCo Worlds nació como fork de [Munder Difflin](https://github.com/chaitanyagiri/munder-difflin), de Chaitanya Giri. El proyecto ya tiene identidad y mundos propios; Munder Difflin permanece como un mundo independiente y conserva sus créditos.
+
+> 🚧 **Estado del proyecto:** la identidad de Worlds, el CLI `worlds` y **Monster Village** ya están en `main`. El pulido y la unificación del estilo visual de las aplicaciones (escritorio, celular y panel), junto con otros acabados y la actualización de sus capturas, siguen pendientes. Las imágenes de esta página pueden no reflejar todavía el aspecto final.
 
 | | |
 |---|---|
-| 🌍 **Elige tu mundo** | **Munder Difflin**, la oficina original con Michael y su equipo, o **ISyCo World**, una aldea donde tus agentes son entrenadores y sus monstruos evolucionan al terminar trabajo. |
+| 🌍 **Elige tu mundo** | **Munder Difflin**, la oficina original con Michael y su equipo, o **Monster Village**, donde el Profesor coordina a entrenadores y sus monstruos evolucionan al terminar trabajo. |
 | ✦ **GUS, tu guía** | Un ayudante opcional que te explica qué está pasando y te propone qué agentes poner a trabajar. Nada se lanza sin tu aprobación. |
 | 📱 **Tu equipo en el celular** | iPhone y Android: contesta preguntas, revisa el tablero y manda trabajo, protegido con **Face ID**, huella o PIN. |
 | 🔗 **Dos computadoras, un equipo** | Tu laptop le pasa trabajo a la PC grande. Cada una tiene su coordinador y se ayudan. |
@@ -39,7 +41,7 @@ ISyCo Worlds nació como fork de [Munder Difflin](https://github.com/chaitanyagi
 
 **1. Instala un «cerebro» para tus agentes.** La app no trae IA propia: usa la que ya tienes. Lo más fácil es [Claude Code](https://claude.com/claude-code). También sirven Codex, Gemini, OpenCode, Copilot y otros.
 
-**2. Descarga la app.** Entra a [**Releases**](https://github.com/DannyBaanks/munder-difflin/releases) y baja la de tu sistema:
+**2. Descarga la app.** Entra a [**Releases**](https://github.com/DannyBaanks/ISyCo-Worlds/releases) y baja la de tu sistema:
 
 | Tu computadora | Descarga |
 |---|---|
@@ -47,7 +49,7 @@ ISyCo Worlds nació como fork de [Munder Difflin](https://github.com/chaitanyagi
 | 🐧 Linux | el `.AppImage` o el `.deb` |
 | 🍎 Mac | el `.dmg` |
 
-> ⚠️ **Ojo:** la release publicada hoy (**v0.5.2-ISyCo.2**) es anterior a los mundos: se llama Munder Difflin y todavía no trae ISyCo World, GUS ni el diseño nuevo. Todo eso ya está en el código y llega en la próxima release. Si no quieres esperar, puedes correrla desde el código (ver «Para quien usa la terminal», abajo).
+> ⚠️ **Ojo:** la última release publicada es **v0.5.2-ISyCo.2**. Es anterior a los cambios recientes de Worlds que ya están en `main`, incluidos Monster Village y el CLI rebrandeado. La página de Releases indica qué versión está empaquetada; el pulido visual de las apps sigue pendiente.
 
 **3. Ábrela.** Eliges idioma, tu **mundo** y la carpeta donde trabajará tu equipo, y tocas **Entrar a este mundo**. Luego toca **agregar agente** y listo.
 
@@ -62,7 +64,7 @@ Arriba tienes cuatro botones:
 | Botón | Para qué es |
 |---|---|
 | **Mundo** | Tu mundo con tu equipo. Abajo están las tarjetas de cada agente; a la derecha, el **Centro de comando** (terminal, tareas, preguntas, historial, memoria…) y el **Registro del mundo**: cuántos compañeros hay, cuántos trabajan y cuántos necesitan tu atención. |
-| **Configuración ▾** | Todos los ajustes, a un clic: agentes y modelos, conexiones, Munder Link, voz, memoria y **Mundos**. |
+| **Configuración ▾** | Todos los ajustes, a un clic: agentes y modelos, **Enlace entre mundos**, voz, memoria y **Mundos**. |
 | **Marketplace** | *Próximamente:* aquí vas a encontrar extensiones y nuevos mundos. Por ahora solo es la vitrina y lo dice claro. |
 | **✦ GUS** | Abre a tu guía (ver abajo). |
 
@@ -77,11 +79,11 @@ Cada mundo es una forma distinta de ver y organizar a tu equipo. Cambias de mund
 | Mundo | Cómo es |
 |---|---|
 | **Munder Difflin** | La oficina original de Chaitanya Giri: Michael coordina y el equipo trabaja en sus escritorios. |
-| **ISyCo World** | Starter Village: el Profesor coordina, tus agentes son entrenadores y sus monstruos evolucionan conforme terminan trabajo. Puedes **explorar** la aldea o **construir** en ella. |
+| **Monster Village** | Empieza en Starter Village: el Profesor coordina, tus agentes son entrenadores y sus monstruos evolucionan conforme terminan trabajo. Puedes **explorar** la aldea o **construir** en ella. |
 
 <p align="center">
-  <img src="./docs/readme/isyco-world-gus.png" alt="ISyCo World: la aldea Starter Village en pixel art con casas, caminos y un corral; abajo la tarjeta del Profesor como coordinador; a la derecha el panel Configure GUS con proveedor, modelo y API key" width="860"><br>
-  <sub>ISyCo World con el panel de GUS abierto.</sub>
+  <img src="./docs/readme/isyco-world-gus.png" alt="Monster Village: Starter Village en pixel art, con el Profesor como coordinador y el panel flotante de GUS" width="860"><br>
+  <sub>Monster Village con el panel de GUS abierto.</sub>
 </p>
 
 **Cada mundo dice quién lo hizo.** En **Configuración → Mundos** ves los créditos del mundo elegido: autor, licencia, código fuente, de qué obra viene y de quién es su arte. Cualquier mundo nuevo, incluidos los que lleguen por el Marketplace, tiene que traer esos créditos o no entra.
@@ -110,7 +112,7 @@ GUS es un ayudante **opcional**. Le cuentas qué quieres hacer («mantener un re
 
 ## 📱 En el celular: iPhone
 
-Tu coordinador te hace una pregunta y no estás en la compu. Contéstale desde el celular y tu equipo sigue trabajando. La app del celular se llama **Munder Mobile** y funciona con los dos mundos.
+Tu coordinador te hace una pregunta y no estás en la compu. Contéstale desde el celular y tu equipo sigue trabajando. La app móvil se conecta a Worlds. **Su identidad visual y la adaptación de la experiencia a cada mundo todavía están pendientes**, como se indica arriba. Los nombres `MunderMobile` que aparecen en algunos instaladores y workflows son identificadores heredados.
 
 <p align="center">
   <img src="./docs/isyco/mobile/ios/office-light.png" alt="App de iPhone, pestaña Oficina: Michael, workers libres, preguntas y tareas" width="190">
@@ -138,10 +140,10 @@ Si alguien toma tu celular, no puede ver tu oficina ni hacer cambios:
 
 ### Cómo instalarla
 
-1. **Baja la app:** en [**Releases**](https://github.com/DannyBaanks/munder-difflin/releases) descarga `MunderMobile-unsigned.ipa`. Para la versión más nueva, en [**Actions → iOS (Munder Mobile)**](https://github.com/DannyBaanks/munder-difflin/actions/workflows/ios.yml) abre la última corrida en verde de `main` y descarga **MunderMobile-unsigned-ipa**.
+1. **Baja la app:** en [**Releases**](https://github.com/DannyBaanks/ISyCo-Worlds/releases) descarga `MunderMobile-unsigned.ipa`. Para la versión más nueva, en [**Actions → iOS (Munder Mobile)**](https://github.com/DannyBaanks/ISyCo-Worlds/actions/workflows/ios.yml) abre la última corrida en verde de `main` y descarga **MunderMobile-unsigned-ipa**.
 2. **Instálala en tu iPhone** con [**iloader**](https://iloader.app) y tu Apple ID gratuito (también sirven SideStore o AltStore).
 3. **Confía en la app:** en el iPhone, **Ajustes → General → VPN y administración de dispositivos**, y activa el **Modo de desarrollador** si te lo pide.
-4. **Prende el enlace en la computadora:** en la app, **Configuración → Munder Link → Encender**. Ahí mismo, en **Celulares**, aparece la dirección para el iPhone.
+4. **Prende el enlace en la computadora:** en la app, **Configuración → Enlace entre mundos → Encender**. Ahí mismo, en **Celulares**, aparece la dirección para el iPhone.
 5. **Empareja:** escribe esa dirección en la app, toca **Emparejar** y en la computadora acepta el código de 6 dígitos **solo si es el mismo** que ves en el celular.
 
 > 🌎 **¿Fuera de casa?** Instala [Tailscale](https://tailscale.com) en la computadora y en el iPhone, y usa la dirección de Tailscale (la que empieza con `100.`). La app aprende las dos direcciones y usa la que conteste: la de tu red en casa y la de Tailscale en la calle.
@@ -164,7 +166,7 @@ La misma app del iPhone, como APK nativo (Kotlin + Compose). No es otra forma de
 </p>
 <p align="center"><sub>Las cuatro son del CI en JVM con la oficina demo; las 18 capturas (incluidos modo oscuro, bloqueo y arranque de cada pestaña) están en <code>docs/isyco/mobile/android/</code>.</sub></p>
 
-Trae una pestaña más que el iPhone no tenía al principio: **Panel**. Desde ahí abres y cierras la app, prendes y apagas el enlace, enciendes GPT y manejas el revividor — los mismos botones del Panel de escritorio, ejecutando lo mismo. Eso sí: emparejar no da ese poder; se concede en la computadora con `munder link panel <celular>`.
+Trae una pestaña más que el iPhone no tenía al principio: **Panel**. Desde ahí abres y cierras la app, prendes y apagas el enlace, enciendes GPT y manejas el revividor — los mismos botones del Panel de escritorio, ejecutando lo mismo. Eso sí: emparejar no da ese poder; se concede en la computadora con `worlds link panel <celular>`.
 
 ### 🔒 Nadie más puede usarla
 
@@ -173,13 +175,13 @@ Igual que en el iPhone, pero con lo de Android:
 - La app **abre bloqueada** y pide tu **huella o el PIN**.
 - Si la dejas en segundo plano más de un minuto, **se vuelve a bloquear**.
 - Mandar algo, contestar, delegar, tocar el Panel o borrar **vuelve a pedir que seas tú**.
-- La llave de sesión vive en el **Keystore cifrado** del aparato. Munder nunca ve tu huella ni tu PIN.
+- La llave de sesión vive en el **Keystore cifrado** del aparato. Worlds nunca ve tu huella ni tu PIN.
 
 ### Cómo instalarla
 
-1. **Baja el APK:** en [**Releases**](https://github.com/DannyBaanks/munder-difflin/releases) descarga `MunderMobile-debug.apk`. Para la versión más nueva, en [**Actions → Android (Munder Mobile)**](https://github.com/DannyBaanks/munder-difflin/actions/workflows/android.yml) abre la última corrida en verde de `main` y descarga **MunderMobile-debug-apk**.
+1. **Baja el APK:** en [**Releases**](https://github.com/DannyBaanks/ISyCo-Worlds/releases) descarga `MunderMobile-debug.apk`. Para la versión más nueva, en [**Actions → Android (Munder Mobile)**](https://github.com/DannyBaanks/ISyCo-Worlds/actions/workflows/android.yml) abre la última corrida en verde de `main` y descarga **MunderMobile-debug-apk**.
 2. **Instálalo** en tu Android (permite instalar de fuentes desconocidas).
-3. **Prende el enlace en la computadora:** en la app, **Configuración → Munder Link → Encender**.
+3. **Prende el enlace en la computadora:** en la app, **Configuración → Enlace entre mundos → Encender**.
 4. **Empareja:** escribe la dirección en la app, toca **Emparejar** y en la computadora acepta el código de 6 dígitos **solo si es el mismo** que ves en el celular.
 
 > 🌎 **¿Fuera de casa?** Igual que el iPhone: instala [Tailscale](https://tailscale.com) en la computadora y en el Android, y usa la dirección de Tailscale (la que empieza con `100.`).
@@ -192,14 +194,14 @@ Guía completa: [`android/MunderMobile/README.md`](./android/MunderMobile/README
 
 ---
 
-## 🔗 Munder Link: dos computadoras, un equipo
+## 🔗 Enlace entre mundos: dos computadoras, un equipo
 
 ¿Tienes una laptop y una PC con más RAM? Enlázalas y tu coordinador le pasa trabajo al de la otra, por tu red de casa o por Tailscale. Ninguna toca los archivos de la otra: la tarea le llega al otro coordinador y él decide cómo hacerla.
 
-**Cómo:** en las dos computadoras, **Configuración → Munder Link → Encender → Buscar**. Elige la otra, confirma que el código de 6 dígitos sea igual en las dos pantallas, y listo.
+**Cómo:** en las dos computadoras, **Configuración → Enlace entre mundos → Encender → Buscar**. Elige la otra, confirma que el código de 6 dígitos sea igual en las dos pantallas, y listo.
 
 <p align="center">
-  <img src="./docs/pr-evidence/after-link-tab-es-dark.png" alt="Configuración → Munder Link: esta oficina, una solicitud entrante con su código y las oficinas enlazadas" width="760">
+  <img src="./docs/pr-evidence/after-link-tab-es-dark.png" alt="Configuración → Enlace entre mundos: esta oficina, una solicitud entrante con su código y las oficinas enlazadas" width="760">
 </p>
 
 Todo lo que viaja entre oficinas va cifrado y firmado.
@@ -218,7 +220,7 @@ Cómo conectarlo: [`tools/munder/GPT.md`](./tools/munder/GPT.md).
 
 ---
 
-## 🛟 Munder Reviver: si se cae, se levanta
+## 🛟 Reviver: si Worlds se cae, se levanta
 
 Un ayudante chiquito que vive junto a la app:
 
@@ -248,7 +250,7 @@ Cómo activarlo: [`tools/munder/REVIVER.md`](./tools/munder/REVIVER.md).
 | Pasa esto | Prueba esto |
 |---|---|
 | La app se cierra sola al abrirla | Ya hay otra copia abierta. Búscala en tu barra de tareas y usa esa. |
-| El celular dice «No alcanzo la oficina» | En la computadora, **Configuración → Munder Link** debe estar **encendido**. Revisa que los dos estén en la misma red Wi-Fi, o los dos con Tailscale prendido. |
+| El celular dice «No alcanzo la oficina» | En la computadora, **Configuración → Enlace entre mundos** debe estar **encendido**. Revisa que los dos estén en la misma red Wi-Fi, o los dos con Tailscale prendido. |
 | El celular dice que la hora no coincide | Activa la **hora automática** en el celular y en la computadora. |
 | El celular dice que ya no lo reconocen | Lo olvidaron en la computadora. En la app toca **Olvidar en este celular** y vuelve a emparejar. |
 | La app del iPhone dejó de abrir | Pasaron los 7 días del Apple ID gratuito: fírmala otra vez con iloader. |
@@ -260,23 +262,23 @@ Cómo activarlo: [`tools/munder/REVIVER.md`](./tools/munder/REVIVER.md).
 ---
 
 <details>
-<summary><b>⌨️ Para quien usa la terminal: el comando <code>munder</code></b></summary>
+<summary><b>⌨️ Para quien usa la terminal: el comando <code>worlds</code></b></summary>
 
 Todo lo de arriba también se hace desde la terminal. Instálalo una vez con `./tools/munder/install.sh`.
 
 | Quiero… | Comando |
 |---|---|
-| Abrir, cerrar o reiniciar la app | `munder start` · `munder stop` · `munder restart` |
-| Ver si está corriendo y sus logs | `munder status` · `munder logs -f` |
-| Ver o armar el equipo | `munder sesion ver` · `munder sesion armar` |
-| Oficina lista para tu giro | `munder sesion packs` · `munder sesion armar --pack retail-shop` |
-| Enlazar otra computadora | `munder link conectar` |
-| Dirección para el celular | `munder link encender` · `munder link celular` |
-| Aceptar un celular | `munder link aceptar <código>` |
-| Que Munder se levante solo | `munder reviver init` · `munder reviver instalar` |
-| Conectar ChatGPT | `munder gpt perfil full` · `munder gpt encender` · `munder gpt aprobar <código>` |
-| Mandar una tarea a un harness externo | `munder harness run <adaptador> "tarea" --cwd <carpeta>` |
-| Crear un avatar | `munder avatar compilar "descripción"` |
+| Abrir, cerrar o reiniciar la app | `worlds start` · `worlds stop` · `worlds restart` |
+| Ver si está corriendo y sus logs | `worlds status` · `worlds logs -f` |
+| Ver o armar el equipo | `worlds sesion ver` · `worlds sesion armar` |
+| Oficina lista para tu giro | `worlds sesion packs` · `worlds sesion armar --pack retail-shop` |
+| Enlazar otra computadora | `worlds link conectar` |
+| Dirección para el celular | `worlds link encender` · `worlds link celular` |
+| Aceptar un celular | `worlds link aceptar <código>` |
+| Mantener Worlds disponible | `worlds reviver init` · `worlds reviver instalar` |
+| Conectar ChatGPT | `worlds gpt perfil full` · `worlds gpt encender` · `worlds gpt aprobar <código>` |
+| Mandar una tarea a un harness externo | `worlds harness run <adaptador> "tarea" --cwd <carpeta>` |
+| Crear un avatar | `worlds avatar compilar "descripción"` |
 
 Desde el código: `git clone`, `npm install` y `./start.sh` (Node 18+ y herramientas de C++). Detalle en [`tools/munder/README.md`](./tools/munder/README.md).
 
@@ -289,7 +291,7 @@ Desde el código: `git clone`, `npm install` y `./start.sh` (Node 18+ y herramie
 Selector de idioma en el onboarding (`en/es/zh-CN/ar/ja`). El inglés sigue siendo el idioma por defecto: nada cambia hasta que eliges otro en Settings. `es.json` está completo, en Title Case y sin artefactos de traducción automática. `ja.json` salió del loop de IntentLang: el pipeline M0–M4 (roundtrip 100%) aporta la capa de diccionario y el resto está escrito a mano — mismo veredicto que `es` y `ar` cuando la prosa del materializador sale en ensalada.
 
 ### 2. Canal de control local (`127.0.0.1`)
-Canal solo de loopback, con un token `0600` guardado en userData. Rutas: `munder ctl ping`, `GET /salud`, `GET /sesion`, `POST/DELETE /sesion/agentes`, y repintado bajo demanda sin reiniciar. Sin token se rehúsa, y nada de este puerto sale de la máquina.
+Canal solo de loopback, con un token `0600` guardado en userData. Rutas: `worlds ctl ping`, `GET /salud`, `GET /sesion`, `POST/DELETE /sesion/agentes`, y repintado bajo demanda sin reiniciar. Sin token se rehúsa, y nada de este puerto sale de la máquina.
 
 ### 3. Launcher Linux `./start.sh`
 Arregla el congelamiento «Detenido»:
@@ -320,15 +322,15 @@ Ver [`docs/delivery-reliability-decision.md`](./docs/delivery-reliability-decisi
 
 Guía sin rutas personales en [`src/mcp/office-bridge/GUIA.md`](./src/mcp/office-bridge/GUIA.md).
 
-### 8. CLI `munder`
-`tools/munder/munder` es Node puro, sin dependencias. Comandos: `start / stop / restart / status / logs -f`, `sesion ver / armar / quitar / proveedor / packs`, `ctl ping / repaint`, `avatar compilar / inspect / inyectar`, `link …`. Receta de avatares para modelos en [`tools/munder/AVATAR_AGENTES.md`](./tools/munder/AVATAR_AGENTES.md).
+### 8. CLI `worlds`
+El CLI público es `worlds`; el lanzador `munder` se conserva como alias histórico de compatibilidad. `tools/munder/munder` es Node puro, sin dependencias. Comandos: `start / stop / restart / status / logs -f`, `sesion ver / armar / quitar / proveedor / packs`, `ctl ping / repaint`, `avatar compilar / inspect / inyectar`, `link …`. Receta de avatares para modelos en [`tools/munder/AVATAR_AGENTES.md`](./tools/munder/AVATAR_AGENTES.md).
 
 ### 9. Placeholder de worker («cuerpo prestado»)
 - **Cómo entra:** `firstFreeCharacter()` elige un slot libre (nunca `michael`, que es del GOD) e `injectAvatarAs()` le inyecta tu receta e invalida sus cachés.
 - **Qué no cambia:** el comportamiento y el hitbox (la clase `Character` es genérica). Las líneas de diálogo son las del slot prestado.
-- **Persistencia:** `munder avatar inyectar … --slot auto` guarda la receta en `avatar-overrides.json`, y la app la aplica al arrancar.
+- **Persistencia:** `worlds avatar inyectar … --slot auto` guarda la receta en `avatar-overrides.json`, y la app la aplica al arrancar.
 
-### 10. Munder Link
+### 10. Enlace entre mundos (identificadores internos heredados)
 - **Delegación:** el peer nunca toca tu hive ni tus PTYs. Deja la tarea en el inbox de tu Michael, en formato Office Bridge.
 - **Seguridad de cada llamada:** firmada con Ed25519 y cifrada con X25519 + AES-256-GCM, con anti-replay y `re` que liga cada respuesta a su petición.
 - **Emparejamiento:** código SAS de 6 dígitos (sas@2, que incluye las llaves de cifrado). `/pair` tiene rate limit, y el descubrimiento UDP solo contesta a IPs privadas.
@@ -336,13 +338,13 @@ Guía sin rutas personales en [`src/mcp/office-bridge/GUIA.md`](./src/mcp/office
 
 Guía: [`tools/munder/LINK.md`](./tools/munder/LINK.md).
 
-### 11. Fachada ChatGPT sobre Munder Link
+### 11. Fachada ChatGPT sobre el enlace entre mundos
 - **Qué es:** un servidor MCP local (`src/mcp/munder-chatgpt-link/`) que verifica peer + ruta (loopback, misma LAN o Tailscale) antes de cada llamada. Expone 7 herramientas: `verify/peers/status/submit/get/message/cancel`.
 - **`self` contra `peers`:** `munder_link_peers` devuelve `self` aparte de `peers`, y `munder_office_status("self")` lee esta máquina directo, sin red. Delegar a `self` responde `self_not_a_peer`.
 - **Probado end-to-end** (2026-09-25): chatgpt.com → fachada → link por LAN → Michael remoto. `compose_submit` llegó `accepted` con recibo (`task-1790331110686-46d4bbdb`, same_lan vía wlo1, 22 ms).
 - **Túnel:** cada quien levanta el suyo con [`chatgpt-tunnel.sh`](./src/mcp/munder-chatgpt-link/chatgpt-tunnel.sh). Tu URL es pública y de vida corta, y la de otra persona no te sirve a ti.
 
-### 12. Munder Link desde Configuración
+### 12. Enlace entre mundos desde Configuración
 - **Mismo motor que el CLI:** `src/main/linkPanel.ts` es una capa delgada sobre `lib-link.cjs`, con la misma identidad, los mismos peers y el mismo archivo pid. Lo que prendes en la app lo apagas en la terminal, y al revés.
 - **Sin llaves en la pantalla:** el renderer nunca maneja llaves; solo un token de un uso que emite el proceso principal.
 
@@ -365,7 +367,7 @@ Plantillas `core` más cinco giros. Las de packs importados limitan a «pedir pe
 ### 16. CI en Linux, Windows y macOS
 Cada push compila y corre la suite en los tres sistemas. Encontró un bug real: en Windows, borrar un worktree podía seguir el junction de `node_modules` hasta el checkout principal. Hoy un test con un `must-survive.txt` lo vigila.
 
-### 17. Munder Mobile: PWA + iOS nativo + Android nativo
+### 17. App móvil: PWA + iOS nativo + Android nativo
 - **PWA:** el daemon de Link sirve la app web en `/app` y su API sellada en `/remote/v1/*`, en `tools/munder/lib-remote.cjs`.
 - **Emparejamiento commit-reveal:** el nonce del celular va comprometido antes de ver el de la oficina, así nadie en medio puede probar nonces hasta que coincidan los códigos.
 - **Llamadas:** ChaCha20-Poly1305 bajo X25519 + HKDF, con hora y anti-replay.
@@ -377,7 +379,7 @@ Cada push compila y corre la suite en los tres sistemas. Encontró un bug real: 
 - **Dónde viven los celulares:** en `remotes.json`, nunca en `peers.json`.
 - **Operaciones:** `overview`, `peers`, `answer` (igual que ASK ME), `ask` y `delegate`, más el estrato Panel (`panel.state`, `panel.action`).
 
-### 18. Munder Reviver (plano de mantenimiento)
+### 18. Reviver (plano de mantenimiento)
 - **Independiente:** `tools/munder/lib-reviver.cjs` usa solo builtins de Node y tiene su propia llave y sus propios clientes. No necesita a Munder, Link, el hive ni Electron.
 - **Sano = cuatro pruebas:** el proceso del destino configurado, `/salud` con el token de ese arranque, el mismo pid y el `office_id` fijado. Para eso `/salud` ahora dice `pid`, `version` y `office_id`.
 - **Sin shell:** solo `status`, `start`, `restart` y `stop`. El destino vive en `config.json`.
@@ -399,7 +401,7 @@ Cada push compila y corre la suite en los tres sistemas. Encontró un bug real: 
   - tokens guardados solo como hash;
   - refresh que rota.
 - **Probado contra el cliente OAuth oficial del SDK de MCP.**
-- **Buzón:** `"to": "gpt"` se entrega en `<hive>/gpt/inbox` solo si `munder gpt` lo creó; si no, rebota como antes.
+- **Buzón:** `"to": "gpt"` se entrega en `<hive>/gpt/inbox` solo si `worlds gpt` lo creó; si no, rebota como antes.
 - **Inventario:** clasifica cada operación de Remote, Link, el canal de control y el Reviver. Un test lee esas fuentes y falla si aparece una sin clasificar.
 - **Link intacto:** por Link, GPT es un peer y solo ve lo que esta oficina delegó.
 
@@ -413,20 +415,20 @@ Cada push compila y corre la suite en los tres sistemas. Encontró un bug real: 
 - Los presets usan `--session <id>`, pero solo si la sesión sigue en `opencode.db` o en el storage JSON; si no, arranca limpio en vez de morir con «Session not found».
 - `opencode.json`/`tui.json` del agente se **fusionan** (`mergeJsonFile`), ya no se reescriben con solo el tema.
 
-### 22. Munder Mobile por Tailscale + Face ID
+### 22. App móvil por Tailscale + Face ID
 - **ATS:** solo `NSAllowsArbitraryLoads`. Con `NSAllowsLocalNetworking` presente, iOS 10+ ignora la primera y bloqueaba las IP de Tailscale (100.64.0.0/10). `test/ios-ats.test.cjs` lo vigila; el contenido ya va cifrado por `RemoteCrypto`.
 - **Bloqueo:** `AppLock` y `LockPolicy` en `MunderMobileCore`, con `.deviceOwnerAuthentication` (Face ID con el código de respaldo). Bloquea al abrir y tras 60 s en segundo plano; reautentica cada acción que cambia la oficina fuera de una ventana de 30 s; tapa la captura del selector de apps. Un iPhone sin código abre con aviso.
 
 ### 23. El Panel en el celular: dos autoridades sobre un solo canal
 - El celular ya es un cliente del estrato del Panel, no un clon: `panel.state` y `panel.action` viajan por el mismo sello `munder-remote@1` y ejecutan los mismos motores (`lib-panel.cjs` `ACTIONS`) que los botones de escritorio. Un solo protocolo, y la app nativa no reimplementa la oficina: la pide.
-- **El código de emparejamiento no abre la computadora.** Da la *oficina* (tablero, preguntas, la gente). Los ops que tocan el host llevan clase de autoridad `machine` y se niegan con `no_authority` hasta que alguien en la máquina lo concede: `munder link panel <celular>` (o el botón `link.phoneAuthority` del Panel, que es de escritorio y **no** está en el set del celular — un teléfono no puede ampliarse su propia autoridad). `--quitar` la devuelve.
+- **El código de emparejamiento no abre la computadora.** Da la *oficina* (tablero, preguntas, la gente). Los ops que tocan el host llevan clase de autoridad `machine` y se niegan con `no_authority` hasta que alguien en la máquina lo concede: `worlds link panel <celular>` (o el botón `link.phoneAuthority` del Panel, que es de escritorio y **no** está en el set del celular — un teléfono no puede ampliarse su propia autoridad). `--quitar` la devuelve.
 - **Por clase de autoridad y no por lista:** `app.restart` apaga tu Munder y `gpt.approve` autoriza un agente. Compartir credencial con `answer` habría convertido el teléfono en control remoto de la máquina con la misma llave que usa para leer el tablero. `OP_AUTHORITY` es fail-closed: un op sin declarar se trata como `machine`.
 - **Techo medido, no supuesto:** `panel.state` pesa 0,5% del límite de 256 KiB en una oficina viva y 17,8% en el peor caso construido con formas reales (100 peers, 50 celulares, 200 grants). Ningún op necesita paginación todavía. `ARG_MAX` declara el tope de cada argumento en el camino del celular, porque el Panel de escritorio no tenía ninguno.
 - `shortcut.install` y `link.phoneAuthority` quedan fuera del celular (`PANEL_OFF`): escriben en una pantalla que el teléfono no ve, y el segundo sería circular.
 
 ### 24. Harnesses externos (P0)
-- `munder harness` entrega una tarea a `codex exec` (JSONL) o a cualquier agente ACP v1, como DeepSeek Harness (`dsh --profile acp`), con selección explícita y sin ruteo.
-- Munder decide el veredicto, mide los artefactos con git, escribe el recibo, borra secretos por nombre, forma y valor, y corta la recursión con `MUNDER_HARNESS_CHAIN`.
+- `worlds harness` entrega una tarea a `codex exec` (JSONL) o a cualquier agente ACP v1, como DeepSeek Harness (`dsh --profile acp`), con selección explícita y sin ruteo.
+- Worlds decide el veredicto, mide los artefactos con git, escribe el recibo, borra secretos por nombre, forma y valor, y corta la recursión con `MUNDER_HARNESS_CHAIN`.
 - Contrato en [`tools/munder/HARNESS_CONTRACT.md`](./HARNESS_CONTRACT.md); auditoría en [`tools/munder/EXTERNAL_HARNESS_AUDIT.md`](./EXTERNAL_HARNESS_AUDIT.md).
 
 ### 25. Mundos con runtime aislado
@@ -452,7 +454,7 @@ Cada push compila y corre la suite en los tres sistemas. Encontró un bug real: 
 
 ## Garantías de este fork
 
-* **Nada va al upstream.** El remoto es `fork=DannyBaanks/munder-difflin`.
+* **Identidad del proyecto:** `origin` publica en [DannyBaanks/ISyCo-Worlds](https://github.com/DannyBaanks/ISyCo-Worlds); el upstream de origen es [chaitanyagiri/munder-difflin](https://github.com/chaitanyagiri/munder-difflin). Munder Difflin conserva su crédito como mundo de origen.
 * **Sin llaves en el repo.** Solo hay placeholders (`xoxb-...`) en docs y comentarios.
 * **`avatar-engine.cjs` no se edita a mano.** Se genera desde `portraitArt.ts` con `node tools/munder/sync-avatar-engine.cjs`, y la suite verifica su hash.
 * **Tests:**
@@ -469,4 +471,4 @@ El código es **MIT**; ver [`LICENSE`](./LICENSE). ISyCo Worlds nació como fork
 Cada mundo trae su propio manifiesto con autor, licencia y créditos de su arte ([`docs/worlds/MANIFEST.md`](./docs/worlds/MANIFEST.md)), y la app los muestra en **Configuración → Mundos**:
 
 - **Munder Difflin:** mundo original de Chaitanya Giri. Sus tilesets son *Modern Interiors - RPG Tileset [16X16]* de [LimeZu](https://limezu.itch.io/moderninteriors), con licencia Complete Version que exige crédito, prohíbe redistribuirlos como assets y no está cubierta por el MIT; ver [`LICENSE-ASSETS`](./LICENSE-ASSETS). Los mapas vienen de [shahar061/the-office](https://github.com/shahar061/the-office) (ISC). Los personajes son procedurales y propios del proyecto. Es una parodia afectuosa, sin fines de lucro y sin afiliación con NBCUniversal, *The Office* ni Dunder Mifflin.
-- **ISyCo World:** mundo y arte originales de DannyBaanks (ISyCo), MIT; detalle en [`src/renderer/src/assets/ATTRIBUTION.md`](./src/renderer/src/assets/ATTRIBUTION.md). Sin afiliación con Pokémon, Nintendo, Game Freak ni The Pokémon Company.
+- **Monster Village:** mundo y arte originales de DannyBaanks (ISyCo), MIT; detalle en [`src/renderer/src/assets/ATTRIBUTION.md`](./src/renderer/src/assets/ATTRIBUTION.md). Sin afiliación con Pokémon, Nintendo, Game Freak ni The Pokémon Company.
