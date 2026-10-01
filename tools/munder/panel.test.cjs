@@ -165,7 +165,9 @@ test('installing the Linux shortcut installs the Worlds pixel icon', { skip: pro
   try {
     assert.equal(P.installShortcut().ok, true);
     const installedIcon = path.join(dataHome, 'icons', 'hicolor', 'scalable', 'apps', 'isyco-worlds.svg');
-    assert.match(fs.readFileSync(installedIcon, 'utf8'), /shape-rendering="crispEdges"/);
+    const iconSvg = fs.readFileSync(installedIcon, 'utf8');
+    assert.match(iconSvg, /shape-rendering="crispEdges"/);
+    assert.match(iconSvg, /Planeta pixel art de ISyCo Worlds/);
     assert.ok(fs.readFileSync(path.join(dataHome, 'applications', 'worlds-panel.desktop'), 'utf8').includes(`Icon=${installedIcon}`));
   } finally {
     if (previousDataHome === undefined) delete process.env.XDG_DATA_HOME;
