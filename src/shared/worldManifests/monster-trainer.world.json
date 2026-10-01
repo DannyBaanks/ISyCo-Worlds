@@ -1,0 +1,31 @@
+{
+  "manifestVersion": 1,
+  "id": "monster-trainer",
+  "name": "Monster Trainer",
+  "description": {
+    "en": "Starter Village: your agents become trainers whose monsters evolve as they finish work.",
+    "es": "Starter Village: tus agentes se vuelven entrenadores cuyos monstruos evolucionan al terminar su trabajo."
+  },
+  "author": { "name": "DannyBaanks (ISyCo)", "url": "https://github.com/DannyBaanks" },
+  "license": "MIT",
+  "source": "https://github.com/DannyBaanks/munder-difflin",
+  "assets": [
+    {
+      "path": "src/renderer/src/assets/worlds/starter-village/",
+      "author": { "name": "DannyBaanks (ISyCo)", "url": "https://github.com/DannyBaanks" },
+      "license": "MIT",
+      "source": "https://github.com/DannyBaanks/munder-difflin",
+      "redistribution": "open",
+      "credit": {
+        "en": "Original Starter Village art made for this project (see src/renderer/src/assets/ATTRIBUTION.md).",
+        "es": "Arte original de Starter Village hecho para este proyecto (ver src/renderer/src/assets/ATTRIBUTION.md)."
+      }
+    }
+  ],
+  "disclaimers": [
+    {
+      "en": "An original world. Not affiliated with, endorsed by, or derived from Pokémon, Nintendo, Game Freak or The Pokémon Company.",
+      "es": "Un mundo original. No está afiliado, respaldado ni derivado de Pokémon, Nintendo, Game Freak ni The Pokémon Company."
+    }
+  ]
+}

@@ -5,6 +5,7 @@ import type { WorldId } from '@shared/worlds';
 import { WORLD_IDS } from '@shared/worlds';
 import { PixelButton } from '@/components/PixelButton';
 import { PixelPanel } from '@/components/PixelPanel';
+import { WorldCredits } from './WorldCredits';
 
 type ProfileStatus = Awaited<ReturnType<typeof window.cth.getWorldProfileStatus>>;
 type ActivationResult = Awaited<ReturnType<typeof window.cth.requestWorldProfileActivation>>;
@@ -126,6 +127,8 @@ export function WorldsView({
               );
             })}
           </div>
+
+          <WorldCredits worldId={selected} />
 
           {confirmation && (
             <div role="alertdialog" aria-label={t('settings.general.worlds.confirmTitle')} style={{ padding: 12, background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)' }}>

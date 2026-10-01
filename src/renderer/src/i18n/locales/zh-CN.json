@@ -269,7 +269,16 @@
         "confirmBody": "这会停止当前配置的终端和服务，然后启动 {{world}}。当前配置的数据会保留以供恢复。",
         "confirmRestart": "重启到所选世界",
         "activationFailed": "无法启动配置",
-        "statusUnavailable": "无法读取当前世界配置。请重新打开设置后重试。"
+        "statusUnavailable": "无法读取当前世界配置。请重新打开设置后重试。",
+        "credits": {
+          "title": "致谢：{{world}}",
+          "createdBy": "创作者",
+          "license": "许可证",
+          "source": "源代码",
+          "basedOn": "基于",
+          "assets": "美术与资源",
+          "restricted": "限制再分发：查看条款"
+        }
       }
     },
     "agentsModels": {
