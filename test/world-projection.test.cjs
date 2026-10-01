@@ -8,7 +8,7 @@ const Projection = loadTs('src/renderer/src/worlds/worldProjection.ts');
 
 test('normalizes real agent-like records into stable, sortable visual agents', () => {
   const snapshot = Projection.normalizeWorldSnapshot([
-    { id: 'zeta', name: 'Zeta', status: 'waiting', archived: true },
+    { id: 'zeta', name: 'Zeta', status: 'waiting', archived: true, monsterCharacter: 'water' },
     { id: 'atlas', name: 'Atlas', status: 'running' },
     { id: 'terra', name: 'Terra', status: 'blocked' },
     { id: 'moss', name: 'Moss', status: 'idle' },
@@ -24,6 +24,7 @@ test('normalizes real agent-like records into stable, sortable visual agents', (
     ['terra', 'blocked', false],
     ['zeta', 'waiting', true]
   ]);
+  assert.equal(snapshot.agents.find((agent) => agent.id === 'zeta').monsterCharacter, 'water', 'the world projection must preserve each worker’s selected creature');
   assert.deepEqual(snapshot.tasks, []);
 });
 

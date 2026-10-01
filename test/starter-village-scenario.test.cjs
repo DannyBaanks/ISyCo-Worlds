@@ -10,6 +10,7 @@ const { applyCompositionCommand, resolveRelativePoint, validateComposition } = l
 const root = process.cwd();
 const Scenario = loadTs('src/renderer/src/worlds/monster/StarterVillageScenario.ts');
 const AtlasFrames = loadTs('src/renderer/src/worlds/monster/StarterVillageAtlasFrames.ts');
+const RosterSprites = loadTs('src/renderer/src/worlds/monster/monsterRosterSprites.ts');
 
 test('Starter Village keeps semantic anchor identities independent from in-bounds placements', () => {
   assert.equal(Scenario.STARTER_VILLAGE_SCENARIO.id, 'starter-village');
@@ -137,8 +138,9 @@ test('Starter Village keeps a validated original PNG atlas alongside legacy art'
   assert.match(attribution, /original.*pixel.art/i);
   assert.match(attribution, /starter-village-atlas\.svg/);
   assert.equal(Scenario.STARTER_VILLAGE_ATLAS_URL, atlasPath, 'the scenario manifest must resolve the PNG atlas');
-  assert.deepEqual(Scenario.STARTER_VILLAGE_SCENARIO.resources.map((resource) => resource.id), ['starter-village-atlas', 'starter-village-buildings', 'monster-professor-roster']);
+  assert.deepEqual(Scenario.STARTER_VILLAGE_SCENARIO.resources.map((resource) => resource.id), ['starter-village-atlas', 'starter-village-buildings', 'monster-professor-roster', 'monster-creature-roster']);
   assert.match(Scenario.STARTER_VILLAGE_SCENARIO.resources[0].url, /starter-village-atlas\.png$/);
+  assert.match(Scenario.STARTER_VILLAGE_SCENARIO.resources[3].url, /isyco-monster-starters\.png$/);
   assert.deepEqual(Object.keys(AtlasFrames.STARTER_VILLAGE_ATLAS_FRAMES), [
     'grass', 'training-grass', 'dirt', 'road', 'water', 'tree', 'shrub', 'flowers',
     'guide-house', 'stable', 'fence-horizontal', 'fence-vertical', 'fence-post', 'rock', 'lantern', 'crate', 'sign'
@@ -150,6 +152,20 @@ test('Starter Village keeps a validated original PNG atlas alongside legacy art'
     assert.ok(frame.y + frame.height <= png.readUInt32BE(20), `${id} frame must fit atlas height`);
     assert.deepEqual([frame.renderWidth, frame.renderHeight], id === 'guide-house' || id === 'stable' ? [64, 48] : [16, 16]);
   }
+});
+
+test('Monster Village maps each selected worker to its real generated roster sprite', () => {
+  const spritePath = path.join(root, 'src/renderer/src/assets/worlds/characters/isyco-monster-starters.png');
+  const sheet = fs.readFileSync(spritePath);
+  assert.deepEqual([sheet.readUInt32BE(16), sheet.readUInt32BE(20)], [2172, 724]);
+  assert.deepEqual(RosterSprites.monsterRosterSpriteFrame('leaf'), { x: 0, y: 0, width: 724, height: 724 });
+  assert.deepEqual(RosterSprites.monsterRosterSpriteFrame('fire'), { x: 724, y: 0, width: 724, height: 724 });
+  assert.deepEqual(RosterSprites.monsterRosterSpriteFrame('water'), { x: 1448, y: 0, width: 724, height: 724 });
+
+  const scene = fs.readFileSync(path.join(root, 'src/renderer/src/worlds/monster/StarterVillageScene.ts'), 'utf8');
+  assert.match(scene, /new Sprite\(new Texture\(\{ source: roster\.source, frame:/, 'workers render from the PNG roster texture');
+  assert.match(scene, /resolveMonsterCharacter\(agent\.monsterCharacter, agent\.id\)/, 'the map uses the same persistent character choice as the roster cards');
+  assert.doesNotMatch(scene, /creatureFramePlan\(|visual\.body\.clear\(/, 'the procedural square-block worker renderer is removed');
 });
 
 test('Monster Trainer has a manifest-backed original building atlas and semantic structure catalog', () => {

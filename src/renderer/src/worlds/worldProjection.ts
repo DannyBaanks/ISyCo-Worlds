@@ -10,6 +10,8 @@ export interface WorldAgent {
   name: string;
   state: WorldAgentState;
   archived: boolean;
+  /** Selected Monster Village roster sprite; absent for legacy/default records. */
+  monsterCharacter?: MonsterRosterCharacter;
 }
 
 export interface WorldTask {
@@ -70,7 +72,8 @@ export function normalizeWorldSnapshot(agents: unknown, rawTasks: unknown): Cano
       id,
       name: stringField(agent.name) ?? id,
       state: normalizeAgentState(agent.status),
-      archived: agent.archived === true
+      archived: agent.archived === true,
+      ...(isMonsterRosterCharacter(agent.monsterCharacter) ? { monsterCharacter: agent.monsterCharacter } : {})
     }];
   }).sort((a, b) => a.id.localeCompare(b.id));
 
@@ -141,3 +144,4 @@ export function deriveVisualTransitions(
   }
   return transitions;
 }
+import { isMonsterRosterCharacter, type MonsterRosterCharacter } from './monster/rosterCharacters';

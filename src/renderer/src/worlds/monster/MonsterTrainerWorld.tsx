@@ -66,7 +66,7 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
       motion.updateProjection(initialCtx.agents, initialCtx.tasks, initialCtx.layout);
       render(initialCtx); app.renderer.render(app.stage); props.onReady?.();
       let signature = JSON.stringify([
-        initialCtx.agents.map((agent) => [agent.id, agent.state]),
+        initialCtx.agents.map((agent) => [agent.id, agent.state, agent.monsterCharacter]),
         initialCtx.tasks.map((task) => [task.id, task.assignee, task.status, task.awaitsHuman]),
         initialCtx.transitions, initialCtx.layout, initialCtx.selectedPlacementId, initialCtx.buildMode,
         initialCtx.agents.map((agent) => initialCtx.growthStageForAgent?.(agent.id) ?? 'baby')
@@ -74,7 +74,7 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
       ticker = (tick) => { try {
         const ctx = ctxRef.current; if (!ctx || failed) return;
         const next = JSON.stringify([
-          ctx.agents.map((agent) => [agent.id, agent.state]),
+          ctx.agents.map((agent) => [agent.id, agent.state, agent.monsterCharacter]),
           ctx.tasks.map((task) => [task.id, task.assignee, task.status, task.awaitsHuman]),
           ctx.transitions, ctx.layout, ctx.selectedPlacementId, ctx.buildMode,
           ctx.agents.map((agent) => ctx.growthStageForAgent?.(agent.id) ?? 'baby')

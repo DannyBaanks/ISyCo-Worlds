@@ -1,12 +1,14 @@
 import { Assets, Container, Graphics, Rectangle, Sprite, Text, Texture, TilingSprite } from 'pixi.js';
 import type { IdentityForAgent } from '../identityResolver';
 import type { WorldAgent, WorldTask } from '../worldProjection';
-import { creatureFramePlan, stateMarker, visualStateFor, type EvolutionStage } from './monsterArt';
+import { stateMarker, visualStateFor, type EvolutionStage } from './monsterArt';
 import type { WorkerMotionSnapshot } from './monsterMovement';
+import { resolveMonsterCharacter, type MonsterRosterCharacter } from './rosterCharacters';
+import { monsterRosterSpriteFrame } from './monsterRosterSprites';
 import { locationReactionFrame, type LocationReactionBurst } from './locationReactions';
 import {
   resolveStarterVillageAnchor, STARTER_VILLAGE_ANCHOR_IDS, STARTER_VILLAGE_ATLAS_URL, STARTER_VILLAGE_BUILDINGS_ATLAS_URL,
-  MONSTER_PROFESSOR_ROSTER_URL, STARTER_VILLAGE_COMPOSITION_DEFINITION, STARTER_VILLAGE_PRESET, STARTER_VILLAGE_SCENARIO,
+  MONSTER_PROFESSOR_ROSTER_URL, MONSTER_CREATURE_ROSTER_URL, STARTER_VILLAGE_COMPOSITION_DEFINITION, STARTER_VILLAGE_PRESET, STARTER_VILLAGE_SCENARIO,
   STARTER_VILLAGE_TILE_SIZE, type StarterVillageTileId
 } from './StarterVillageScenario';
 import { STARTER_VILLAGE_ATLAS_FRAMES, STARTER_VILLAGE_BUILDING_FRAMES } from './StarterVillageAtlasFrames';
@@ -57,8 +59,8 @@ function drawGuide(root: Container, composition: WorldCompositionV1): void {
   const position = resolveStarterVillageAnchor(composition, 'professor');
   const frame = new Rectangle(roster.source.width * 4 / 5, 0, roster.source.width / 5, roster.source.height);
   const guide = new Sprite(new Texture({ source: roster.source, frame }));
-  const width = 32;
-  const height = 48;
+  const width = 44;
+  const height = 60;
   guide.label = 'monster-village-professor';
   guide.width = width;
   guide.height = height;
@@ -66,6 +68,16 @@ function drawGuide(root: Container, composition: WorldCompositionV1): void {
   guide.y = Math.round(position.y * STARTER_VILLAGE_TILE_SIZE + STARTER_VILLAGE_TILE_SIZE - height);
   guide.zIndex = position.y * STARTER_VILLAGE_TILE_SIZE + STARTER_VILLAGE_TILE_SIZE + 1;
   root.addChild(guide);
+}
+
+function createCreatureSprite(roster: Texture, character: MonsterRosterCharacter): Sprite {
+  const frame = monsterRosterSpriteFrame(character);
+  const sprite = new Sprite(new Texture({ source: roster.source, frame: new Rectangle(frame.x, frame.y, frame.width, frame.height) }));
+  sprite.label = `monster-village-worker-${character}`;
+  sprite.width = 52;
+  sprite.height = 56;
+  sprite.anchor.set(0.5, 1);
+  return sprite;
 }
 
 function tileSprite(atlas: Texture, tile: StarterVillageTileId, x: number, y: number): Sprite {
@@ -138,6 +150,7 @@ function buildStructureLayers(atlas: Texture, frame: typeof STARTER_VILLAGE_BUIL
 export function buildStarterVillageScene(options: StarterVillageSceneOptions): AnimatedStarterVillageScene {
   const atlas = Assets.get<Texture>(STARTER_VILLAGE_ATLAS_URL); if (!atlas) throw new Error('Starter Village atlas was not bootstrapped'); atlas.source.scaleMode = 'nearest';
   const buildingsAtlas = Assets.get<Texture>(STARTER_VILLAGE_BUILDINGS_ATLAS_URL); if (!buildingsAtlas) throw new Error('Starter Village buildings atlas was not bootstrapped'); buildingsAtlas.source.scaleMode = 'nearest';
+  const creatureRoster = Assets.get<Texture>(MONSTER_CREATURE_ROSTER_URL); if (!creatureRoster) throw new Error('Monster Village creature roster was not bootstrapped'); creatureRoster.source.scaleMode = 'nearest';
   const composition = options.composition ?? STARTER_VILLAGE_PRESET;
   const root = new Container({ sortableChildren: true }) as AnimatedStarterVillageScene; root.sortableChildren = true;
   const reactionOverlay = new Graphics();
@@ -197,18 +210,14 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
 
   drawGuide(root, composition);
   const agentById = new Map(options.agents.map((agent) => [agent.id, agent]));
-  const actorVisuals = new Map<string, { body: Graphics; marker: Graphics; stage: EvolutionStage; action: string; direction: string; frame: number; visualState: string }>();
-  const actorScale = 1.5;
+  const actorVisuals = new Map<string, { body: Sprite; marker: Graphics; stage: EvolutionStage; action: string; direction: string; frame: number; visualState: string }>();
   root.updateWorkers = (motions) => {
     for (const motion of motions) {
       const agent = agentById.get(motion.id);
       const visual = actorVisuals.get(motion.id);
       if (!agent || !visual) continue;
       const stage = options.growthStageForAgent?.(motion.id) ?? 'baby';
-      const plan = creatureFramePlan(options.identityFor(motion.id), { stage, action: motion.action, direction: motion.direction, frame: motion.frame as 0 | 1 });
       if (visual.stage !== stage || visual.action !== motion.action || visual.direction !== motion.direction || visual.frame !== motion.frame || visual.visualState !== motion.visualState) {
-        visual.body.clear();
-        for (const block of plan.blocks) visual.body.setFillStyle({ color: block.color }).rect(block.x, block.y, block.w, block.h).fill();
         visual.marker.clear();
         const marker = stateMarker(motion.visualState);
         visual.marker.setFillStyle({ color: marker.color });
@@ -220,10 +229,10 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
       }
       const footX = motion.x + STARTER_VILLAGE_TILE_SIZE / 2;
       const footY = motion.y + STARTER_VILLAGE_TILE_SIZE;
-      visual.body.x = Math.round(footX - plan.width * actorScale / 2);
-      visual.body.y = Math.round(footY - plan.height * actorScale);
+      visual.body.x = footX;
+      visual.body.y = footY;
       visual.marker.x = Math.round(footX - 8);
-      visual.marker.y = visual.body.y - 4;
+      visual.marker.y = visual.body.y - 60;
       visual.body.zIndex = footY;
       visual.marker.zIndex = footY + 1;
     }
@@ -246,10 +255,9 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
   };
   options.agents.forEach((agent) => {
     const task = options.tasks.find((candidate) => candidate.assignee === agent.id);
-    const body = new Graphics();
+    const character = resolveMonsterCharacter(agent.monsterCharacter, agent.id);
+    const body = createCreatureSprite(creatureRoster, character);
     const marker = new Graphics();
-    body.scale.set(actorScale);
-    body.hitArea = new Rectangle(0, 0, 24 * actorScale, 24 * actorScale);
     body.eventMode = 'static'; body.cursor = 'pointer';
     body.on('pointertap', () => options.onAgentSelect(agent.id));
     marker.eventMode = 'static'; marker.cursor = 'pointer';

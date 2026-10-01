@@ -22,6 +22,8 @@ test('accepts only well-formed bootstrap/restart/dispose/update commands', () =>
     visualIdentities: { atlas: { version: 1, agentId: 'atlas', seed: 'stable-seed', appearances: {}, updatedAt: 'now' } }
   };
   assert.equal(P.isWorldPresentationCommand({ type: 'bootstrap', profileId: 'monster-trainer', generation: 1, projection: identityProjection }), true);
+  assert.equal(P.isWorldPresentationCommand({ type: 'bootstrap', profileId: 'monster-trainer', generation: 1, projection: { agents: [{ id: 'atlas', name: 'Atlas', state: 'idle', archived: false, monsterCharacter: 'fire' }], tasks: [] } }), true);
+  assert.equal(P.isWorldPresentationCommand({ type: 'bootstrap', profileId: 'monster-trainer', generation: 1, projection: { agents: [{ id: 'atlas', name: 'Atlas', state: 'idle', archived: false, monsterCharacter: 'pikachu' }], tasks: [] } }), false);
   assert.equal(P.isWorldPresentationCommand({ type: 'bootstrap', profileId: 'monster-trainer', generation: 1, projection: { ...identityProjection, visualIdentities: { atlas: { ...identityProjection.visualIdentities.atlas, agentId: 'other' } } } }), false);
 });
 
