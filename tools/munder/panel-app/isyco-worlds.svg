@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" shape-rendering="crispEdges">
+  <path fill="#071714" stroke="#a8e66a" stroke-width="2" d="M12 2h40v4h6v6h4v40h-4v6h-6v4H12v-4H6v-6H2V12h4V6h6z"/>
+  <path fill="#102720" d="M10 10h44v44H10z"/>
+  <path fill="#20513e" d="M12 12h40v2H12zm0 38h40v2H12zM12 16h2v30h-2zm38 0h2v30h-2z"/>
+  <path fill="#e8c86f" d="M16 17h2v2h-2zm30 4h2v2h-2zM19 45h2v2h-2z"/>
+  <!-- Three tiny biomes orbit the central pixel portal. -->
+  <path fill="#a8e66a" d="M13 24h2v-4h2v-2h4v2h2v4h2v3h-2v2H15v-2h-2z"/>
+  <path fill="#20513e" d="M14 26h10v3H14z"/>
+  <path fill="#63d9d3" d="M39 48h3v-2h4v2h3v3h-2v2H40v-2h-1z"/>
+  <path fill="#e8c86f" d="M43 17h3v3h2v2h2v3h-3v-2h-2v-2h-2v2h-2v2h-3v-3h2v-2h2z"/>
+  <!-- Portal frame and luminous opening. -->
+  <path fill="#20513e" stroke="#63d9d3" stroke-width="2" d="M25 48V29h2v-5h3v-3h8v3h3v5h2v19h-5V30h-2v-4h-7v4h-2v18z"/>
+  <path fill="#071714" d="M31 45V30h2v-3h4v3h2v15z"/>
+  <path fill="#63d9d3" d="M32 31h2v2h-2zm4 3h2v2h-2zm-4 4h2v2h-2zm4 4h2v2h-2z" opacity=".85"/>
+  <path fill="#a8e66a" d="M24 49h20v3H24zM27 53h14v2H27z"/>
+</svg>

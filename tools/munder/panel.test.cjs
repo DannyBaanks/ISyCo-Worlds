@@ -43,6 +43,9 @@ test('the page and its assets load without a token; the API does not', async () 
     assert.match(await page.text(), /WORLDS PANEL/);
     assert.match(page.headers.get('content-security-policy'), /default-src 'self'/);
     assert.equal((await fetch(`${s.base}/panel.js`)).status, 200);
+    const icon = await fetch(`${s.base}/isyco-worlds.svg`);
+    assert.equal(icon.status, 200);
+    assert.match(icon.headers.get('content-type'), /image\/svg\+xml/);
     assert.equal((await fetch(`${s.base}/api/state`)).status, 401);
     assert.equal((await fetch(`${s.base}/api/state`, { headers: { 'x-munder-panel': 'x'.repeat(48) } })).status, 401);
     const ok = await fetch(`${s.base}/api/state`, { headers: { 'x-munder-panel': s.token } });
@@ -150,8 +153,24 @@ test('the menu entry opens the panel, with paths quoted', () => {
   const d = P.desktopEntry({ cmd: '/opt/ISyCo Worlds/isyco-worlds', args: ['--panel'] });
   assert.match(d, /^Exec="\/opt\/ISyCo Worlds\/isyco-worlds" --panel$/m);
   assert.match(d, /^Name=Worlds Panel$/m);
+  assert.match(d, /^Icon=isyco-worlds$/m);
   process.env.APPIMAGE = '/home/x/Munder.AppImage';
   try { assert.deepEqual(P.panelCommand(), { cmd: '/home/x/Munder.AppImage', args: ['--panel'] }); } finally { delete process.env.APPIMAGE; }
+});
+
+test('installing the Linux shortcut installs the Worlds pixel icon', { skip: process.platform !== 'linux' }, () => {
+  const dataHome = path.join(root, 'desktop-data');
+  const previousDataHome = process.env.XDG_DATA_HOME;
+  process.env.XDG_DATA_HOME = dataHome;
+  try {
+    assert.equal(P.installShortcut().ok, true);
+    const installedIcon = path.join(dataHome, 'icons', 'hicolor', 'scalable', 'apps', 'isyco-worlds.svg');
+    assert.match(fs.readFileSync(installedIcon, 'utf8'), /shape-rendering="crispEdges"/);
+    assert.ok(fs.readFileSync(path.join(dataHome, 'applications', 'worlds-panel.desktop'), 'utf8').includes(`Icon=${installedIcon}`));
+  } finally {
+    if (previousDataHome === undefined) delete process.env.XDG_DATA_HOME;
+    else process.env.XDG_DATA_HOME = previousDataHome;
+  }
 });
 
 test('scripts run as node inside the packaged (Electron) panel', () => {

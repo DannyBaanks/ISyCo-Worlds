@@ -278,23 +278,27 @@ function panelCommand() {
   return { cmd: process.execPath, args: [path.join(HERE, 'munder'), 'panel'] };
 }
 
-function desktopEntry({ cmd, args }) {
+function desktopEntry({ cmd, args, icon = 'isyco-worlds' }) {
   const q = (s) => (/[\s"'\\]/.test(s) ? `"${s.replace(/(["\\`$])/g, '\\$1')}"` : s);
   return [
     '[Desktop Entry]', 'Type=Application', 'Name=Worlds Panel',
     'Comment=Abre, cierra y maneja ISyCo Worlds con botones',
     `Exec=${[cmd, ...args].map(q).join(' ')}`,
-    'Icon=isyco-worlds', 'Terminal=false', 'Categories=Development;Utility;', '',
+    `Icon=${icon}`, 'Terminal=false', 'Categories=Development;', '',
   ].join('\n');
 }
 
 function installShortcut() {
   if (process.platform === 'linux') {
-    const dir = path.join(process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share'), 'applications');
+    const dataHome = process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share');
+    const dir = path.join(dataHome, 'applications');
+    const icons = path.join(dataHome, 'icons', 'hicolor', 'scalable', 'apps');
     fs.mkdirSync(dir, { recursive: true });
+    fs.mkdirSync(icons, { recursive: true });
+    fs.copyFileSync(path.join(PAGE_DIR, 'isyco-worlds.svg'), path.join(icons, 'isyco-worlds.svg'));
     const file = path.join(dir, 'worlds-panel.desktop');
-    fs.writeFileSync(file, desktopEntry(panelCommand()), { mode: 0o755 });
-    return { ok: true, text: 'Listo: busca «Worlds Panel» en tu menú de aplicaciones.' };
+    fs.writeFileSync(file, desktopEntry({ ...panelCommand(), icon: path.join(icons, 'isyco-worlds.svg') }), { mode: 0o755 });
+    return { ok: true, text: 'Listo: Worlds Panel ya tiene su icono en el menú de aplicaciones.' };
   }
   if (process.platform === 'win32') {
     const portable = process.env.PORTABLE_EXECUTABLE_FILE;
@@ -337,6 +341,7 @@ function createPanelServer({ token = crypto.randomBytes(24).toString('hex'), act
       if (req.method === 'GET' && url.pathname === '/') return send(res, 200, fs.readFileSync(path.join(PAGE_DIR, 'index.html')), 'text/html; charset=utf-8');
       if (req.method === 'GET' && url.pathname === '/panel.js') return send(res, 200, fs.readFileSync(path.join(PAGE_DIR, 'panel.js')), 'text/javascript; charset=utf-8');
       if (req.method === 'GET' && url.pathname === '/panel.css') return send(res, 200, fs.readFileSync(path.join(PAGE_DIR, 'panel.css')), 'text/css; charset=utf-8');
+      if (req.method === 'GET' && url.pathname === '/isyco-worlds.svg') return send(res, 200, fs.readFileSync(path.join(PAGE_DIR, 'isyco-worlds.svg')), 'image/svg+xml; charset=utf-8');
       if (req.method === 'GET' && url.pathname === '/font.woff2') {
         return fs.existsSync(FONT) ? send(res, 200, fs.readFileSync(FONT), 'font/woff2') : send(res, 404, { error: 'none' });
       }

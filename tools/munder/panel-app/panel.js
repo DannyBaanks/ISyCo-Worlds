@@ -42,10 +42,10 @@
 
     const L = s.link;
     if (L.error) setState('link-dot', 'link-text', 'warn', L.error);
-    else setState('link-dot', 'link-text', L.on ? 'on' : 'off', `${L.on ? 'Encendido' : 'Apagado'} · esta oficina es ${L.name}`);
+    else setState('link-dot', 'link-text', L.on ? 'on' : 'off', `${L.on ? 'Encendido' : 'Apagado'} · esta base es ${L.name}`);
     $('link-pending').innerHTML = (L.pending || []).map((q) => `
       <div class="request">
-        <strong>${q.kind === 'celular' ? 'Un celular' : 'Una oficina'} quiere enlazarse: ${esc(q.name)}</strong>
+        <strong>${q.kind === 'celular' ? 'Un celular' : 'Otra base de Worlds'} quiere enlazarse: ${esc(q.name)}</strong>
         <div class="code">${esc(q.code.replace(/(\d{3})(\d{3})/, '$1 $2'))}</div>
         <div class="hint">Acepta solo si ves este MISMO código en ${q.kind === 'celular' ? 'el celular' : 'la otra computadora'}.</div>
         <div class="row">
@@ -55,7 +55,7 @@
     $('link-peers').innerHTML = (L.peers || []).length ? L.peers.map((p) => `
       <li><span class="dot ${p.online ? 'on' : 'off'}"></span><span class="grow"><strong>${esc(p.name)}</strong>
       <small>${p.online ? `en línea · ${p.workers_idle ?? '?'}/${p.workers_total ?? '?'} libres · ${p.latency_ms} ms` : esc(p.reason)}</small></span></li>`).join('')
-      : '<li class="empty">Ninguna todavía. Enciende el enlace en las dos computadoras y empareja desde ISyCo Worlds → Configuración → World Link.</li>';
+      : '<li class="empty">Ninguna todavía. Enciende World Link en las dos computadoras y empareja desde ISyCo Worlds → Configuración → World Link.</li>';
     $('link-urls').innerHTML = (L.urls || []).length ? L.urls.map((u) => `<li><span class="grow">${esc(u.url)}</span><small>${esc(u.via)}</small></li>`).join('')
       : '<li class="empty">Esta computadora no tiene red local ni Tailscale.</li>';
     $('link-phones').innerHTML = (L.phones || []).length ? L.phones.map((p) => `
@@ -88,7 +88,7 @@
     const R = s.reviver;
     if (!R.configured) setState('rv-dot', 'rv-text', 'off', 'No activado');
     else if (!R.running) setState('rv-dot', 'rv-text', 'warn', 'Activado, pero no está corriendo');
-    else setState('rv-dot', 'rv-text', 'on', `Cuidando a Munder · vigilancia: ${R.watchdog}`);
+    else setState('rv-dot', 'rv-text', 'on', `Cuidando ISyCo Worlds · vigilancia: ${R.watchdog}`);
     offWhen('reviver.enable', R.configured && R.running);
     offWhen('reviver.disable', !R.configured);
   }
