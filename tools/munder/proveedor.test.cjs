@@ -132,7 +132,7 @@ test('sin TTY cancela limpio sin pedir sudo ni keys', () => {
 test('linkKeyToCli solo toca el auth del CLI (código auditable)', () => {
   const src = fs.readFileSync(CLI, 'utf8');
   assert.ok(src.includes('writableAuth'), 'allowlist explícito de escritura');
-  assert.ok(src.includes('.bak-munder'), 'respaldo antes de escribir');
+  assert.ok(src.includes('.bak-worlds'), 'respaldo antes de escribir');
   assert.ok(src.includes('0600') || src.includes('0o600'), 'permisos restingidos en escritura');
   assert.ok(src.includes('NUNCA guarda keys'), 'disclaimer presente');
 });
