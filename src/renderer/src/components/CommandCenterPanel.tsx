@@ -85,7 +85,7 @@ const TABS: { key: CCTab; labelKey: string; icon: Parameters<typeof Icon>[0]['na
  *  and renders the real terminal. The docked instance renders the "open in
  *  fullscreen" placeholder instead — two live xterms on one pty fight over its
  *  cols/rows and corrupt the display. */
-export function CommandCenterPanel({ agent, fullscreen = false, profileId = 'office', displayName }: { agent: Agent; fullscreen?: boolean; profileId?: WorldId; displayName?: string }) {
+export function CommandCenterPanel({ agent, fullscreen = false, profileId = 'office', displayName, navigationCollapsed = false }: { agent: Agent; fullscreen?: boolean; profileId?: WorldId; displayName?: string; navigationCollapsed?: boolean }) {
   const { t } = useTranslation();
   const [tab, setTab] = useState<CCTab>('terminal');
   // The trigger-history ledger has nothing to say until an outside party can
@@ -229,10 +229,10 @@ export function CommandCenterPanel({ agent, fullscreen = false, profileId = 'off
         </div>
       </div>
 
-      <div className="worlds-book-spread">
+      <div className={`worlds-book-spread${navigationCollapsed && !fullscreen ? ' worlds-book-spread--nav-collapsed' : ''}`}>
       {/* Bookmarks form a vertical index in the docked ledger. Focus mode
           uses a horizontal row with visible labels; both retain every section. */}
-      <div className="cth-tabbar" style={{
+      <div id={!fullscreen ? 'worlds-command-navigation' : undefined} className="cth-tabbar" style={{
         display: 'flex', gap: 4,
         flexWrap: fullscreen ? 'nowrap' : 'wrap',
         overflowX: fullscreen ? 'auto' : 'visible',

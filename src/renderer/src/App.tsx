@@ -64,7 +64,7 @@ export function App() {
   const appThemeNow = useAppTheme();
   const sidebarWidth = useStore(s => s.sidebarWidth);
   const setSidebarWidth = useStore(s => s.setSidebarWidth);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [commandNavCollapsed, setCommandNavCollapsed] = useState(false);
   const ideOpen = useStore(s => s.ideOpen);
   const setIdeOpen = useStore(s => s.setIdeOpen);
   const taskDetailOpen = useStore(s => s.taskDetailId !== null);
@@ -548,30 +548,32 @@ export function App() {
           <AgentStrip config={config} profileId={activeWorldProfileId} onOverlayVisibilityChange={setAgentStripOverlayOpen} />
         </WoodFrame>
 
-        {!sidebarCollapsed && <SidebarSplitter
+        <SidebarSplitter
           width={sidebarWidth}
           onChange={setSidebarWidth}
           viewportWidth={vpWidth}
-        />}
+        />
 
         <div className="worlds-sidebar" style={{
-          width: sidebarCollapsed ? 46 : sidebarWidth, flexShrink: 0,
+          width: sidebarWidth, flexShrink: 0,
           minHeight: 0, display: 'flex', flexDirection: 'column',
-          padding: sidebarCollapsed ? 5 : undefined,
-          alignItems: sidebarCollapsed ? 'center' : undefined
         }}>
-          <button
+          {agent?.isGod && <button
             type="button"
             className="worlds-sidebar-toggle"
-            aria-label={sidebarCollapsed ? 'Show command sidebar' : 'Hide command sidebar'}
-            aria-expanded={!sidebarCollapsed}
-            title={sidebarCollapsed ? 'Show command sidebar' : 'Hide command sidebar'}
-            onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
-          >{sidebarCollapsed ? '‹' : '›'}</button>
-          {!sidebarCollapsed && <>
+            aria-label={commandNavCollapsed ? 'Show command tabs' : 'Hide command tabs'}
+            aria-controls="worlds-command-navigation"
+            aria-expanded={!commandNavCollapsed}
+            title={commandNavCollapsed ? 'Show command tabs' : 'Hide command tabs'}
+            onClick={() => setCommandNavCollapsed((collapsed) => !collapsed)}
+          >{commandNavCollapsed ? '‹' : '›'}</button>}
           <div className="worlds-command-slot">
           {agent ? (
-            <AgentDetailPanel agent={agent} profileId={activeWorldProfileId} />
+            <AgentDetailPanel
+              agent={agent}
+              profileId={activeWorldProfileId}
+              commandNavCollapsed={commandNavCollapsed}
+            />
           ) : godStatus === 'booting' ? (
             <PixelPanel variant="default" noPadding style={{
               padding: 16, height: '100%',
@@ -610,7 +612,6 @@ export function App() {
           )}
           </div>
           <WorldStatusLedger />
-          </>}
         </div>
       </div>
 

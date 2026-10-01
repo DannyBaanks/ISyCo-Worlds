@@ -24,9 +24,10 @@ import type { WorldId } from '@shared/worlds';
 export interface AgentDetailPanelProps {
   agent: Agent;
   profileId?: WorldId;
+  commandNavCollapsed?: boolean;
 }
 
-export function AgentDetailPanel({ agent, profileId = 'office' }: AgentDetailPanelProps) {
+export function AgentDetailPanel({ agent, profileId = 'office', commandNavCollapsed = false }: AgentDetailPanelProps) {
   const { t } = useTranslation();
   const [openTerminalState, setOpenTerminalState] = useState<'idle' | 'opening' | 'ok' | 'error'>('idle');
   const [openTerminalError, setOpenTerminalError] = useState<string | undefined>();
@@ -99,6 +100,7 @@ export function AgentDetailPanel({ agent, profileId = 'office' }: AgentDetailPan
     agent={agent}
     profileId={profileId}
     displayName={profileId === 'monster-trainer' ? t('worldCharacters.professor') : undefined}
+    navigationCollapsed={commandNavCollapsed}
   />;
 
   const openTerminal = async () => {
