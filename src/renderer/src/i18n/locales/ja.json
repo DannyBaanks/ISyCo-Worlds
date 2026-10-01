@@ -210,7 +210,7 @@
       "agentsModels": "エージェントとモデル",
       "autonomyBudgets": "自律と予算",
       "connections": "接続",
-      "link": "Munder Link",
+      "link": "ワールドリンク",
       "voice": "音声",
       "memoryKnowledge": "メモリとナレッジ"
     },
@@ -279,6 +279,16 @@
           "assets": "アートとリソース",
           "restricted": "再配布に制限あり：条件を見る"
         }
+      },
+      "inspirations": {
+        "title": "インスピレーションとライセンス",
+        "description": "この世界を支えるプロジェクト、連携機能、アート。",
+        "munder": "オフィスワールドのオープンソースの原点です。ISyCo Worlds のワールドのひとつとして引き続き利用できます。",
+        "opencode": "ISyCo Worlds と併用できるオープンソースのコーディングエージェントです。",
+        "munderLicense": "MIT ライセンス · 元のプロジェクト",
+        "openSource": "オープンソースプロジェクト",
+        "website": "ウェブサイト",
+        "github": "GitHub"
       }
     },
     "agentsModels": {
@@ -736,7 +746,7 @@
       "openAtLogin": "ログイン時に開く",
       "openAtLoginDesc": "再起動後にハーネスを再起動し、予定されたミッションを自動で再開します。確認なし — 即時適用です。",
       "shareStats": "匿名の利用統計を共有",
-      "shareStatsDesc": "Munder Difflin の改善に役立つ、ごく少数の匿名イベント（アプリ起動、エージェント spawn、機能の使用）です — プロンプト、コード、ファイルパス、エージェント出力は決して送りません。全リストは TELEMETRY.md。設定でいつでも変更できます。",
+      "shareStatsDesc": "ISyCo Worlds の改善に役立つ、ごく少数の匿名イベント（アプリ起動、エージェント spawn、機能の使用）です — プロンプト、コード、ファイルパス、エージェント出力は決して送りません。全リストは TELEMETRY.md。設定でいつでも変更できます。",
       "stayAwake": "電源接続中はスリープしない（手動）",
       "stayAwakeDescMac": "macOS ではこれは自分で設定するしかありません。バッテリー → オプションで「ディスプレイがオフのときに自動スリープを防止」を（電源アダプタ接続時）オンにすると、ディスプレイが眠っていてもタイマーが動き続けます。スリープ防止の設定がないと Mac は本当に眠ります — 仕事は失われず、起きたら追いつきます。",
       "stayAwakeDescWindows": "Windows ではこれは自分で設定するしかありません。設定 → システム → 電源とバッテリー → 画面、オフとスリープで、「バッテリー駆動時、デバイスのスリープ状態を切り替える」と「電源接続時」を「指定なし」に（または延ばす）と、タイマーが動き続けます。スリープ防止の設定がないと Windows は本当に眠ります — 仕事は失われず、起きたら追いつきます。",
@@ -875,7 +885,7 @@
     "localEndpoint": "ローカルエンドポイント · デフォルトモデル（エンジンごと）",
     "defaultModelPlaceholder": "デフォルトモデル（provider/model）",
     "runningOpenModels": "オープンモデルを動かしていますか？手順ガイド:",
-    "runOnOpenModels": "Munder Difflin をオープンモデルで動かす",
+    "runOnOpenModels": "ISyCo Worlds をオープンモデルで動かす",
     "setUpMacMini": "Mac Mini でセットアップする",
     "autoModeCaveat": "⚠ 自動モードでは、これらのエンジンはフルのファイルシステム + シェルアクセス（サンドボックスなし）で動きます — Claude の bypass モードと同じ。先に確認させたい場合は自動モードをオフにしてください（全般）。実モデルでのエンドツーエンド検証は、あなたのキー / ローカル LLM を待っています。"
   },
@@ -925,7 +935,7 @@
     "downloadingHeadline": "v{{version}} をダウンロード中",
     "downloadingDetail": "{{percent}}% 完了。作業は続けられます。再起動はあなたのタイミングで。",
     "downloadedHeadline": "v{{version}} はインストール準備完了",
-    "downloadedDetail": "v{{v}} からの更新を完了するには、Munder Difflin を再起動してください。",
+    "downloadedDetail": "v{{v}} からの更新を完了するには、ISyCo Worlds を再起動してください。",
     "restartBtn": "再起動して更新",
     "manualDetail": "このインストールは自己更新できません — リリースページからダウンロードしてください。",
     "manualDetailReason": "このインストールは自己更新できません（{{reason}}）— リリースページからダウンロードしてください。",
@@ -952,7 +962,7 @@
     "webhooks": "Webhook",
     "webhooksBlurb": "外部システムが仕事を投げ込めるように。",
     "organisation": "オーガニゼーション",
-    "organisationBlurb": "チームメイトの Munder Difflin があなたのものにメッセージを送れるように。"
+    "organisationBlurb": "チームメイトの ISyCo Worlds があなたのものにメッセージを送れるように。"
   },
   "orgSection": {
     "acceptMessages": "オーガニゼーションからのメッセージを受け取る",
@@ -1630,12 +1640,12 @@
   },
   "installSteps": {
     "darwin": [
-      ".dmg を開いて、Munder Difflin をアプリケーションへドラッグ。聞かれたら「置き換える」を選んでください。",
+      ".dmg を開いて、ISyCo Worlds をアプリケーションへドラッグ。聞かれたら「置き換える」を選んでください。",
       "このアプリを終了し、アプリケーションから新しいものを開いて、同じプロジェクトを選んでください。"
     ],
     "win32": [
       "このアプリを終了してから、ダウンロードしたセットアップ .exe を実行してください。インストール済みのバージョンを置き換えます。",
-      "Munder Difflin をもう一度開き、同じプロジェクトを選んでください。"
+      "ISyCo Worlds をもう一度開き、同じプロジェクトを選んでください。"
     ],
     "linux": [
       "ダウンロードした .AppImage に実行権限を付け（chmod +x）、今使っているものの上に移動してください。",
@@ -1643,10 +1653,10 @@
     ]
   },
   "link": {
-    "title": "Munder Link",
+    "title": "ワールドリンク",
     "desc": "このオフィスを、ローカルネットワークや Tailscale 経由で他のオフィスとつなぎます: あなたの {{godName}} が相手に仕事を委任でき、相手からもできます。ターミナルの `munder link` と同じです。",
     "loading": "リンクを読み込み中…",
-    "unavailable": "Munder Link は利用できません: {{error}}",
+    "unavailable": "ワールドリンクを利用できません: {{error}}",
     "thisOffice": "このオフィス",
     "turnOn": "オンにする",
     "turnOff": "オフにする",
@@ -1679,7 +1689,7 @@
     "alreadyLinked": "リンク済み",
     "noTailscale": "Tailscale が未インストールか応答しません: ローカルネットワークだけを検索しました。",
     "pairingWith": "{{name}}（{{fingerprint}}）とペア中",
-    "pairingHint": "{{name}} 側で Settings → Munder Link を開き（または `munder link aceptar` を実行し）、同じコードが表示されているか確認してください。",
+    "pairingHint": "{{name}} 側で設定 → ワールドリンクを開き（または `munder link aceptar` を実行し）、同じコードが表示されているか確認してください。",
     "codesMatch": "コードは一致しています",
     "codesDiffer": "一致しません。キャンセルを",
     "paired": "こちら側は完了。{{name}} が承認したら、互いに仕事を委任し合えます。",

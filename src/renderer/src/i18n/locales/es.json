@@ -210,7 +210,7 @@
       "agentsModels": "Agentes y modelos",
       "autonomyBudgets": "Autonomía y presupuestos",
       "connections": "Conexiones",
-      "link": "Munder Link",
+      "link": "Enlace entre mundos",
       "voice": "Voz",
       "memoryKnowledge": "Memoria y conocimiento"
     },
@@ -279,6 +279,16 @@
           "assets": "Arte y recursos",
           "restricted": "Redistribución restringida: ver términos"
         }
+      },
+      "inspirations": {
+        "title": "Inspiraciones y licencias",
+        "description": "Proyectos, integraciones y arte que hacen posibles estos mundos.",
+        "munder": "El origen de código abierto del mundo de la oficina. Su identidad sigue disponible como uno de los mundos de ISyCo Worlds.",
+        "opencode": "Agente de programación de código abierto que puedes usar con ISyCo Worlds.",
+        "munderLicense": "Licencia MIT · proyecto original",
+        "openSource": "Proyecto de código abierto",
+        "website": "Sitio web",
+        "github": "GitHub"
       }
     },
     "agentsModels": {
@@ -736,7 +746,7 @@
       "openAtLogin": "ABRIR AL INICIAR SESIÓN",
       "openAtLoginDesc": "Reinicie el arnés después de reiniciar para que las misiones programadas se reanuden por sí solas. Sin aviso: se aplica de inmediato.",
       "shareStats": "COMPARTE ESTADÍSTICAS DE USO ANÓNIMAS",
-      "shareStatsDesc": "Un puñado de eventos anónimos (aplicación abierta, agente generado, función utilizada) que ayudan a mejorar Munder Difflin: nunca mensajes, código, rutas de archivos o salida del agente. Lista completa en TELEMETRY.md; cambiar en cualquier momento en Configuración.",
+      "shareStatsDesc": "Un puñado de eventos anónimos (aplicación abierta, agente generado, función utilizada) que ayudan a mejorar ISyCo Worlds: nunca mensajes, código, rutas de archivos o salida del agente. Lista completa en TELEMETRY.md; cambiar en cualquier momento en Configuración.",
       "stayAwake": "MANTENTE DESPIERTO CON ENERGÍA (MANUAL)",
       "stayAwakeDescMac": "macOS solo te permite configurarlo tú. En Batería → Opciones, activa «Evitar el modo de suspensión automático cuando la pantalla está apagada» (con el adaptador de corriente) para que los temporizadores sigan funcionando con la pantalla suspendida. Sin una configuración que impida la suspensión, el Mac seguirá durmiéndose: el trabajo sobrevive y se pone al día al despertar.",
       "stayAwakeDescWindows": "Windows solo te permite configurarlo tú. En Configuración → Sistema → Energía y batería → Pantalla, en blanco y suspensión, establece «Con batería, poner mi dispositivo en suspensión» y «Cuando esté conectado» en Nunca (o aumenta los tiempos) para que los temporizadores sigan funcionando. Sin una configuración que impida la suspensión, Windows seguirá durmiéndose: el trabajo sobrevive y se pone al día al despertar.",
@@ -875,7 +885,7 @@
     "localEndpoint": "PUNTO DE CONEXIÓN LOCAL · MODELO PREDETERMINADO (POR MOTOR)",
     "defaultModelPlaceholder": "modelo predeterminado (proveedor/modelo)",
     "runningOpenModels": "¿Está ejecutando modelos abiertos? Guías paso a paso:",
-    "runOnOpenModels": "ejecute Munder Difflin en modelos abiertos",
+    "runOnOpenModels": "ejecute ISyCo Worlds en modelos abiertos",
     "setUpMacMini": "configúrelo en un Mac Mini",
     "autoModeCaveat": "⚠ En modo automático, estos motores se ejecutan con sistema de archivos completo + acceso a shell (sin zona de pruebas), como el modo de derivación de Claude. Desactive el modo automático (General) para que pregunten primero. La verificación en vivo de un extremo a otro con llamadas de modelos reales está pendiente de sus claves/un LLM local."
   },
@@ -925,7 +935,7 @@
     "downloadingHeadline": "Descargando v{{version}}",
     "downloadingDetail": "{{percent}}% hecho. Puedes seguir trabajando; el reinicio es tuyo para activarlo.",
     "downloadedHeadline": "v{{version}} está listo para instalar",
-    "downloadedDetail": "Reinicie Munder Difflin para finalizar la actualización desde v{{v}}.",
+    "downloadedDetail": "Reinicie ISyCo Worlds para finalizar la actualización desde v{{v}}.",
     "restartBtn": "Reiniciar para actualizar",
     "manualDetail": "Esta instalación no puede actualizarse por sí sola; descárguela desde la página de lanzamiento.",
     "manualDetailReason": "Esta instalación no puede actualizarse sola ({{reason}}): descárguela desde la página de lanzamiento.",
@@ -952,7 +962,7 @@
     "webhooks": "WEBHOOKS",
     "webhooksBlurb": "Deje que un sistema externo publique el trabajo.",
     "organisation": "ORGANIZACIÓN",
-    "organisationBlurb": "Deja que el Munder Difflin de un compañero de equipo te envíe un mensaje."
+    "organisationBlurb": "Deja que el ISyCo Worlds de un compañero de equipo te envíe un mensaje."
   },
   "orgSection": {
     "acceptMessages": "Acepta mensajes de tu organización",
@@ -1630,12 +1640,12 @@
   },
   "installSteps": {
     "darwin": [
-      "Abre el .dmg y arrastra Munder Difflin a Aplicaciones. Elige Reemplazar cuando pregunte.",
+      "Abre el .dmg y arrastra ISyCo Worlds a Aplicaciones. Elige Reemplazar cuando pregunte.",
       "Cierra esta aplicación, abre la nueva desde Aplicaciones y elige el mismo proyecto."
     ],
     "win32": [
       "Cierra esta aplicación y ejecuta el .exe de instalación descargado. Reemplaza la versión instalada.",
-      "Abre Munder Difflin de nuevo y elige el mismo proyecto."
+      "Abre ISyCo Worlds de nuevo y elige el mismo proyecto."
     ],
     "linux": [
       "Haz ejecutable el .AppImage descargado (chmod +x) y muévelo sobre el que usas ahora.",
@@ -1643,10 +1653,10 @@
     ]
   },
   "link": {
-    "title": "Munder Link",
+    "title": "Enlace entre mundos",
     "desc": "Enlaza esta oficina con otras por tu red local o Tailscale: tu {{godName}} les puede delegar trabajo y ellas a ti. Es lo mismo que «munder link» en la terminal.",
     "loading": "Cargando el enlace…",
-    "unavailable": "Munder Link no está disponible: {{error}}",
+    "unavailable": "El enlace entre mundos no está disponible: {{error}}",
     "thisOffice": "Esta oficina",
     "turnOn": "Encender",
     "turnOff": "Apagar",
@@ -1679,7 +1689,7 @@
     "alreadyLinked": "ya enlazada",
     "noTailscale": "Tailscale no está instalado o no responde: solo busqué en la red local.",
     "pairingWith": "Emparejando con {{name}} ({{fingerprint}})",
-    "pairingHint": "En {{name}} abre Configuración → Munder Link (o corre «munder link aceptar») y revisa que muestre este mismo código.",
+    "pairingHint": "En {{name}} abre Configuración → Enlace entre mundos (o ejecuta `munder link aceptar`) y confirma que aparezca este mismo código.",
     "codesMatch": "El código coincide",
     "codesDiffer": "No coincide, cancelar",
     "paired": "Listo de este lado. Cuando {{name}} acepte, ya pueden delegarse trabajo.",

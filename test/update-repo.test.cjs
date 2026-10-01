@@ -23,7 +23,7 @@ const { EventEmitter } = require('node:events');
 const loadTs = require('./load-ts.cjs');
 
 const root = path.join(__dirname, '..');
-const { REPO, isNewerBuild, pendingVersion } = loadTs('src/shared/updateState.ts');
+const { REPO, installerUrl, isNewerBuild, pendingVersion } = loadTs('src/shared/updateState.ts');
 
 test('the updater polls the same repo electron-builder publishes to', () => {
   const yml = fs.readFileSync(path.join(root, 'electron-builder.yml'), 'utf8');
@@ -33,6 +33,24 @@ test('the updater polls the same repo electron-builder publishes to', () => {
   assert.equal(REPO, `${owner}/${repo}`);
   const updater = fs.readFileSync(path.join(root, 'src/main/updater.ts'), 'utf8');
   assert.ok(!/const REPO = /.test(updater), 'updater.ts uses the shared REPO, no second copy');
+});
+
+test('manual installer fallback uses the current ISyCo Worlds release asset names', () => {
+  const yml = fs.readFileSync(path.join(root, 'electron-builder.yml'), 'utf8');
+  for (const pattern of [
+    'artifactName: ISyCo-Worlds-${version}-mac-${arch}.${ext}',
+    'artifactName: ISyCo-Worlds-${version}-win-x64-setup.exe',
+    'artifactName: ISyCo-Worlds-${version}-linux-x86_64.AppImage',
+  ]) assert.ok(yml.includes(pattern), `builder config should contain ${pattern}`);
+  for (const [platform, arch, asset] of [
+    ['darwin', 'arm64', 'ISyCo-Worlds-0.5.2-ISyCo.2-mac-arm64.dmg'],
+    ['darwin', 'x64', 'ISyCo-Worlds-0.5.2-ISyCo.2-mac-x64.dmg'],
+    ['win32', 'x64', 'ISyCo-Worlds-0.5.2-ISyCo.2-win-x64-setup.exe'],
+    ['linux', 'x64', 'ISyCo-Worlds-0.5.2-ISyCo.2-linux-x86_64.AppImage'],
+  ]) {
+    assert.ok(installerUrl('0.5.2-ISyCo.2', platform, arch).endsWith(`/${asset}`),
+      `manual download should resolve ${asset}`);
+  }
 });
 
 test('isNewerBuild: the fork counter counts, an -rc does not, and upstream order still holds', () => {

@@ -196,7 +196,7 @@ function fetchReleaseBody(version: string, done: (notes: string | undefined) => 
         hostname: 'api.github.com',
         path: `/repos/${REPO}/releases/tags/v${version}`,
         method: 'GET',
-        headers: { 'User-Agent': 'munder-difflin-updater', Accept: 'application/vnd.github+json' },
+        headers: { 'User-Agent': 'isyco-worlds-updater', Accept: 'application/vnd.github+json' },
         timeout: 10_000
       },
       (res) => {
@@ -272,7 +272,7 @@ function fallbackCheck(reason: string | undefined, force = false, report = false
           hostname: 'api.github.com',
           path: `/repos/${REPO}/releases?per_page=20`,
           method: 'GET',
-          headers: { 'User-Agent': 'munder-difflin-updater', Accept: 'application/vnd.github+json' },
+          headers: { 'User-Agent': 'isyco-worlds-updater', Accept: 'application/vnd.github+json' },
           timeout: 10_000
         },
         (res) => {

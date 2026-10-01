@@ -204,8 +204,6 @@ test('no Arabic string is left as its English source', () => {
   // would make the UI wrong, not more Arabic.
   const SAME_ON_PURPOSE = new Set([
     'settings.connections.slack',            // product name
-    'settings.nav.link',                     // "Munder Link" — product name
-    'link.title',                            // same
     'onboarding.providerBlurb.claude',       // "Claude Code — Anthropic": two product names
     'onboarding.providerBlurb.codex',
     'onboarding.providerBlurb.antigravity',
@@ -215,7 +213,7 @@ test('no Arabic string is left as its English source', () => {
     'mcpDefaults.toggleNote',                // "{{id}}: {{state}}" — pure interpolation
     'webhooksSection.summary',               // "{{count}} · {{state}}" — same
     'editAgent.namePlaceholder',             // "Stanley" — example proper name; translating a name would be wrong
-    'settings.general.worlds.office',        // "Munder Difflin" — world/product name
+    'settings.general.worlds.office',        // "Munder Difflin" — world name
     'settings.general.worlds.monsterTrainer',// "Monster Village" — world name
     'startScreen.isycoWorld',                // "Monster Village" — world name
     'startScreen.monsterTrainer',            // same world name

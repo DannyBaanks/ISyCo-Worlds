@@ -116,10 +116,23 @@ test('localize falls back from region to language to English', () => {
   assert.equal(M.localize('plain', 'es'), 'plain');
 });
 
-test('the Worlds selector shows the chosen world\'s credits, straight from its manifest', () => {
+test('world credits live at the bottom of General settings, straight from each manifest', () => {
   const view = fs.readFileSync(path.join(root, 'src/renderer/src/worlds/WorldsView.tsx'), 'utf8');
   const credits = fs.readFileSync(path.join(root, 'src/renderer/src/worlds/WorldCredits.tsx'), 'utf8');
-  assert.match(view, /<WorldCredits worldId=\{selected\} \/>/);
+  const settings = fs.readFileSync(path.join(root, 'src/renderer/src/components/SettingsModal.tsx'), 'utf8');
+  const inspirations = fs.readFileSync(path.join(root, 'src/renderer/src/components/InspirationsLicenses.tsx'), 'utf8');
+  assert.doesNotMatch(view, /WorldCredits/, 'the profile selector stays focused on choosing a world');
+  assert.match(settings, /<InspirationsLicenses \/>/, 'General settings owns the credits surface');
+  assert.ok(settings.indexOf('<InspirationsLicenses />') > settings.indexOf("t('settings.general.dangerZone')"), 'credits come after the danger section at the bottom');
+  assert.match(inspirations, /<WorldCredits worldId="office" \/>/);
+  assert.match(inspirations, /<WorldCredits worldId="monster-trainer" \/>/);
+  assert.match(inspirations, /https:\/\/github\.com\/chaitanyagiri\/munder-difflin/);
+  assert.match(inspirations, /https:\/\/munderdiffl\.in/);
+  assert.match(inspirations, /https:\/\/github\.com\/anomalyco\/opencode/);
+  assert.match(inspirations, /https:\/\/opencode\.ai/);
+  assert.doesNotMatch(inspirations, /donat|sponsor/i, 'credits do not include a donation or sponsorship CTA');
+  const hero = fs.readFileSync(path.join(root, 'src/renderer/src/components/SettingsHeroCard.tsx'), 'utf8');
+  assert.doesNotMatch(hero, /munderdiffl\.in\/wall|foundersWall/, 'Settings no longer promotes Munder-branded plans');
   assert.match(credits, /worldManifest\(worldId\)/, 'reads the manifest, never a retyped copy');
   for (const field of ['m.author', 'm.license', 'm.source', 'm.derivedFrom', 'm.assets', 'm.disclaimers', 'a.credit', 'a.terms']) {
     assert.ok(credits.includes(field), `renders ${field}`);
@@ -130,6 +143,17 @@ test('the Worlds selector shows the chosen world\'s credits, straight from its m
   for (const code of ['es', 'zh-CN', 'ar', 'ja']) {
     const loc = JSON.parse(fs.readFileSync(path.join(dir, `${code}.json`), 'utf8')).settings.general.worlds.credits;
     assert.deepEqual(Object.keys(loc).sort(), Object.keys(en).sort(), code);
+  }
+});
+
+test('product settings use ISyCo naming while keeping Munder as the office world credit', () => {
+  const dir = path.join(root, 'src/renderer/src/i18n/locales');
+  for (const code of ['en', 'es', 'zh-CN', 'ar', 'ja']) {
+    const locale = JSON.parse(fs.readFileSync(path.join(dir, `${code}.json`), 'utf8'));
+    assert.ok(locale.settings.nav.link, `${code}: generic feature name`);
+    assert.equal(locale.link.title, locale.settings.nav.link, `${code}: link settings title`);
+    assert.doesNotMatch(`${locale.settings.nav.link} ${locale.link.unavailable} ${locale.link.pairingHint}`, /Munder Difflin|Munder Link/);
+    assert.match(locale.settings.general.worlds.office, /Munder Difflin/, `${code}: credited world remains named`);
   }
 });
 

@@ -210,7 +210,7 @@
       "agentsModels": "智能体与模型",
       "autonomyBudgets": "自主权与预算",
       "connections": "连接",
-      "link": "Munder Link",
+      "link": "世界连接",
       "voice": "语音",
       "memoryKnowledge": "记忆与知识"
     },
@@ -279,6 +279,16 @@
           "assets": "美术与资源",
           "restricted": "限制再分发：查看条款"
         }
+      },
+      "inspirations": {
+        "title": "灵感与许可",
+        "description": "构成这些世界的项目、集成与美术资源。",
+        "munder": "办公室世界的开源起点。它仍作为 ISyCo Worlds 中的一个世界保留。",
+        "opencode": "可与 ISyCo Worlds 配合使用的开源编程代理。",
+        "munderLicense": "MIT 许可证 · 原始项目",
+        "openSource": "开源项目",
+        "website": "网站",
+        "github": "GitHub"
       }
     },
     "agentsModels": {
@@ -736,7 +746,7 @@
       "openAtLogin": "开机启动",
       "openAtLoginDesc": "重启后自动重新启动 harness，让计划任务自行恢复。无提示——立即生效。",
       "shareStats": "共享匿名使用统计",
-      "shareStatsDesc": "少量匿名事件（打开应用、生成智能体、使用功能），用于改进 Munder Difflin——绝不包含提示词、代码、文件路径或智能体输出。完整清单见 TELEMETRY.md；可随时在设置中更改。",
+      "shareStatsDesc": "少量匿名事件（打开应用、生成智能体、使用功能），用于改进 ISyCo Worlds——绝不包含提示词、代码、文件路径或智能体输出。完整清单见 TELEMETRY.md；可随时在设置中更改。",
       "stayAwake": "接电源时保持唤醒（手动）",
       "stayAwakeDescMac": "macOS 只允许你自己设置这一项。在「电池」→「选项」中，开启「防止显示器关闭时自动进入睡眠」（接电源适配器时），这样显示器休眠时定时器也能继续触发。没有防休眠设置的话 Mac 仍会真正休眠——工作会保存并在唤醒后补上。",
       "stayAwakeDescWindows": "Windows 只允许你自己设置这一项。在「设置」→「系统」→「电源和电池」→「屏幕和睡眠」中，将「使用电源时，使设备进入睡眠状态」设为「从不」（或延长时间），这样定时器也能继续触发。没有防休眠设置的话 Windows 仍会真正休眠——工作会保存并在唤醒后补上。",
@@ -875,7 +885,7 @@
     "localEndpoint": "本地端点 · 默认模型（按引擎）",
     "defaultModelPlaceholder": "默认模型（提供商/模型）",
     "runningOpenModels": "要跑开源模型？分步指南：",
-    "runOnOpenModels": "在开源模型上运行 Munder Difflin",
+    "runOnOpenModels": "在开源模型上运行 ISyCo Worlds",
     "setUpMacMini": "在 Mac Mini 上配置",
     "autoModeCaveat": "⚠ 在自动模式下，这些引擎以完整的文件系统 + shell 访问权限运行（无沙箱）——就像 Claude 的绕过模式。把自动模式关掉（通用页）即可让它们先询问。与真实模型调用的端到端实测仍在等待你的密钥 / 本地 LLM。"
   },
@@ -925,7 +935,7 @@
     "downloadingHeadline": "正在下载 v{{version}}",
     "downloadingDetail": "已完成 {{percent}}%。你可以继续工作；重启由你自己决定。",
     "downloadedHeadline": "v{{version}} 已就绪，可安装",
-    "downloadedDetail": "重启 Munder Difflin 以完成从 v{{v}} 的更新。",
+    "downloadedDetail": "重启 ISyCo Worlds 以完成从 v{{v}} 的更新。",
     "restartBtn": "重启以更新",
     "manualDetail": "此安装无法自行更新——请从发布页面下载。",
     "manualDetailReason": "此安装无法自行更新（{{reason}}）——请从发布页面下载。",
@@ -952,7 +962,7 @@
     "webhooks": "Webhook",
     "webhooksBlurb": "让外部系统把工作投进来。",
     "organisation": "组织",
-    "organisationBlurb": "让队友的 Munder Difflin 给你的发消息。"
+    "organisationBlurb": "让队友的 ISyCo Worlds 给你的发消息。"
   },
   "orgSection": {
     "acceptMessages": "接受来自你组织的消息",
@@ -1630,12 +1640,12 @@
   },
   "installSteps": {
     "darwin": [
-      "Open the .dmg and drag Munder Difflin onto Applications. Choose Replace when asked.",
+      "Open the .dmg and drag ISyCo Worlds onto Applications. Choose Replace when asked.",
       "Quit this app, open the new one from Applications, and pick the same project."
     ],
     "win32": [
       "Quit this app, then run the downloaded setup .exe. It replaces the installed version.",
-      "Open Munder Difflin again and pick the same project."
+      "Open ISyCo Worlds again and pick the same project."
     ],
     "linux": [
       "Make the downloaded .AppImage executable (chmod +x) and move it over the one you run now.",
@@ -1643,10 +1653,10 @@
     ]
   },
   "link": {
-    "title": "Munder Link",
+    "title": "世界连接",
     "desc": "通过局域网或 Tailscale 将此办公室与其他办公室连接：你的 {{godName}} 可以把工作委派给它们，它们也可以委派给你。与终端中的 `munder link` 相同。",
     "loading": "正在加载连接…",
-    "unavailable": "Munder Link 不可用：{{error}}",
+    "unavailable": "世界连接不可用：{{error}}",
     "thisOffice": "此办公室",
     "turnOn": "开启",
     "turnOff": "关闭",
@@ -1679,7 +1689,7 @@
     "alreadyLinked": "已连接",
     "noTailscale": "Tailscale 未安装或无响应：仅搜索了局域网。",
     "pairingWith": "正在与 {{name}}（{{fingerprint}}）配对",
-    "pairingHint": "在 {{name}} 上打开 设置 → Munder Link（或运行 `munder link aceptar`），确认显示相同的代码。",
+    "pairingHint": "在 {{name}} 上打开 设置 → 世界连接（或运行 `munder link aceptar`），确认显示相同的代码。",
     "codesMatch": "代码一致",
     "codesDiffer": "不一致，取消",
     "paired": "本端已完成。{{name}} 接受后，你们就可以互相委派工作。",
