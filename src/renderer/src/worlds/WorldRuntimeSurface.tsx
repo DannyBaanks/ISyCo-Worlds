@@ -27,10 +27,20 @@ export function createBrowserResourceResolver(): WorldResourceResolver {
     runtime,
     async resolve(_world, resource) {
       try {
-        await Assets.load({ alias: resource.url, src: resource.url, data: { scaleMode: 'nearest' } });
+        // Vite inlines small images as data: URLs. Pixi's automatic resolver
+        // cannot infer a texture parser from those extension-less URLs, so
+        // select the image loader explicitly. Keep the URL as the alias because
+        // some worlds retrieve their preloaded textures from Assets by URL.
+        await Assets.load({
+          alias: resource.url,
+          src: resource.url,
+          loadParser: 'loadTextures',
+          data: { scaleMode: 'nearest' }
+        });
       } catch (cause) {
         throw Object.assign(
-          cause instanceof Error ? cause : new Error(`failed to load ${resource.url}`),
+          new Error(`Failed to load world resource "${resource.id}"`),
+          { cause },
           { category: runtime === 'dev' ? 'external-resource' : 'resource' }
         );
       }
