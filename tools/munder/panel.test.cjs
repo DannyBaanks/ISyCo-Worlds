@@ -147,9 +147,9 @@ test('Link buttons share the CLI state: accept a phone, see it, forget it', asyn
 });
 
 test('the menu entry opens the panel, with paths quoted', () => {
-  const d = P.desktopEntry({ cmd: '/opt/Munder Difflin/munder-difflin', args: ['--panel'] });
-  assert.match(d, /^Exec="\/opt\/Munder Difflin\/munder-difflin" --panel$/m);
-  assert.match(d, /^Name=Munder Panel$/m);
+  const d = P.desktopEntry({ cmd: '/opt/ISyCo Worlds/isyco-worlds', args: ['--panel'] });
+  assert.match(d, /^Exec="\/opt\/ISyCo Worlds\/isyco-worlds" --panel$/m);
+  assert.match(d, /^Name=ISyCo Worlds Panel$/m);
   process.env.APPIMAGE = '/home/x/Munder.AppImage';
   try { assert.deepEqual(P.panelCommand(), { cmd: '/home/x/Munder.AppImage', args: ['--panel'] }); } finally { delete process.env.APPIMAGE; }
 });

@@ -2,8 +2,8 @@
  * The app's real entry point. It only decides WHICH app to be, before any of
  * the office loads:
  *
- *   Munder Difflin            → the office (index.js, exactly as before)
- *   Munder Difflin --panel    → Munder Panel, the small button window
+ *   ISyCo Worlds              → the active world (index.js)
+ *   ISyCo Worlds --panel      → ISyCo Worlds Panel, the small button window
  *
  * The panel lives in this same executable on purpose: no second download, and
  * an AppImage stays mounted for as long as the panel window is open (a panel

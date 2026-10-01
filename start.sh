@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# start.sh — launcher de Munder Difflin (build compilado, DESPEGADO de la terminal).
+# start.sh — launcher de ISyCo Worlds (build compilado, DESPEGADO de la terminal).
 #
 # FIX 2026-09-21 — freeze "Detenido" al aceptar la sesión del harness:
 # lanzar Electron adjunto a la terminal lo deja bajo job control del shell.
@@ -47,7 +47,7 @@ SANDBOX_HELPER="$APP_BIN/../chrome-sandbox"
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/munder-difflin"
 GPU_SIG="GPU process.*isn't usable|GPU process launch failed"
 
-say() { printf 'start.sh: %s\n' "$*"; }
+say() { printf 'worlds: %s\n' "$*"; }
 
 # Pre-barre --user-data-dir (formas `--user-data-dir DIR` y `--user-data-dir=DIR`)
 # antes del dispatch por $1, para que combine con --fg/--stop/lanzamiento.
@@ -70,7 +70,7 @@ if [[ ${#FILTERED_ARGS[@]} -gt 0 ]]; then set -- "${FILTERED_ARGS[@]}"; else set
 
 if [[ "${1:-}" == "--check" ]]; then
   [[ -x "$ELECTRON" ]] || { printf 'Electron no encontrado: %s\n' "$ELECTRON" >&2; exit 1; }
-  [[ -f "$MAIN_ENTRY" ]] || { printf 'Build de Munder no encontrado: %s\n' "$MAIN_ENTRY" >&2; exit 1; }
+  [[ -f "$MAIN_ENTRY" ]] || { printf 'Build de ISyCo Worlds no encontrado: %s\n' "$MAIN_ENTRY" >&2; exit 1; }
   printf 'start.sh: OK\nroot: %s\nelectron: %s\nmain: %s\n' "$APP_ROOT" "$ELECTRON" "$MAIN_ENTRY"
   exit 0
 fi
@@ -84,7 +84,7 @@ fi
   exit 1
 }
 [[ -f "$MAIN_ENTRY" ]] || {
-  printf 'Build de Munder no encontrado. Ejecuta npm run build en %s\n' "$APP_ROOT" >&2
+  printf 'Build de ISyCo Worlds no encontrado. Ejecuta npm run build en %s\n' "$APP_ROOT" >&2
   exit 1
 }
 

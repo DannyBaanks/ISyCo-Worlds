@@ -1,18 +1,18 @@
 {
-  "name": "munder-difflin",
+  "name": "isyco-worlds",
   "version": "0.5.2-ISyCo.2",
   "private": true,
-  "description": "Clones for you and your team, working 24/7 — a free, local-first multi-agent harness that turns the CLI coding agent you already run into a clone of you, coordinating an office of agents on your machine.",
+  "description": "ISyCo Worlds — a local-first multi-agent workspace for building and coordinating worlds with the coding agents you already run.",
   "main": "out/main/boot.js",
   "author": "Chaitanya Giri",
   "engines": {
     "node": "22.x",
     "npm": "10.x"
   },
-  "homepage": "https://munderdiffl.in/",
+  "homepage": "https://github.com/DannyBaanks/ISyCo-Worlds",
   "repository": {
     "type": "git",
-    "url": "https://github.com/DannyBaanks/munder-difflin.git"
+    "url": "https://github.com/DannyBaanks/ISyCo-Worlds.git"
   },
   "scripts": {
     "dev": "electron-vite dev",

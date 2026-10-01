@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * munder — CLI de control dev para Munder Difflin (v3 interactivo).
+ * worlds — CLI de control dev para ISyCo Worlds (v3 interactivo).
  *
  * Fuente de verdad: tools/munder/munder (dentro de este repo).
  * Instala: ln -sf "$PWD/tools/munder/munder" ~/.local/bin/munder
- * Uso: munder [comando] · sin args abre el menú interactivo (si hay TTY).
+ * Uso: worlds [comando] · sin args abre el menú interactivo (si hay TTY).
  *
  * HEREDADO del launcher bash 2026-09-21 (conservado en munder.bash-legacy):
  * FIX freeze "Detenido": lanzar `npm run dev` adjunto al job control del shell
@@ -31,8 +31,8 @@ const { chatearPersonaje } = require('./lib-personaje.cjs');
 const { blankCanvas, decodePNG, verifyAvatar, editImageEndpoint } = require('./lib-avatar.cjs');
 
 // ─── config ────────────────────────────────────────────────────────────────
-const MUNDER_DIR = process.env.MUNDER_DIR || path.resolve(__dirname, '..', '..');
-const STATE_DIR = process.env.MUNDER_STATE_DIR || path.join(process.env.XDG_STATE_HOME || path.join(os.homedir(), '.local', 'state'), 'munder');
+const MUNDER_DIR = process.env.WORLDS_DIR || process.env.MUNDER_DIR || path.resolve(__dirname, '..', '..');
+const STATE_DIR = process.env.WORLDS_STATE_DIR || process.env.MUNDER_STATE_DIR || path.join(process.env.XDG_STATE_HOME || path.join(os.homedir(), '.local', 'state'), 'munder');
 const PID_FILE = path.join(STATE_DIR, 'munder-dev.pid');
 const LATEST_LOG = path.join(STATE_DIR, 'latest.log');
 // Patrón estricto: solo el dev de ESTE checkout (nunca los agentes hive en bun).
@@ -47,10 +47,10 @@ const C = {
   red: '\x1b[31m', inverse: '\x1b[7m', hide: '\x1b[?25l', show: '\x1b[?25l'.replace('?25l', '?25h'),
 };
 const st = (s, ...codes) => (USE_COLOR && codes.length ? codes.join('') + s + C.reset : s);
-const say = (m) => console.log(`munder: ${m}`);
-const die = (m) => { console.error(`munder: ${m}`); process.exit(1); };
+const say = (m) => console.log(`worlds: ${m}`);
+const die = (m) => { console.error(`worlds: ${m}`); process.exit(1); };
 
-const BANNER = st('▚ MUNDER', C.bold, C.cyan) + st('  dev control', C.dim);
+const BANNER = st('▚ ISYCO WORLDS', C.bold, C.cyan) + st('  dev control', C.dim);
 
 // ─── procesos ──────────────────────────────────────────────────────────────
 function pids() {
@@ -243,7 +243,7 @@ function cmdCheck() {
   if (!fs.existsSync(MUNDER_DIR)) die(`no existe MUNDER_DIR=${MUNDER_DIR}`);
   if (!fs.existsSync(path.join(MUNDER_DIR, 'package.json'))) die(`package.json no encontrado en ${MUNDER_DIR}`);
   if (!fs.existsSync(path.join(MUNDER_DIR, 'node_modules'))) die(`node_modules no encontrado. Ejecuta npm install en ${MUNDER_DIR}`);
-  console.log('munder: OK');
+  console.log('worlds: OK');
   console.log(`root: ${MUNDER_DIR}`);
 }
 
@@ -273,7 +273,7 @@ function readChannelCfg() {
 function readChannel() {
   const r = readChannelCfg();
   if (!r) die(`sin canal (no se lee ${channelCfgFile()}): ¿la app está corriendo con build que lo trae?`);
-  if (r.corrupt) die(`${channelCfgFile()} corrupto (se esperaba {port, token}). Prueba: munder ctl limpiar`);
+  if (r.corrupt) die(`${channelCfgFile()} corrupto (se esperaba {port, token}). Prueba: worlds ctl limpiar`);
   return r.cfg;
 }
 async function probeChannel(cfg, ms = 5000) {
@@ -308,14 +308,14 @@ async function pruneChannelOrphan() {
   if (!r) return false;
   if (r.corrupt) {
     try { fs.unlinkSync(channelCfgFile()); } catch { return false; }
-    console.log('munder: archivo de canal corrupto eliminado.');
+    console.log('worlds: archivo de canal corrupto eliminado.');
     return true;
   }
   const p = await probeChannel(r.cfg, 3000);
   if (p.alive) return false;
   if (pids().length) return false;
   try { fs.unlinkSync(channelCfgFile()); } catch { return false; }
-  console.log(`munder: canal huérfano eliminado (puerto ${r.cfg.port}). Arranca con munder start.`);
+  console.log(`worlds: canal huérfano eliminado (puerto ${r.cfg.port}). Arranca con worlds start.`);
   return true;
 }
 
@@ -342,7 +342,7 @@ async function cmdSesionVer() {
   }
   const agents = r.body.agents;
   if (!agents.length) {
-    console.log('munder: sesión vacía (0 agentes).');
+    console.log('worlds: sesión vacía (0 agentes).');
     return;
   }
   const rows = agents.map((a) => ({
@@ -371,17 +371,17 @@ async function cmdSesion(args) {
   if (sub === 'packs') return await cmdSesionPacks();
   if (sub === 'quitar') {
     const id = rest[0];
-    if (!id) die("uso: munder sesion quitar <id>  (id de agente o de pty)");
+    if (!id) die("uso: worlds sesion quitar <id>  (id de agente o de pty)");
     const ch = readChannel();
     const r = await channelCall('DELETE', { port: ch.port, path: `/sesion/agentes/${encodeURIComponent(id)}` }, undefined, ch.token)
       .catch((e) => die(`sin respuesta del canal (${e && e.message ? e.message : e})`));
     if (r.status === 200 && r.body && r.body.ok === true) {
-      console.log(`munder: agente ${r.body.id} eliminado.`);
+      console.log(`worlds: agente ${r.body.id} eliminado.`);
       return;
     }
     die(`no se pudo quitar (${r.status}): ${(r.body && r.body.error) || 'sin detalle'}`);
   }
-  die("uso: munder sesion ver | munder sesion proveedor [--cli X --endpoint Y --model Z] | munder sesion armar [--nombre X --comando \"...\" --cwd ...] | munder sesion armar --pack <id|pack.json> --cwd ... [--comando claude] [--solo a,b] | munder sesion packs | munder sesion quitar <id>");
+  die("uso: worlds sesion ver | worlds sesion proveedor [--cli X --endpoint Y --model Z] | worlds sesion armar [--nombre X --comando \"...\" --cwd ...] | worlds sesion armar --pack <id|pack.json> --cwd ... [--comando claude] [--solo a,b] | worlds sesion packs | worlds sesion quitar <id>");
 }
 
 // Office Packs (de dontbemichael): equipos listos por tipo de negocio.
@@ -394,7 +394,7 @@ async function cmdSesionPacks() {
     console.log(`  ${st(p.id, C.bold)}  ${p.name}  ${st(p.tagline || '', C.dim)}`);
     for (const a of p.agents) console.log(`      ${a.default ? st('●', C.green) : st('○', C.dim)} ${a.id.padEnd(9)} ${a.role}: ${st(a.summary, C.dim)}`);
   }
-  console.log(st('  ● = entra por defecto. Arma uno con: munder sesion armar --pack <id> --cwd <carpeta> [--solo oscar,pam]', C.dim));
+  console.log(st('  ● = entra por defecto. Arma uno con: worlds sesion armar --pack <id> --cwd <carpeta> [--solo oscar,pam]', C.dim));
 }
 
 async function cmdSesionArmarPack(args) {
@@ -442,7 +442,7 @@ async function cmdSesionProveedor(args) {
   const getFlag = (ns) => flagVal(args, ns);
   const catalog = readModelCatalog();
   if (!IS_TTY && !getFlag(['--cli', '--comando'])) {
-    die('sin TTY: usa flags. Uso: munder sesion proveedor --cli <id> [--endpoint <id>] [--model <slug>]');
+    die('sin TTY: usa flags. Uso: worlds sesion proveedor --cli <id> [--endpoint <id>] [--model <slug>]');
   }
   // 1) CLI.
   const detected = detectCLIs();
@@ -512,7 +512,7 @@ async function cmdSesionProveedor(args) {
   let pastedKey = null; // solo memoria de esta corrida: alimenta el chat IA si lo pides
   if (!hasKey && needKey) {
     console.log('');
-    console.log(st(`  Falta ${needKey}. Para vincularla sin guardar nada en munder:`, C.bold));
+    console.log(st(`  Falta ${needKey}. Para vincularla sin guardar nada en worlds:`, C.bold));
     printDisclaimer();
     if (!IS_TTY) {
       console.log(st('  Sin TTY no puedo pedir sudo ni leer la key: sigo sin vincular (expórtala tú).', C.yellow));
@@ -640,7 +640,7 @@ async function cmdSesionArmar(args) {
   const rol = flagVal(args, ['--rol', '--role', '-r']);
   const interactivo = !nombre || !comando || !cwd;
   if (interactivo && !IS_TTY) {
-    die('faltan --nombre/--comando/--cwd y no hay TTY para preguntar. Uso: munder sesion armar --nombre X --comando "..." --cwd ...');
+    die('faltan --nombre/--comando/--cwd y no hay TTY para preguntar. Uso: worlds sesion armar --nombre X --comando "..." --cwd ...');
   }
   if (!nombre) nombre = (await ask('  Nombre del agente (p. ej. jim): ')).trim();
   if (!comando) comando = (await ask('  Comando (p. ej. claude --model opus): ')).trim();
@@ -676,25 +676,25 @@ async function cmdCtl(args) {
     const cs = await channelState();
     if (cs.state === 'viva') die('el canal está vivo, no se toca.');
     if (cs.state === 'caida') die('hay procesos del checkout: puede ser arranque en curso, no se toca.');
-    console.log('munder: sin archivo de canal, nada que limpiar.');
+    console.log('worlds: sin archivo de canal, nada que limpiar.');
     return;
   }
-  if (sub !== 'ping' || rest.length) die("uso: munder ctl ping | munder ctl limpiar");
+  if (sub !== 'ping' || rest.length) die("uso: worlds ctl ping | worlds ctl limpiar");
   const cfg = readChannel();
   const p = await probeChannel(cfg);
   if (p.alive) {
-    console.log(`munder: pong (canal en puerto ${cfg.port})`);
+    console.log(`worlds: pong (canal en puerto ${cfg.port})`);
     return;
   }
   if (!pids().length) {
-    die(`sin respuesta del canal en puerto ${cfg.port} (${p.detail}). La app murió dejando el archivo: munder ctl limpiar`);
+    die(`sin respuesta del canal en puerto ${cfg.port} (${p.detail}). La app murió dejando el archivo: worlds ctl limpiar`);
   }
   die(`sin respuesta del canal en puerto ${cfg.port} (${p.detail}). Hay procesos: ¿arranque en curso?`);
 }
 
 function cmdPs() {
   const list = pids();
-  if (!list.length) { console.log('munder: parado (sin procesos)'); return false; }
+  if (!list.length) { console.log('worlds: parado (sin procesos)'); return false; }
   try {
     const out = execFileSync('ps', ['-o', 'pid,ppid,etime,cmd', '-p', list.join(',')], { encoding: 'utf8' });
     console.log(out.trimEnd());
@@ -711,9 +711,9 @@ async function cmdStatus() {
   console.log('--- canal ---');
   const cs = await channelState();
   if (cs.state === 'viva') console.log(`canal vivo (puerto ${cs.port})`);
-  else if (cs.state === 'huerfana') console.log(`canal HUÉRFANO (puerto ${cs.port}, ${cs.detail}): munder ctl limpiar`);
+  else if (cs.state === 'huerfana') console.log(`canal HUÉRFANO (puerto ${cs.port}, ${cs.detail}): worlds ctl limpiar`);
   else if (cs.state === 'caida') console.log(`canal caído con procesos vivos (puerto ${cs.port}, ${cs.detail})`);
-  else if (cs.state === 'corrupta') console.log(`canal corrupto (${cs.file}): munder ctl limpiar`);
+  else if (cs.state === 'corrupta') console.log(`canal corrupto (${cs.file}): worlds ctl limpiar`);
   else console.log('(sin canal)');
   console.log('--- log (tail 20) ---');
   try {
@@ -728,7 +728,7 @@ function cmdLogs(args) {
   for (const a of args) {
     if (a === '-f' || a === '--follow') follow = true;
     else if (/^\d+$/.test(a)) n = Number(a);
-    else die(`logs: '${a}' no es número. Uso: munder logs [N] [-f]`);
+    else die(`logs: '${a}' no es número. Uso: worlds logs [N] [-f]`);
   }
   if (!fs.existsSync(LATEST_LOG)) die(`sin log en ${LATEST_LOG} (¿nunca se arrancó?)`);
   if (!follow) {
@@ -767,7 +767,7 @@ function startDev() {
 
 async function cmdStart(fg) {
   cmdCheckSilent();
-  if (pids().length) die("ya está corriendo. Usa 'munder status' o 'munder stop' primero.");
+  if (pids().length) die("ya está corriendo. Usa 'worlds status' o 'worlds stop' primero.");
   try {
     const old = fs.existsSync(PID_FILE) ? fs.readFileSync(PID_FILE, 'utf8').trim() : '';
     if (old && alive(old)) die(`el pid file dice que ya corre (pid ${old}). Si es huérfano, borra ${PID_FILE}.`);
@@ -792,7 +792,7 @@ async function cmdStart(fg) {
     process.exit(1);
   }
   say(`en marcha (pid ${pid})`);
-  say('log: munder logs -f | parar: munder stop');
+  say('log: worlds logs -f | parar: worlds stop');
 }
 
 function cmdCheckSilent() {
@@ -805,31 +805,31 @@ async function cmdStop() {
   try {
     if (fs.existsSync(PID_FILE)) {
       const lp = fs.readFileSync(PID_FILE, 'utf8').trim();
-      if (lp && alive(lp)) { console.log(`munder: TERM a launcher ${lp}`); try { process.kill(Number(lp)); } catch { /* noop */ } }
+      if (lp && alive(lp)) { console.log(`worlds: TERM a launcher ${lp}`); try { process.kill(Number(lp)); } catch { /* noop */ } }
     }
   } catch { /* noop */ }
   let list = pids();
   if (!list.length) {
-    console.log('munder: ya estaba parado.');
+    console.log('worlds: ya estaba parado.');
     try { fs.unlinkSync(PID_FILE); } catch { /* noop */ }
     await pruneChannelOrphan();
     return;
   }
-  console.log(`munder: TERM a: ${list.join(' ')}`);
+  console.log(`worlds: TERM a: ${list.join(' ')}`);
   for (const p of list) { try { process.kill(Number(p)); } catch { /* noop */ } }
   const t0 = Date.now();
   while (pids().length && Date.now() - t0 < 5000) await new Promise((r) => setTimeout(r, 250));
   list = pids();
   if (list.length) {
-    console.log(`munder: KILL a: ${list.join(' ')}`);
+    console.log(`worlds: KILL a: ${list.join(' ')}`);
     for (const p of list) { try { process.kill(Number(p), 9); } catch { /* noop */ } }
     await new Promise((r) => setTimeout(r, 1500));
   }
   list = pids();
-  if (list.length) { console.error(`munder: ATENCION, siguen vivos: ${list.join(' ')}`); process.exit(1); }
+  if (list.length) { console.error(`worlds: ATENCION, siguen vivos: ${list.join(' ')}`); process.exit(1); }
   try { fs.unlinkSync(PID_FILE); } catch { /* noop */ }
   await pruneChannelOrphan();
-  console.log('munder: parado.');
+  console.log('worlds: parado.');
 }
 
 async function cmdCreateHarness(parentArg, nameArg) {
@@ -866,7 +866,7 @@ async function cmdRepaint() {
   const r = await channelCall('POST', { port: ch.port, path: '/repaint' }, undefined, ch.token)
     .catch((e) => die(`sin respuesta del canal (${e && e.message ? e.message : e})`));
   if (r.status === 200 && r.body && r.body.ok === true) {
-    console.log(`munder: repintado pedido a ${r.body.windows ?? 0} ventana(s). Sin reinicio.`);
+    console.log(`worlds: repintado pedido a ${r.body.windows ?? 0} ventana(s). Sin reinicio.`);
     return;
   }
   die(`no se pudo pedir repintado (${r.status}): ${(r.body && r.body.error) || 'sin detalle'}`);
@@ -906,7 +906,7 @@ function cmdAvatarCompilar(desc, opts) {
   opts = opts || {};
   const partFlags = ['piel', 'pelo', 'ojos', 'ropa', 'pantalon', 'zapatos'].filter((k) => opts[k]);
   if ((!desc || !String(desc).trim()) && !(opts.motor === 'spec' && (partFlags.length || opts.dsl))) {
-    if (!IS_TTY) die('uso: munder avatar compilar "piel morena, pelo negro corto..." [--motor local|modelo|flow|spec] [--salida x.png]');
+    if (!IS_TTY) die('uso: worlds avatar compilar "piel morena, pelo negro corto..." [--motor local|modelo|flow|spec] [--salida x.png]');
     die('sin descripción, cancelado.');
   }
   const motor = opts.motor || 'local';
@@ -1118,7 +1118,7 @@ const AVATAR_REGIONS = [
 ];
 
 function cmdAvatarInspect(target) {
-  if (!target) die('uso: munder avatar inspect <personaje|ruta.png>  (p. ej. pam, ./avatar.png)');
+  if (!target) die('uso: worlds avatar inspect <personaje|ruta.png>  (p. ej. pam, ./avatar.png)');
   const engine = loadAvatarEngine();
   let buf, w = 18, h = 28, title = target;
   const names = Object.keys(engine.AVATAR_RECIPES || {});
@@ -1230,21 +1230,21 @@ async function cmdAvatarInyectar(desc, opts) {
   if (opts.ver) {
     const o = readOverrides();
     const keys = Object.keys(o);
-    if (!keys.length) { console.log('munder: sin overrides (munder avatar inyectar "desc" --slot <nombre|auto>).'); return; }
+    if (!keys.length) { console.log('worlds: sin overrides (worlds avatar inyectar "desc" --slot <nombre|auto>).'); return; }
     for (const k of keys) console.log(`  ${k}: ${(o[k] && o[k].desc) || '(sin desc)'}`);
     return;
   }
   const slotArg = String(opts.slot || '').trim().toLowerCase();
   if (opts.quitar) {
-    if (!slotArg) die('uso: munder avatar inyectar --quitar --slot <nombre>');
+    if (!slotArg) die('uso: worlds avatar inyectar --quitar --slot <nombre>');
     const o = readOverrides();
     if (!o[slotArg]) die(`no hay override en '${slotArg}'.`);
     delete o[slotArg];
     writeOverrides(o);
-    console.log(`munder: override de '${slotArg}' eliminado. Reinicia la app para verlo.`);
+    console.log(`worlds: override de '${slotArg}' eliminado. Reinicia la app para verlo.`);
     return;
   }
-  if (!desc || !desc.trim()) die('uso: munder avatar inyectar "piel morena, ..." --slot <nombre|auto>');
+  if (!desc || !desc.trim()) die('uso: worlds avatar inyectar "piel morena, ..." --slot <nombre|auto>');
   const engine = loadAvatarEngine();
   const { compileAvatar } = require('./lib-avatar.cjs');
   let compiled;
@@ -1271,7 +1271,7 @@ async function cmdAvatarInyectar(desc, opts) {
   console.log(st(`  ✓ inyectado en '${slot}':`, C.green, C.bold));
   console.log(`    receta: piel=${recipe.skin} pelo=${recipe.hair} ropa=${recipe.cloth}`);
   console.log(st('  Reinicia la app para verlo (el override aplica al montar el piso).', C.dim));
-  console.log(st(`  Arma su worker con character='${slot}' (munder sesion armar o Add agent).`, C.dim));
+  console.log(st(`  Arma su worker con character='${slot}' (worlds sesion armar o Add agent).`, C.dim));
 }
 
 function cmdAvatarLienzo(salidaArg) {
@@ -1283,11 +1283,11 @@ function cmdAvatarLienzo(salidaArg) {
   const info = decodePNG(fs.readFileSync(out));
   console.log(st('  ✓ lienzo en blanco:', C.green, C.bold));
   console.log(`    ${out} (${info.w}x${info.h} RGBA transparente)`);
-  console.log(st('  Úsalo con: munder avatar editar <png> --endpoint <id> --model <id>', C.dim));
+  console.log(st('  Úsalo con: worlds avatar editar <png> --endpoint <id> --model <id>', C.dim));
 }
 
 async function cmdAvatarEditar(pngPath, opts) {
-  if (!pngPath) die('uso: munder avatar editar <png> --endpoint <id> --model <id> [--key-env VAR] [--prompt "..."] [--si]');
+  if (!pngPath) die('uso: worlds avatar editar <png> --endpoint <id> --model <id> [--key-env VAR] [--prompt "..."] [--si]');
   const abs = path.resolve(expandTilde(pngPath));
   if (!fs.existsSync(abs)) die(`no existe: ${abs}`);
   const endpoint = getEndpoint(opts.endpoint);
@@ -1437,7 +1437,7 @@ async function cmdAvatar(args) {
     });
   }
   // Sin subcomando (o en menú): selector lienzo/compilar/inyectar/inspect/editar.
-  if (!IS_TTY) die('uso: munder avatar lienzo [salida] | munder avatar compilar "desc" [--motor local|modelo|flow|spec] [--salida] [--piel|--pelo|--ojos|--ropa|--pantalon|--zapatos <valor>] [--dsl <spec.txt>] | munder avatar inyectar "desc" --slot <nombre|auto> [--quitar|--ver] | munder avatar editar <png> --endpoint <id> --model <id> [--prompt "..."]');
+  if (!IS_TTY) die('uso: worlds avatar lienzo [salida] | worlds avatar compilar "desc" [--motor local|modelo|flow|spec] [--salida] [--piel|--pelo|--ojos|--ropa|--pantalon|--zapatos <valor>] [--dsl <spec.txt>] | worlds avatar inyectar "desc" --slot <nombre|auto> [--quitar|--ver] | worlds avatar editar <png> --endpoint <id> --model <id> [--prompt "..."]');
   const i = await select('¿Avatar qué hacemos?', [
     { label: 'Lienzo en blanco (18×28 transparente)', value: 'lienzo' },
     { label: 'Compilar desde texto (local/modelo/flow/spec)', value: 'compilar' },
@@ -1625,7 +1625,7 @@ function sudoGate() {
 function printDisclaimer() {
   console.log(st('  ┌ AVISO — lee antes de pegar ninguna key ────────────────', C.bold, C.yellow));
   console.log('  · sudo solo prueba que eres tú (no cifra ni protege nada por sí solo).');
-  console.log('  · munder NUNCA guarda keys: ni en sus archivos, ni logs, ni roster, ni git.');
+  console.log('  · worlds NUNCA guarda keys: ni en sus archivos, ni logs, ni roster, ni git.');
   console.log('  · Lo que pegues va SOLO al auth propio del CLI que elegiste (te digo cuál archivo exacto).');
   console.log('  · Todo sigue en tu PC. Esto es un puente hacia tu CLI, no un almacén.');
   console.log(st('  └────────────────────────────────────────────────────────', C.bold, C.yellow));
@@ -1756,7 +1756,7 @@ async function interactiveMenu() {
 }
 
 function printHelp() {
-  console.log(`Uso: munder <comando> [opciones]
+  console.log(`Uso: worlds <comando> [opciones]
 
 Comandos:
   start [--fg]    Arranca \`npm run dev\` despegado (setsid, anti-freeze).
@@ -1814,15 +1814,17 @@ Sin TTY se muestra esta ayuda (no se lanza nada).
 Compat: --stop = stop, --check = check, --fg = start --fg.
 
 Env:
-  MUNDER_DIR        Ruta del app (def. la raíz de este repo)
-  MUNDER_STATE_DIR  Estado/logs/pid (def. ~/.local/state/munder)
+  WORLDS_DIR        Ruta de la app (acepta MUNDER_DIR como alias)
+  WORLDS_STATE_DIR  Estado/logs/pid (acepta MUNDER_STATE_DIR como alias)
 
 Ejemplos:
-  munder                 # menú interactivo
-  munder status
-  munder logs -f
-  munder restart
-  munder create-harness ~/Development harness-isYco`);
+  worlds                 # menú interactivo
+  worlds status
+  worlds logs -f
+  worlds restart
+  worlds create-harness ~/Development harness-isYco
+
+Compatibilidad: el lanzador histórico \`munder\` sigue disponible.`);
 }
 
 // ─── link (Munder Link: oficinas enlazadas; ver LINK.md) ────────────────────
@@ -1881,8 +1883,8 @@ async function main() {
     case '--check': cmdCheck(); break;
     case '--fg': await cmdStart(true); break;
     case 'help': case '--help': case '-h': printHelp(); break;
-    default: die(`comando desconocido '${cmd}'. Usa: munder {start|stop|restart|status|logs|create-harness|link|ps|check|help}`);
+    default: die(`comando desconocido '${cmd}'. Usa: worlds {start|stop|restart|status|logs|create-harness|link|ps|check|help}`);
   }
 }
 
-main().catch((e) => { console.error(`munder: error inesperado: ${e && e.message ? e.message : e}`); process.exit(1); });
+main().catch((e) => { console.error(`worlds: error inesperado: ${e && e.message ? e.message : e}`); process.exit(1); });

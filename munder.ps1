@@ -1,22 +1,23 @@
-# munder.ps1 — CLI de Munder Difflin para Windows.
+# munder.ps1 — implementación del CLI ISyCo Worlds para Windows.
 # Carril Windows (MANTENEDORES.md): este archivo + munder.cmd + install.ps1.
 # Equivalente de start.sh: lanza Electron DESPEGADO de la terminal
 # (via .NET ProcessStartInfo con stdio nulo: cerrar la terminal no mata
 # la app, y los handles heredados no pueden romperse al salir el shell).
 #
 # Uso:
-#   munder start [--user-data-dir DIR]   lanza la app despegada (recomendado)
-#   munder stop                           detiene TODAS las instancias de este build
-#   munder restart                        stop + start
-#   munder status                         dice si esta corriendo (PIDs)
-#   munder logs [-n N]                    ultimas lineas del log vigente
-#   munder check                          verifica electron + build
+#   worlds start [--user-data-dir DIR]   lanza la app despegada (recomendado)
+#   worlds stop                           detiene TODAS las instancias de este build
+#   worlds restart                        stop + start
+#   worlds status                         dice si esta corriendo (PIDs)
+#   worlds logs [-n N]                    ultimas lineas del log vigente
+#   worlds check                          verifica electron + build
+# El lanzador histórico `munder` sigue como alias.
 #
 # NOTA singleton: el userData (%APPDATA%\munder-difflin) es COMPARTIDO con
 # cualquier `npm run dev` de este checkout. No lances ambos a la vez: la
 # segunda instancia muere al arrancar (second-instance).
 # Sesiones paralelas: cada instancia necesita su PROPIO userData:
-#   munder start --user-data-dir "$env:APPDATA\munder-difflin-harness2"
+#   worlds start --user-data-dir "$env:APPDATA\munder-difflin-harness2"
 # OJO: no pongas dos sesiones a trabajar sobre los mismos repos a la vez.
 #
 # Logs: $env:LOCALAPPDATA\munder-difflin\logs\latest.log
@@ -31,7 +32,7 @@ $MAIN_ENTRY = Join-Path $APP_ROOT 'out\main\index.js'
 $MUNDER_CLI = Join-Path $APP_ROOT 'tools\munder\munder'
 $LOG_DIR = Join-Path $env:LOCALAPPDATA 'munder-difflin\logs'
 
-function Say($m) { Write-Output "munder: $m" }
+function Say($m) { Write-Output "worlds: $m" }
 
 # Nombres de ejecutable que cuentan como "la app": electron.exe (checkout) y
 # "Munder Difflin.exe" / "Munder-Difflin-*.exe" (builds empaquetados: portable
@@ -44,7 +45,7 @@ function Get-AppProcesses {
         Where-Object { $_.ProcessId -ne $PID -and $_.Name -like 'electron*' -and $_.CommandLine -like "*$APP_ROOT*" })
     # Empaquetados: por nombre de producto, cualquiera que este corriendo.
     $pack = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
-        Where-Object { $_.ProcessId -ne $PID -and ($_.Name -like 'Munder Difflin*' -or $_.Name -like 'Munder-Difflin-*') })
+        Where-Object { $_.ProcessId -ne $PID -and ($_.Name -like 'ISyCo Worlds*' -or $_.Name -like 'ISyCo-Worlds-*' -or $_.Name -like 'Munder Difflin*' -or $_.Name -like 'Munder-Difflin-*') })
     @($dev + $pack | Sort-Object ProcessId -Unique)
 }
 
@@ -146,7 +147,7 @@ function Start-App($userDataDir) {
             Copy-Item -LiteralPath $runLog -Destination $latest -Force
             Say "otra instancia ya esta corriendo (mismo userData compartido) - no lanzo otra"
             Say ("  pids: {0}" -f (($otras | ForEach-Object { $_.ProcessId }) -join ', '))
-            Say "parar la que corre: munder stop   (para sesiones paralelas: --user-data-dir)"
+            Say "parar la que corre: worlds stop   (para sesiones paralelas: --user-data-dir)"
             exit 0
         }
         "$(Get-Date -Format o) DIED exit=$code (ver %APPDATA%\munder-difflin\updater.log; diagnostico: lanzar en primer plano)" | Out-File -LiteralPath $runLog -Encoding utf8 -Append
@@ -158,7 +159,7 @@ function Start-App($userDataDir) {
     Copy-Item -LiteralPath $runLog -Destination $latest -Force
     Say ("en marcha (pid main: {0})" -f $pr.Id)
     Say "log del lanzador: $runLog"
-    Say "parar: munder stop"
+    Say "parar: worlds stop"
 }
 
 function Show-Logs($n) {
@@ -172,14 +173,16 @@ function Show-Logs($n) {
 
 function Show-Help {
     Write-Output @"
-munder — CLI de Munder Difflin (checkout: $APP_ROOT)
+worlds — CLI de ISyCo Worlds (checkout: $APP_ROOT)
 
-  munder start [--user-data-dir DIR]   arranca la app despegada
-  munder stop                           detiene todas las instancias
-  munder restart                        stop + start
-  munder status                         en marcha o detenido (PIDs)
-  munder logs [-n N]                    ultimas N lineas del log (def. 30)
-  munder check                          verifica electron + build compilado
+  worlds start [--user-data-dir DIR]   arranca la app despegada
+  worlds stop                           detiene todas las instancias
+  worlds restart                        stop + start
+  worlds status                         en marcha o detenido (PIDs)
+  worlds logs [-n N]                    ultimas N lineas del log (def. 30)
+  worlds check                          verifica electron + build compilado
+
+El comando `munder` sigue disponible como alias de compatibilidad.
 "@
 }
 

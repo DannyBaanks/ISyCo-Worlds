@@ -1,4 +1,4 @@
-# install.ps1 — setup de Munder Difflin en Windows (carril Windows).
+# install.ps1 — setup de ISyCo Worlds en Windows (carril Windows).
 #
 # Uso (desde la raiz del checkout):
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1
@@ -15,8 +15,8 @@
 #   4. npx electron-rebuild -f (node-pty + better-sqlite3 para Electron).
 #   5. tools/ensure-pty-perms.cjs + tools/patch-node-pty-conpty.cjs.
 #   6. npm run build (out/main, out/preload, out/renderer).
-#   7. Registra esta carpeta en el PATH de usuario -> comando `munder`.
-#   8. munder check.
+#   7. Registra esta carpeta en el PATH de usuario -> comando `worlds`.
+#   8. worlds check.
 #
 # El toolchain C++ NO se instala solo: son GBs. Sin -Toolchain se verifica
 # y, si falta, se imprime el comando exacto. Ver GUIA-WINDOWS.md.
@@ -126,7 +126,7 @@ if (-not $SkipBuild) {
     Say "6/8 build omitido (-SkipBuild)"
 }
 
-# --- 7. PATH de usuario -> comando `munder` -----------------------------------
+# --- 7. PATH de usuario -> comando `worlds` ----------------------------------
 if (-not $NoPath) {
     Say "7/8 PATH de usuario"
     $cur = [Environment]::GetEnvironmentVariable('Path', 'User')
@@ -141,6 +141,6 @@ if (-not $NoPath) {
 }
 
 # --- 8. check -----------------------------------------------------------------
-Say "8/8 munder check"
-& "$APP_ROOT\munder.cmd" check
-Say "listo. Arranca con: munder start"
+Say "8/8 worlds check"
+& "$APP_ROOT\worlds.cmd" check
+Say "listo. Arranca con: worlds start (munder sigue como alias)"
