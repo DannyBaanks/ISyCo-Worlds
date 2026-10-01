@@ -137,7 +137,7 @@ test('Starter Village keeps a validated original PNG atlas alongside legacy art'
   assert.match(attribution, /original.*pixel.art/i);
   assert.match(attribution, /starter-village-atlas\.svg/);
   assert.equal(Scenario.STARTER_VILLAGE_ATLAS_URL, atlasPath, 'the scenario manifest must resolve the PNG atlas');
-  assert.deepEqual(Scenario.STARTER_VILLAGE_SCENARIO.resources.map((resource) => resource.id), ['starter-village-atlas', 'starter-village-buildings']);
+  assert.deepEqual(Scenario.STARTER_VILLAGE_SCENARIO.resources.map((resource) => resource.id), ['starter-village-atlas', 'starter-village-buildings', 'monster-professor-roster']);
   assert.match(Scenario.STARTER_VILLAGE_SCENARIO.resources[0].url, /starter-village-atlas\.png$/);
   assert.deepEqual(Object.keys(AtlasFrames.STARTER_VILLAGE_ATLAS_FRAMES), [
     'grass', 'training-grass', 'dirt', 'road', 'water', 'tree', 'shrub', 'flowers',

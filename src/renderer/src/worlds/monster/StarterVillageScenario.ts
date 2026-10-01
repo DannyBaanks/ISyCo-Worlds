@@ -1,5 +1,6 @@
 import starterVillageAtlasUrl from '../../assets/worlds/starter-village/starter-village-atlas.png?url';
 import starterVillageBuildingsUrl from '../../assets/worlds/starter-village/starter-village-buildings.png?url';
+import professorRosterUrl from '../../assets/worlds/characters/isyco-professor-roster-sheet.png?url';
 import { resolveRelativePoint, type CompositionScenarioDefinition, type GridPoint, type WorldCompositionV1 } from '@shared/worldComposition';
 
 export const STARTER_VILLAGE_TILE_SIZE = 16;
@@ -103,7 +104,7 @@ export interface ScenarioAnchorPlacement {
 
 export interface StarterVillageScenario {
   id: 'starter-village';
-  resources: readonly { id: 'starter-village-atlas' | 'starter-village-buildings'; url: string }[];
+  resources: readonly { id: 'starter-village-atlas' | 'starter-village-buildings' | 'monster-professor-roster'; url: string }[];
   map: {
     columns: typeof STARTER_VILLAGE_COLUMNS;
     rows: typeof STARTER_VILLAGE_ROWS;
@@ -120,6 +121,7 @@ export interface StarterVillageScenario {
 
 export const STARTER_VILLAGE_ATLAS_URL = starterVillageAtlasUrl;
 export const STARTER_VILLAGE_BUILDINGS_ATLAS_URL = starterVillageBuildingsUrl;
+export const MONSTER_PROFESSOR_ROSTER_URL = professorRosterUrl;
 
 function rectangle(tile: StarterVillageTileId, left: number, top: number, width: number, height: number): ScenarioTilePlacement[] {
   return Array.from({ length: width * height }, (_, index) => ({
@@ -146,7 +148,8 @@ export const STARTER_VILLAGE_SCENARIO: StarterVillageScenario = {
   id: 'starter-village',
   resources: [
     { id: 'starter-village-atlas', url: STARTER_VILLAGE_ATLAS_URL },
-    { id: 'starter-village-buildings', url: STARTER_VILLAGE_BUILDINGS_ATLAS_URL }
+    { id: 'starter-village-buildings', url: STARTER_VILLAGE_BUILDINGS_ATLAS_URL },
+    { id: 'monster-professor-roster', url: MONSTER_PROFESSOR_ROSTER_URL }
   ],
   map: {
     columns: STARTER_VILLAGE_COLUMNS,

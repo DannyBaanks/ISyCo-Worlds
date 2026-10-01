@@ -23,6 +23,8 @@ import { useAppTheme, toggleAppTheme } from '@/design/theme';
 import type { HarnessConfig } from '@/store/config';
 import { useRtl } from '@/i18n/useDirection';
 import type { WorldId } from '@shared/worlds';
+import { WorldCharacterPortrait } from './WorldCharacterPortrait';
+import { resolveMonsterCharacter } from '@/worlds/monster/rosterCharacters';
 
 /** Roster rail width. A fixed 232px is right on a 14" laptop but reads as a
  *  sliver on a 27" display, where names truncate for no reason — so it tracks
@@ -449,6 +451,7 @@ export function FullscreenTerminal({ config, profileId = 'office' }: FullscreenT
                 onNoteChange={(note) => setAgentNote(a.id, note)}
                 drag={drag}
                 scale={scale}
+                profileId={profileId}
               />
             ))}
             {groups.map(([repoKey, { label, members }]) => (
@@ -485,6 +488,7 @@ export function FullscreenTerminal({ config, profileId = 'office' }: FullscreenT
                     onNoteChange={(note) => setAgentNote(a.id, note)}
                     drag={drag}
                     scale={scale}
+                    profileId={profileId}
                   />
                 ))}
               </div>
@@ -574,11 +578,16 @@ export function FullscreenTerminal({ config, profileId = 'office' }: FullscreenT
             // Column so the panel's `height: 100%` resolves against a definite
             // height and `align-items: stretch` gives it the full width.
             <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-              <CommandCenterPanel agent={agent} fullscreen />
+              <CommandCenterPanel
+                agent={agent}
+                fullscreen
+                profileId={profileId}
+                displayName={profileId === 'monster-trainer' ? t('worldCharacters.professor') : undefined}
+              />
             </div>
           ) : (
             <>
-              <Header agent={agent} onEdit={() => setEditAgentOpen(true)} />
+              <Header agent={agent} profileId={profileId} onEdit={() => setEditAgentOpen(true)} />
               {editAgentOpen && (
                 <EditAgentModal agent={agent} profileId={profileId} onClose={() => setEditAgentOpen(false)} />
               )}
@@ -654,6 +663,7 @@ function ContextBar({ tokens, limit, accent }: { tokens?: number; limit?: number
 
 function SidebarRow({
   agent,
+  profileId,
   active,
   onClick,
   onNoteChange,
@@ -661,6 +671,7 @@ function SidebarRow({
   scale
 }: {
   agent: Agent;
+  profileId: WorldId;
   active: boolean;
   onClick: () => void;
   onNoteChange: (note: string) => void;
@@ -688,6 +699,11 @@ function SidebarRow({
   const bullets = (agent.note ?? '').split('\n').map(s => s.trim()).filter(Boolean);
 
   const typing = useHasTerminalDraft(agent.ptyId);
+  const portraitWidth = profileId === 'monster-trainer' ? Math.max(52, scale.portrait) : scale.portrait;
+  const portraitHeight = Math.round(portraitWidth * 1.3);
+  const displayName = profileId === 'monster-trainer'
+    ? t(agent.isGod ? 'worldCharacters.professor' : `worldCharacters.${resolveMonsterCharacter(agent.monsterCharacter, agent.id)}`)
+    : agent.name;
 
   /** The ✎ button opens the editor beside the row — the bullets on the row are
    *  the summary, this is where you write them. EXPLICIT open only (v0.3.4):
@@ -722,7 +738,7 @@ function SidebarRow({
         onDrop={(e) => { e.preventDefault(); drag.drop(agent.id); }}
         onDragEnd={drag.end}
         onClick={onClick}
-        aria-label={`${agent.name} · ${agent.project}`}
+        aria-label={`${displayName} · ${agent.name} · ${agent.project}`}
         aria-current={active ? 'true' : undefined}
         style={{
           width: '100%',
@@ -746,7 +762,7 @@ function SidebarRow({
         }}
       >
         <div style={{
-          width: scale.portrait, height: Math.round(scale.portrait * 1.3), flexShrink: 0,
+          width: portraitWidth, height: portraitHeight, flexShrink: 0,
           background: `var(--cth-${agent.accent}-light)`,
           boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
           // Anchor the sprite's TOP: the portrait is taller than this tile, and
@@ -756,7 +772,9 @@ function SidebarRow({
         }}>
           {/* The sprite is drawn at exactly the tile's width, so the figure
               grows with the tile instead of floating in it. */}
-          <SpritePortrait character={agent.character} scale={scale.portraitScale} />
+          {profileId === 'monster-trainer'
+            ? <WorldCharacterPortrait character={agent.isGod ? 'professor' : resolveMonsterCharacter(agent.monsterCharacter, agent.id)} width={portraitWidth} height={portraitHeight} />
+            : <SpritePortrait character={agent.character} scale={scale.portraitScale} />}
         </div>
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
@@ -765,7 +783,7 @@ function SidebarRow({
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
               fontFamily: 'var(--cth-font-display)',
               fontSize: scale.name, lineHeight: 1.5
-            }}>{agent.name.toUpperCase()}</span>
+            }} title={agent.name}>{displayName.toUpperCase()}</span>
             {/* Your unsent text outranks the agent's own state here: an idle
                 agent with a draft on its prompt is not idle-and-free, it is
                 idle-and-held, and nothing else on screen said so. */}
@@ -920,11 +938,14 @@ function SidebarRow({
   );
 }
 
-function Header({ agent, onEdit }: { agent: Agent; onEdit: () => void }) {
+function Header({ agent, profileId, onEdit }: { agent: Agent; profileId: WorldId; onEdit: () => void }) {
   const { t } = useTranslation();
   const typing = useHasTerminalDraft(agent.ptyId);
   const archiveAgent = useStore((st) => st.archiveAgent);
   const [openState, setOpenState] = useState<'idle' | 'opening' | 'ok' | 'error'>('idle');
+  const displayName = profileId === 'monster-trainer'
+    ? t(`worldCharacters.${resolveMonsterCharacter(agent.monsterCharacter, agent.id)}`)
+    : agent.name;
 
   /** Same action as the docked panel: open the OS terminal in this agent's
    *  working directory. Fullscreen had no way to do it, which is backwards —
@@ -963,7 +984,7 @@ function Header({ agent, onEdit }: { agent: Agent; onEdit: () => void }) {
       <span style={{
         fontFamily: 'var(--cth-font-display)', fontSize: 10, lineHeight: '16px',
         color: 'var(--cth-ink-900)'
-      }}>{agent.name.toUpperCase()}</span>
+      }} title={agent.name}>{displayName.toUpperCase()}</span>
       {/* Edit belongs with the NAME, not with the action cluster on the right:
           it changes who this agent is, and the right-hand group is things you do
           with the agent. Icon-only because it sits inside the identity line —

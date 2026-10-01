@@ -37,6 +37,8 @@ import {
 import { canReceiveInbox } from '@shared/agentProvider';
 import { isComposingKey } from '@shared/imeGuard';
 import { useRtl } from '@/i18n/useDirection';
+import { WorldCharacterPortrait } from './WorldCharacterPortrait';
+import type { WorldId } from '@shared/worlds';
 
 /** Michael's control surface. Shown instead of the plain terminal/files panel
  *  when the god agent is selected: terminal + queue, the floor roster (with
@@ -83,7 +85,7 @@ const TABS: { key: CCTab; labelKey: string; icon: Parameters<typeof Icon>[0]['na
  *  and renders the real terminal. The docked instance renders the "open in
  *  fullscreen" placeholder instead — two live xterms on one pty fight over its
  *  cols/rows and corrupt the display. */
-export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent; fullscreen?: boolean }) {
+export function CommandCenterPanel({ agent, fullscreen = false, profileId = 'office', displayName }: { agent: Agent; fullscreen?: boolean; profileId?: WorldId; displayName?: string }) {
   const { t } = useTranslation();
   const [tab, setTab] = useState<CCTab>('terminal');
   // The trigger-history ledger has nothing to say until an outside party can
@@ -160,11 +162,13 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
         borderBottom: '1px solid var(--cth-ink-700)', flexShrink: 0
       }}>
         <div style={{
-          width: 32, height: 32, background: `var(--cth-${agent.accent}-light)`,
+          width: profileId === 'monster-trainer' ? 44 : 32, height: profileId === 'monster-trainer' ? 50 : 32, background: `var(--cth-${agent.accent}-light)`,
           boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
           display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden', flexShrink: 0
         }}>
-          <SpritePortrait character={agent.character} scale={1} />
+          {profileId === 'monster-trainer'
+            ? <WorldCharacterPortrait character="professor" width={44} height={50} />
+            : <SpritePortrait character={agent.character} scale={1} />}
         </div>
         {/* Title + subtitle truncate; the control cluster never shrinks. At
             sidebar width the old header wrapped its 24-char display-font title
@@ -180,7 +184,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
             <span style={{
               fontSize: 12, color: 'var(--cth-ink-500)',
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-            }}>{t('commandCenter.runsTheFloor', { name: agent.name })}</span>
+            }}>{t('commandCenter.runsTheFloor', { name: displayName ?? agent.name })}</span>
           </div>
         </div>
         {/* v0.3.4: floor-wide auto-delivery lives HERE (one switch for every

@@ -216,9 +216,9 @@ test('no Arabic string is left as its English source', () => {
     'webhooksSection.summary',               // "{{count}} · {{state}}" — same
     'editAgent.namePlaceholder',             // "Stanley" — example proper name; translating a name would be wrong
     'settings.general.worlds.office',        // "Munder Difflin" — world/product name
-    'settings.general.worlds.monsterTrainer',// "ISyCo World" — world/product name
-    'startScreen.isycoWorld',                // same product name
-    'startScreen.monsterTrainer',            // same product name
+    'settings.general.worlds.monsterTrainer',// "Monster Village" — world name
+    'startScreen.isycoWorld',                // "Monster Village" — world name
+    'startScreen.monsterTrainer',            // same world name
     'startScreen.munderDifflin',             // same product name
   ]);
   const e = pathsOf(en), a = pathsOf(ar);

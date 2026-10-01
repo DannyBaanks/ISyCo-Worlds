@@ -2732,9 +2732,9 @@ function createWorldPresentationSupervisor(win: BrowserWindow): WorldPresentatio
 function layoutWorldHelperOverlay(win: BrowserWindow, view: WebContentsView): void {
   if (view.webContents.isDestroyed() || win.isDestroyed()) return;
   const { width, height } = win.getContentBounds();
-  const overlayWidth = Math.min(460, Math.max(320, width - 24));
-  const overlayHeight = Math.min(760, Math.max(360, height - 24));
-  view.setBounds({ x: Math.max(0, width - overlayWidth - 12), y: Math.max(12, height - overlayHeight - 12), width: overlayWidth, height: overlayHeight });
+  // Full-window transparent surface: the floating GUS launcher can move over
+  // the whole workspace without painting an opaque rectangle over the floor.
+  view.setBounds({ x: 0, y: 0, width, height });
 }
 
 function raiseWorldHelperOverlay(win: BrowserWindow): void {
@@ -6044,7 +6044,7 @@ function getActiveWorldProfile(): WorldProfileRuntimeStatus & { preferredWorldPr
   const status = worldProfileLifecycle?.getStatus() ?? {
     state: 'STOPPED' as const, activeProfileId: null, pendingProfileId: null, sessionId: null
   };
-  return { ...status, preferredWorldProfile: readConfig().preferredWorldProfile ?? 'office' };
+  return { ...status, preferredWorldProfile: readConfig().preferredWorldProfile ?? 'monster-trainer' };
 }
 
 async function activateWorldProfile(
@@ -6281,7 +6281,7 @@ app.whenReady().then(async () => {
   initAutoUpdater(() => liveWebContents());
   // Bootstrap the preferred semantic profile without relaunching the Electron
   // GUI. A failed bootstrap leaves the profile stopped and is queryable over IPC.
-  const preferredProfile = readConfig().preferredWorldProfile ?? 'office';
+  const preferredProfile = readConfig().preferredWorldProfile ?? 'monster-trainer';
   activeWorldProfileId = preferredProfile;
   try {
     await bootstrapHiveServices();

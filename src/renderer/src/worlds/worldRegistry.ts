@@ -7,7 +7,7 @@ import { STARTER_VILLAGE_SCENARIO } from './monster/StarterVillageScenario';
 import type { WorldManifest } from './WorldEngine';
 import type { WorldPresentationCommand, WorldPresentationComposition, WorldPresentationIntent, WorldPresentationProjection } from '@shared/worldPresentationProtocol';
 
-export const FALLBACK_WORLD_ID: WorldId = 'office';
+export const FALLBACK_WORLD_ID: WorldId = 'monster-trainer';
 
 export interface WorldSurfaceLifecycle {
   onReady: () => void;
@@ -33,6 +33,13 @@ const MonsterSurface = MonsterTrainerSurface as unknown as ComponentType<WorldSu
 /** A small allowlist: a persisted id never selects arbitrary renderer code. */
 export const WORLD_REGISTRY: readonly WorldDefinition[] = [
   {
+    id: 'monster-trainer',
+    labelKey: 'settings.general.worlds.monsterTrainer',
+    experimental: true,
+    resources: STARTER_VILLAGE_SCENARIO.resources,
+    render: (lifecycle) => createElement(MonsterSurface, lifecycle)
+  },
+  {
     id: 'office',
     labelKey: 'settings.general.worlds.office',
     experimental: false,
@@ -42,13 +49,6 @@ export const WORLD_REGISTRY: readonly WorldDefinition[] = [
     })),
     render: (lifecycle) => createElement(OfficeSurface, lifecycle)
   },
-  {
-    id: 'monster-trainer',
-    labelKey: 'settings.general.worlds.monsterTrainer',
-    experimental: true,
-    resources: STARTER_VILLAGE_SCENARIO.resources,
-    render: (lifecycle) => createElement(MonsterSurface, lifecycle)
-  }
 ];
 
 export function worldById(id: unknown): WorldDefinition {

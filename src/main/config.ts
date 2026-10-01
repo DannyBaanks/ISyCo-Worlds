@@ -467,8 +467,8 @@ const DEFAULTS: HarnessConfig = {
   tvShowOffices: false,
   officeTheme: 'office',
   worldsEnabled: false,
-  preferredWorldProfile: 'office',
-  selectedWorld: 'office',
+  preferredWorldProfile: 'monster-trainer',
+  selectedWorld: 'monster-trainer',
   lastGlobalView: 'office',
   slackEnabled: false,
   slackSigningSecret: undefined,
@@ -625,8 +625,8 @@ function normalizeWorldPreferences(cfg: HarnessConfig): HarnessConfig {
   return {
     ...cfg,
     worldsEnabled,
-    preferredWorldProfile: isWorldId(cfg.preferredWorldProfile) ? cfg.preferredWorldProfile : 'office',
-    selectedWorld: isWorldId(cfg.selectedWorld) ? cfg.selectedWorld : 'office',
+    preferredWorldProfile: isWorldId(cfg.preferredWorldProfile) ? cfg.preferredWorldProfile : 'monster-trainer',
+    selectedWorld: isWorldId(cfg.selectedWorld) ? cfg.selectedWorld : 'monster-trainer',
     lastGlobalView: isGlobalVisualView(cfg.lastGlobalView)
       && (cfg.lastGlobalView !== 'worlds' || worldsEnabled)
       ? cfg.lastGlobalView
@@ -703,8 +703,8 @@ export function writeConfig(patch: Partial<HarnessConfig>): HarnessConfig {
   const current = readConfig();
   const next: HarnessConfig = { ...current, ...patch };
   next.worldsEnabled = next.worldsEnabled === true;
-  next.preferredWorldProfile = isWorldId(next.preferredWorldProfile) ? next.preferredWorldProfile : 'office';
-  next.selectedWorld = isWorldId(next.selectedWorld) ? next.selectedWorld : 'office';
+  next.preferredWorldProfile = isWorldId(next.preferredWorldProfile) ? next.preferredWorldProfile : 'monster-trainer';
+  next.selectedWorld = isWorldId(next.selectedWorld) ? next.selectedWorld : 'monster-trainer';
   next.lastGlobalView = isGlobalVisualView(next.lastGlobalView)
     && (next.lastGlobalView !== 'worlds' || next.worldsEnabled)
     ? next.lastGlobalView

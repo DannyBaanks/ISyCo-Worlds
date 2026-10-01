@@ -1,20 +1,20 @@
 {
   "manifestVersion": 1,
   "id": "monster-trainer",
-  "name": "ISyCo World",
+  "name": "Monster Village",
   "description": {
-    "en": "ISyCo's own world, starting in Starter Village: your agents become trainers whose monsters evolve as they finish work.",
-    "es": "El mundo propio de ISyCo, empezando por Starter Village: tus agentes se vuelven entrenadores cuyos monstruos evolucionan al terminar su trabajo."
+    "en": "ISyCo Worlds' monster world, starting in Starter Village: your agents become trainers whose monsters evolve as they finish work.",
+    "es": "El mundo de monstruos de ISyCo Worlds, empezando por Starter Village: tus agentes se vuelven entrenadores cuyos monstruos evolucionan al terminar su trabajo."
   },
   "author": { "name": "DannyBaanks (ISyCo)", "url": "https://github.com/DannyBaanks" },
   "license": "MIT",
-  "source": "https://github.com/DannyBaanks/munder-difflin",
+  "source": "https://github.com/DannyBaanks/ISyCo-Worlds",
   "assets": [
     {
       "path": "src/renderer/src/assets/worlds/starter-village/",
       "author": { "name": "DannyBaanks (ISyCo)", "url": "https://github.com/DannyBaanks" },
       "license": "MIT",
-      "source": "https://github.com/DannyBaanks/munder-difflin",
+      "source": "https://github.com/DannyBaanks/ISyCo-Worlds",
       "redistribution": "open",
       "credit": {
         "en": "Original Starter Village art made for this project (see src/renderer/src/assets/ATTRIBUTION.md).",
@@ -25,22 +25,22 @@
       "path": "src/renderer/src/assets/worlds/characters/",
       "author": { "name": "DannyBaanks (ISyCo)", "url": "https://github.com/DannyBaanks" },
       "license": "MIT",
-      "source": "https://github.com/DannyBaanks/munder-difflin",
+      "source": "https://github.com/DannyBaanks/ISyCo-Worlds",
       "redistribution": "open",
       "credit": {
-        "en": "ISyCo World roster art supplied with the project's visual handoff; the professor source sheet was generated with OpenAI. See the bundled PROVENANCE.md for hashes and source paths.",
-        "es": "Arte del roster de ISyCo World suministrado con el handoff visual del proyecto; la hoja fuente del profesor fue generada con OpenAI. Ver el PROVENANCE.md incluido para hashes y rutas de origen."
+        "en": "Monster Village roster art supplied with the project's visual handoff; the professor source sheet was generated with OpenAI. See the bundled PROVENANCE.md for hashes and source paths.",
+        "es": "Arte del roster de Monster Village suministrado con el handoff visual del proyecto; la hoja fuente del profesor fue generada con OpenAI. Ver el PROVENANCE.md incluido para hashes y rutas de origen."
       }
     },
     {
       "path": "src/renderer/src/assets/worlds/materials/",
       "author": { "name": "DannyBaanks (ISyCo)", "url": "https://github.com/DannyBaanks" },
       "license": "MIT",
-      "source": "https://github.com/DannyBaanks/munder-difflin",
+      "source": "https://github.com/DannyBaanks/ISyCo-Worlds",
       "redistribution": "open",
       "credit": {
-        "en": "ISyCo Worlds presentation materials supplied with the project's visual handoff. See the bundled PROVENANCE.md for hashes and source paths.",
-        "es": "Materiales de presentación de ISyCo Worlds suministrados con el handoff visual del proyecto. Ver el PROVENANCE.md incluido para hashes y rutas de origen."
+        "en": "Monster Village presentation materials from the project's visual handoff and the generated Munder Difflin office launch art. See the bundled PROVENANCE.md for provenance and hashes.",
+        "es": "Materiales de presentación de Monster Village del handoff visual del proyecto y la imagen generada para el inicio de Munder Difflin. Ver el PROVENANCE.md incluido para procedencia y hashes."
       }
     }
   ],

@@ -95,7 +95,11 @@ export function AgentDetailPanel({ agent, profileId = 'office' }: AgentDetailPan
   const onPtyStream = usePtyParser(agent.id);
 
   // Michael gets the full command-center dashboard instead of the plain panel.
-  if (agent.isGod) return <CommandCenterPanel agent={agent} />;
+  if (agent.isGod) return <CommandCenterPanel
+    agent={agent}
+    profileId={profileId}
+    displayName={profileId === 'monster-trainer' ? t('worldCharacters.professor') : undefined}
+  />;
 
   const openTerminal = async () => {
     setOpenTerminalState('opening');

@@ -12,3 +12,7 @@ Neither image substitutes interactive controls or the live world canvas.
 The Monster Trainer scene was copied byte-for-byte from the same supplied visual handoff. It is a static launch-screen backdrop; it does not add movement, interactions, or world behavior.
 
 - `../starter-village/starter-village-atlas.png` SHA-256: `bc398dcd4bb577e7cc17ba458316288f477cf563e55a3861b9e6971b77e0e0bc`
+
+Munder Difflin launch-screen art was generated for this project from Danny’s request for a ground-level, pixel-art office view with Ryan beside Dwight. It replaces the office selection card backdrop only; it does not alter the live office scene.
+
+- `munder-difflin-office.png` SHA-256: `1bc90e4281701fa6c4e47820ad0e0b8c5555374ad7ee6539f28009914a11263f`

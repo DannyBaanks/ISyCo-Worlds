@@ -6,7 +6,7 @@ import type { WorkerMotionSnapshot } from './monsterMovement';
 import { locationReactionFrame, type LocationReactionBurst } from './locationReactions';
 import {
   resolveStarterVillageAnchor, STARTER_VILLAGE_ANCHOR_IDS, STARTER_VILLAGE_ATLAS_URL, STARTER_VILLAGE_BUILDINGS_ATLAS_URL,
-  STARTER_VILLAGE_COMPOSITION_DEFINITION, STARTER_VILLAGE_PRESET, STARTER_VILLAGE_SCENARIO,
+  MONSTER_PROFESSOR_ROSTER_URL, STARTER_VILLAGE_COMPOSITION_DEFINITION, STARTER_VILLAGE_PRESET, STARTER_VILLAGE_SCENARIO,
   STARTER_VILLAGE_TILE_SIZE, type StarterVillageTileId
 } from './StarterVillageScenario';
 import { STARTER_VILLAGE_ATLAS_FRAMES, STARTER_VILLAGE_BUILDING_FRAMES } from './StarterVillageAtlasFrames';
@@ -51,12 +51,21 @@ export interface AnimatedStarterVillageScene extends Container {
 }
 function markerFor(state: ReturnType<typeof visualStateFor>, x: number, y: number): Graphics { const marker = stateMarker(state); const graphics = new Graphics().setFillStyle({ color: marker.color }); if (marker.shape === 'circle') graphics.circle(x + 4, y + 4, 4).fill(); else if (marker.shape === 'bar') graphics.rect(x, y + 2, 8, 4).fill(); else if (marker.shape === 'triangle') graphics.poly([x + 4, y, x + 8, y + 8, x, y + 8]).fill(); else graphics.poly([x + 4, y, x + 8, y + 4, x + 4, y + 8, x, y + 4]).fill(); return graphics; }
 function drawGuide(root: Container, composition: WorldCompositionV1): void {
+  const roster = Assets.get<Texture>(MONSTER_PROFESSOR_ROSTER_URL);
+  if (!roster) throw new Error('Monster Village professor art was not bootstrapped');
+  roster.source.scaleMode = 'nearest';
   const position = resolveStarterVillageAnchor(composition, 'professor');
-  const guide = new Graphics(); const x = position.x * STARTER_VILLAGE_TILE_SIZE + 4; const y = position.y * STARTER_VILLAGE_TILE_SIZE;
-  guide.setFillStyle({ color: 0x2c3045 }).rect(x, y + 5, 8, 10).fill();
-  guide.setFillStyle({ color: 0xf0c8a0 }).rect(x + 2, y + 1, 4, 5).fill();
-  guide.setFillStyle({ color: 0xb76b45 }).rect(x + 1, y, 6, 2).fill();
-  guide.zIndex = y + 16; root.addChild(guide);
+  const frame = new Rectangle(roster.source.width * 4 / 5, 0, roster.source.width / 5, roster.source.height);
+  const guide = new Sprite(new Texture({ source: roster.source, frame }));
+  const width = 32;
+  const height = 48;
+  guide.label = 'monster-village-professor';
+  guide.width = width;
+  guide.height = height;
+  guide.x = Math.round(position.x * STARTER_VILLAGE_TILE_SIZE + (STARTER_VILLAGE_TILE_SIZE - width) / 2);
+  guide.y = Math.round(position.y * STARTER_VILLAGE_TILE_SIZE + STARTER_VILLAGE_TILE_SIZE - height);
+  guide.zIndex = position.y * STARTER_VILLAGE_TILE_SIZE + STARTER_VILLAGE_TILE_SIZE + 1;
+  root.addChild(guide);
 }
 
 function tileSprite(atlas: Texture, tile: StarterVillageTileId, x: number, y: number): Sprite {
@@ -189,6 +198,7 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
   drawGuide(root, composition);
   const agentById = new Map(options.agents.map((agent) => [agent.id, agent]));
   const actorVisuals = new Map<string, { body: Graphics; marker: Graphics; stage: EvolutionStage; action: string; direction: string; frame: number; visualState: string }>();
+  const actorScale = 1.5;
   root.updateWorkers = (motions) => {
     for (const motion of motions) {
       const agent = agentById.get(motion.id);
@@ -210,10 +220,10 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
       }
       const footX = motion.x + STARTER_VILLAGE_TILE_SIZE / 2;
       const footY = motion.y + STARTER_VILLAGE_TILE_SIZE;
-      visual.body.x = Math.round(footX - plan.width / 2);
-      visual.body.y = Math.round(footY - plan.height);
-      visual.marker.x = visual.body.x;
-      visual.marker.y = visual.body.y;
+      visual.body.x = Math.round(footX - plan.width * actorScale / 2);
+      visual.body.y = Math.round(footY - plan.height * actorScale);
+      visual.marker.x = Math.round(footX - 8);
+      visual.marker.y = visual.body.y - 4;
       visual.body.zIndex = footY;
       visual.marker.zIndex = footY + 1;
     }
@@ -238,7 +248,8 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
     const task = options.tasks.find((candidate) => candidate.assignee === agent.id);
     const body = new Graphics();
     const marker = new Graphics();
-    body.hitArea = new Rectangle(0, 0, 24, 24);
+    body.scale.set(actorScale);
+    body.hitArea = new Rectangle(0, 0, 24 * actorScale, 24 * actorScale);
     body.eventMode = 'static'; body.cursor = 'pointer';
     body.on('pointertap', () => options.onAgentSelect(agent.id));
     marker.eventMode = 'static'; marker.cursor = 'pointer';

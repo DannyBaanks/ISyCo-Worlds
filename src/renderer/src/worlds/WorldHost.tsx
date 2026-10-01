@@ -222,10 +222,10 @@ function IsolatedWorldViewport({ profileId, suspended }: { profileId: 'monster-t
         <WorldRecoverySurface error={status.error ? {
           phase: status.error.phase, worldId: status.error.profileId, cause: new Error(status.error.cause.message),
           runtime: 'host', category: status.error.category === 'resource' ? 'resource' : 'renderer'
-        } : undefined} retryLabel="Retry ISyCo World" onRetry={() => { void window.cth.restartWorldPresentation().then(acceptStatus); }} />
+        } : undefined} retryLabel={profileId === 'monster-trainer' ? 'Retry Monster Village' : 'Retry Munder Difflin'} onRetry={() => { void window.cth.restartWorldPresentation().then(acceptStatus); }} />
       )}
       {status.phase !== 'READY' && status.phase !== 'RECOVERY' && (
-        <div data-world-loading={status.phase} style={{ position: 'absolute', inset: 0, zIndex: 2, display: 'grid', placeItems: 'center', pointerEvents: 'none' }}>Loading ISyCo World…</div>
+        <div data-world-loading={status.phase} style={{ position: 'absolute', inset: 0, zIndex: 2, display: 'grid', placeItems: 'center', pointerEvents: 'none' }}>Loading {profileId === 'monster-trainer' ? 'Monster Village' : 'Munder Difflin'}…</div>
       )}
     </div>
   );

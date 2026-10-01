@@ -4,6 +4,8 @@ import type { WorldHelperStreamEvent } from '@shared/worldHelper';
 import './world-helper-surface.css';
 
 type HelperBridge = NonNullable<Window['gusOverlay']>;
+type LauncherPosition = { x: number; y: number };
+const LAUNCHER_STORAGE_KEY = 'isyco.worldHelperLauncherPosition';
 
 const COLORS = {
   ink: 'var(--worlds-page-ink, #382a1c)',
@@ -50,6 +52,22 @@ export function WorldHelperSurface({ snapshot, setupRequired, onSnapshot, bridge
   const [showSetup, setShowSetup] = useState(setupRequired);
   const [error, setError] = useState('');
   const streamRequestId = useRef<string | null>(null);
+  const [viewport, setViewport] = useState({ width: window.innerWidth, height: window.innerHeight });
+  const [launcherPosition, setLauncherPosition] = useState<LauncherPosition>(() => {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(LAUNCHER_STORAGE_KEY) ?? 'null') as LauncherPosition | null;
+      if (saved && Number.isFinite(saved.x) && Number.isFinite(saved.y)) return saved;
+    } catch { /* use the default corner */ }
+    return { x: Math.max(12, window.innerWidth - 80), y: Math.max(12, window.innerHeight - 72) };
+  });
+  const drag = useRef<{ pointerId: number; offsetX: number; offsetY: number; startX: number; startY: number; moved: boolean } | null>(null);
+  const suppressLauncherClick = useRef(false);
+
+  useEffect(() => {
+    const resize = (): void => setViewport({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener('resize', resize);
+    return () => window.removeEventListener('resize', resize);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -162,9 +180,44 @@ export function WorldHelperSurface({ snapshot, setupRequired, onSnapshot, bridge
     padding: '7px 10px', cursor: 'pointer', fontFamily: 'var(--cth-font-ui)', fontSize: 12
   };
 
+  const launcherWidth = 56;
+  const launcherHeight = 48;
+  const panelWidth = Math.min(360, Math.max(240, viewport.width - 24));
+  const panelHeight = Math.min(430, Math.max(260, viewport.height - 24));
+  const launcherX = Math.min(Math.max(8, launcherPosition.x), Math.max(8, viewport.width - launcherWidth - 8));
+  const launcherY = Math.min(Math.max(8, launcherPosition.y), Math.max(8, viewport.height - launcherHeight - 8));
+  const panelLeft = Math.min(Math.max(8, launcherX - (panelWidth - launcherWidth) / 2), Math.max(8, viewport.width - panelWidth - 8));
+  const openDown = launcherY < viewport.height / 2;
+  const panelTop = Math.min(Math.max(8, openDown ? launcherY + launcherHeight + 8 : launcherY - panelHeight - 8), Math.max(8, viewport.height - panelHeight - 8));
+
+  const moveLauncher = (event: React.PointerEvent<HTMLButtonElement>): void => {
+    const activeDrag = drag.current;
+    if (!activeDrag || activeDrag.pointerId !== event.pointerId) return;
+    const x = event.clientX - activeDrag.offsetX;
+    const y = event.clientY - activeDrag.offsetY;
+    if (!activeDrag.moved && Math.hypot(event.clientX - activeDrag.startX, event.clientY - activeDrag.startY) > 4) activeDrag.moved = true;
+    if (!activeDrag.moved) return;
+    setLauncherPosition({
+      x: Math.min(Math.max(8, x), Math.max(8, viewport.width - launcherWidth - 8)),
+      y: Math.min(Math.max(8, y), Math.max(8, viewport.height - launcherHeight - 8))
+    });
+  };
+
+  const finishLauncherDrag = (event: React.PointerEvent<HTMLButtonElement>): void => {
+    if (drag.current?.pointerId !== event.pointerId) return;
+    suppressLauncherClick.current = drag.current.moved;
+    if (drag.current.moved) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      const position = { x: rect.left, y: rect.top };
+      setLauncherPosition(position);
+      try { window.localStorage.setItem(LAUNCHER_STORAGE_KEY, JSON.stringify(position)); } catch { /* optional preference */ }
+    }
+    drag.current = null;
+  };
+
   if (setupRequired || showSetup) {
     return (
-      <div className="world-helper-root world-helper-root--setup" style={{ position: 'fixed', zIndex: 1500, inset: 0, display: 'grid', placeItems: 'center', padding: 20, background: 'rgba(24,18,12,.62)' }}>
+      <div className="world-helper-root world-helper-root--setup" style={{ position: 'fixed', zIndex: 1500, inset: 0, display: 'grid', placeItems: 'center', padding: 20, background: 'rgba(24,18,12,.62)', pointerEvents: 'auto' }}>
         <section className="world-helper-setup-card" aria-label="Configure World Helper" style={{ ...frame, width: 'min(500px, 96vw)', maxHeight: '90vh', overflow: 'auto', padding: 24 }}>
           <div className="world-helper-kicker" style={{ color: COLORS.brass, fontSize: 11, letterSpacing: 2 }}>OPTIONAL · WORLD HELPER</div>
           <h1 className="world-helper-title" style={{ fontFamily: 'var(--cth-font-display)', fontSize: 22, margin: '8px 0' }}>Configure GUS</h1>
@@ -205,9 +258,9 @@ export function WorldHelperSurface({ snapshot, setupRequired, onSnapshot, bridge
   }
 
   return (
-    <div className="world-helper-root world-helper-root--desk" style={{ position: 'fixed', zIndex: 1300, right: 16, bottom: 16 }}>
+    <div className="world-helper-root world-helper-root--desk" style={{ position: 'fixed', zIndex: 1300, inset: 0, pointerEvents: 'none' }}>
       {expanded && (
-        <section className="world-helper-desk" aria-label="GUS World Helper" style={{ ...frame, width: 'min(360px, calc(100vw - 32px))', height: 430, display: 'flex', flexDirection: 'column', marginBottom: 10 }}>
+        <section className={`world-helper-desk world-helper-desk--${openDown ? 'down' : 'up'}`} aria-label="GUS World Helper" style={{ ...frame, position: 'fixed', left: panelLeft, top: panelTop, width: panelWidth, height: panelHeight, display: 'flex', flexDirection: 'column', pointerEvents: 'auto' }}>
           <header className="world-helper-desk-header" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 10, borderBottom: `1px solid ${COLORS.trim}`, background: COLORS.creamDark }}>
             <span aria-hidden="true">✦</span><strong style={{ flex: 1 }}>GUS · World Helper</strong>
             <span className="world-helper-lifecycle" style={{ color: COLORS.brass, fontSize: 10 }}>{snapshot.lifecycle.toLowerCase()}</span>
@@ -229,7 +282,7 @@ export function WorldHelperSurface({ snapshot, setupRequired, onSnapshot, bridge
                 {snapshot.pendingProposal && <div className="world-helper-proposal" style={{ borderTop: `1px solid ${COLORS.trim}`, marginTop: 10, paddingTop: 8 }}>
                   <strong>Proposed team · review before launch</strong>
                   {snapshot.pendingProposal.workspace && <p style={{ margin: '8px 0', color: COLORS.muted, overflowWrap: 'anywhere' }}>Launch target (bound to this approval): <b>{snapshot.pendingProposal.workspace}</b></p>}
-                  {snapshot.pendingProposal.worldSuggestion && <p style={{ margin: '8px 0', color: COLORS.muted }}>World suggestion: <b>{snapshot.pendingProposal.worldSuggestion === 'monster-trainer' ? 'Monster Trainer' : 'Office'}</b> · advisory only; select the world yourself from Worlds.</p>}
+                {snapshot.pendingProposal.worldSuggestion && <p style={{ margin: '8px 0', color: COLORS.muted }}>World suggestion: <b>{snapshot.pendingProposal.worldSuggestion === 'monster-trainer' ? 'Monster Village' : 'Munder Difflin'}</b> · advisory only; select the world yourself from Worlds.</p>}
                   {snapshot.pendingProposal.workers.map((worker) => <label key={`${worker.name}-${worker.role}`} style={{ display: 'grid', gridTemplateColumns: '18px 1fr', gap: 5, marginTop: 9 }}>
                     <input type="checkbox" checked={selected.includes(worker.name)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, worker.name] : current.filter((name) => name !== worker.name))} />
                     <span><b>{worker.name}</b> · {worker.role}<br /><span style={{ color: COLORS.muted }}>{worker.purpose} · {worker.provider}</span></span>
@@ -252,8 +305,26 @@ export function WorldHelperSurface({ snapshot, setupRequired, onSnapshot, bridge
           )}
         </section>
       )}
-      <button className="world-helper-launcher" type="button" aria-label={expanded ? 'Minimize GUS' : 'Open GUS World Helper'} onClick={() => setExpanded((value) => !value)} style={{ ...frame, width: 56, height: 48, cursor: 'pointer', fontSize: 18, borderRadius: 8 }}>
-        ✦{snapshot.notices.some((notice) => notice.severity === 'requires_action') ? <span style={{ color: COLORS.red }}>●</span> : null}
+      <button
+        className="world-helper-launcher"
+        type="button"
+        aria-label={expanded ? 'Minimize GUS' : 'Open GUS World Helper'}
+        title="Drag to move · click to open GUS"
+        onPointerDown={(event) => {
+          event.currentTarget.setPointerCapture(event.pointerId);
+          const rect = event.currentTarget.getBoundingClientRect();
+          drag.current = { pointerId: event.pointerId, offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top, startX: event.clientX, startY: event.clientY, moved: false };
+        }}
+        onPointerMove={moveLauncher}
+        onPointerUp={finishLauncherDrag}
+        onPointerCancel={finishLauncherDrag}
+        onClick={() => {
+          if (suppressLauncherClick.current) { suppressLauncherClick.current = false; return; }
+          setExpanded((value) => !value);
+        }}
+        style={{ ...frame, position: 'fixed', left: launcherX, top: launcherY, width: launcherWidth, height: launcherHeight, cursor: 'grab', fontSize: 18, borderRadius: 8, pointerEvents: 'auto', touchAction: 'none', userSelect: 'none' }}
+      >
+        ◆{snapshot.notices.some((notice) => notice.severity === 'requires_action') ? <span style={{ color: COLORS.red }}>●</span> : null}
       </button>
     </div>
   );

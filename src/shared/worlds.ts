@@ -1,4 +1,5 @@
-export const WORLD_IDS = ['office', 'monster-trainer'] as const;
+// The first profile is the default world shown to new installations.
+export const WORLD_IDS = ['monster-trainer', 'office'] as const;
 
 export type WorldId = (typeof WORLD_IDS)[number];
 

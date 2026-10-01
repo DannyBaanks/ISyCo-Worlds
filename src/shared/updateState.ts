@@ -41,7 +41,7 @@ export type UpdateAction = 'none' | 'check' | 'download' | 'restart' | 'open-rel
  * to point at the upstream repo, so a fork build compared itself against
  * someone else's releases and refused to open its own.
  */
-export const REPO = 'DannyBaanks/munder-difflin';
+export const REPO = 'DannyBaanks/ISyCo-Worlds';
 
 /** The installer for THIS machine in the release tagged v{version}, by the
  *  names electron-builder.yml produces. Used when a status carries no

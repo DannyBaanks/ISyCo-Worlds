@@ -64,6 +64,7 @@ export function App() {
   const appThemeNow = useAppTheme();
   const sidebarWidth = useStore(s => s.sidebarWidth);
   const setSidebarWidth = useStore(s => s.setSidebarWidth);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const ideOpen = useStore(s => s.ideOpen);
   const setIdeOpen = useStore(s => s.setIdeOpen);
   const taskDetailOpen = useStore(s => s.taskDetailId !== null);
@@ -512,7 +513,7 @@ export function App() {
         {globalView === 'marketplace' && <MarketplaceView />}
         <WoodFrame className="worlds-world-column">
           <HangingSign className="worlds-world-sign">
-            {t(activeWorldProfileId === 'monster-trainer' ? 'startScreen.isycoWorld' : 'startScreen.munderDifflin')}
+            {t(activeWorldProfileId === 'monster-trainer' ? 'startScreen.monsterTrainer' : 'startScreen.munderDifflin')}
           </HangingSign>
           <VineCorner /><VineCorner flipped />
           <div className="worlds-stage" style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative' }}>
@@ -547,16 +548,27 @@ export function App() {
           <AgentStrip config={config} profileId={activeWorldProfileId} onOverlayVisibilityChange={setAgentStripOverlayOpen} />
         </WoodFrame>
 
-        <SidebarSplitter
+        {!sidebarCollapsed && <SidebarSplitter
           width={sidebarWidth}
           onChange={setSidebarWidth}
           viewportWidth={vpWidth}
-        />
+        />}
 
         <div className="worlds-sidebar" style={{
-          width: sidebarWidth, flexShrink: 0,
-          minHeight: 0, display: 'flex', flexDirection: 'column'
+          width: sidebarCollapsed ? 46 : sidebarWidth, flexShrink: 0,
+          minHeight: 0, display: 'flex', flexDirection: 'column',
+          padding: sidebarCollapsed ? 5 : undefined,
+          alignItems: sidebarCollapsed ? 'center' : undefined
         }}>
+          <button
+            type="button"
+            className="worlds-sidebar-toggle"
+            aria-label={sidebarCollapsed ? 'Show command sidebar' : 'Hide command sidebar'}
+            aria-expanded={!sidebarCollapsed}
+            title={sidebarCollapsed ? 'Show command sidebar' : 'Hide command sidebar'}
+            onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
+          >{sidebarCollapsed ? '‹' : '›'}</button>
+          {!sidebarCollapsed && <>
           <div className="worlds-command-slot">
           {agent ? (
             <AgentDetailPanel agent={agent} profileId={activeWorldProfileId} />
@@ -598,6 +610,7 @@ export function App() {
           )}
           </div>
           <WorldStatusLedger />
+          </>}
         </div>
       </div>
 

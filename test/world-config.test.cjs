@@ -22,7 +22,7 @@ const { readConfig, writeConfig } = loadTs('src/main/config.ts');
 test.after(() => fs.rmSync(userData, { recursive: true, force: true }));
 
 test('World IDs admit only the renderers that config can select', () => {
-  assert.deepEqual(W.WORLD_IDS, ['office', 'monster-trainer']);
+  assert.deepEqual(W.WORLD_IDS, ['monster-trainer', 'office']);
   assert.equal(W.isWorldId('office'), true);
   assert.equal(W.isWorldId('monster-trainer'), true);
   assert.equal(W.isWorldId('tavern'), false);
@@ -33,8 +33,8 @@ test('World IDs admit only the renderers that config can select', () => {
 test('World preferences default safely, persist, and reject an unknown renderer', () => {
   const fresh = readConfig();
   assert.equal(fresh.worldsEnabled, false);
-  assert.equal(fresh.selectedWorld, 'office');
-  assert.equal(fresh.preferredWorldProfile, 'office');
+  assert.equal(fresh.selectedWorld, 'monster-trainer');
+  assert.equal(fresh.preferredWorldProfile, 'monster-trainer');
   assert.equal(fresh.lastGlobalView, 'office');
 
   writeConfig({ worldsEnabled: true, selectedWorld: 'monster-trainer', lastGlobalView: 'worlds' });
@@ -42,7 +42,7 @@ test('World preferences default safely, persist, and reject an unknown renderer'
   assert.equal(saved.worldsEnabled, true);
   assert.equal(saved.selectedWorld, 'monster-trainer');
   assert.equal(saved.lastGlobalView, 'worlds');
-  assert.equal(saved.preferredWorldProfile, 'office', 'visual selection does not select the semantic runtime profile');
+  assert.equal(saved.preferredWorldProfile, 'monster-trainer', 'visual selection does not select the semantic runtime profile');
   assert.equal(writeConfig({ preferredWorldProfile: 'monster-trainer' }).preferredWorldProfile, 'monster-trainer');
 
   fs.writeFileSync(
@@ -50,7 +50,7 @@ test('World preferences default safely, persist, and reject an unknown renderer'
     JSON.stringify({ ...saved, selectedWorld: 'not-a-world' }),
     'utf8'
   );
-  assert.equal(readConfig().selectedWorld, 'office');
+  assert.equal(readConfig().selectedWorld, 'monster-trainer');
 
   fs.writeFileSync(
     path.join(userData, 'config.json'),

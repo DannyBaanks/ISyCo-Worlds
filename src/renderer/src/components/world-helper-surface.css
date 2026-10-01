@@ -114,12 +114,10 @@
 .world-helper-root :focus-visible { outline: 2px solid #6f884e; outline-offset: 2px; }
 
 @media (max-width: 520px) {
-  .world-helper-root--setup { padding: 10px !important; }
+.world-helper-root--setup { padding: 10px !important; }
   .world-helper-setup-card { padding: 18px !important; padding-top: 26px !important; }
   .world-helper-setup-card > div:last-child { flex-wrap: wrap; }
   .world-helper-setup-card > div:last-child > div { flex-wrap: wrap; justify-content: flex-end; }
-  .world-helper-desk { width: min(360px, calc(100vw - 20px)) !important; }
-  .world-helper-root--desk { right: 10px !important; bottom: 10px !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {

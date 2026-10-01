@@ -12,7 +12,7 @@ import { Icon } from '@/components/Icon';
 import { ProviderLogo } from '@/components/ProviderLogo';
 import { PixelButton } from '@/components/PixelButton';
 import { LANGUAGES, setLanguage } from '@/i18n';
-import officeSceneUrl from '@/assets/worlds/materials/isyco-world-scene.webp?url';
+import officeSceneUrl from '@/assets/worlds/materials/munder-difflin-office.png?url';
 import monsterTrainerSceneUrl from '@/assets/worlds/materials/monster-trainer-scene.webp?url';
 import './world-start-screen.css';
 
@@ -21,11 +21,11 @@ type ActivationResult = Awaited<ReturnType<typeof window.cth.requestWorldProfile
 
 const PROFILE_LABELS: Record<WorldId, string> = {
   office: 'startScreen.munderDifflin',
-  'monster-trainer': 'startScreen.isycoWorld'
+  'monster-trainer': 'startScreen.monsterTrainer'
 };
 const PROFILE_ART_LABEL: Record<WorldId, string> = {
   office: 'Munder Difflin',
-  'monster-trainer': 'Starter Village'
+  'monster-trainer': 'Monster Village'
 };
 const PROFILE_SCENE: Record<WorldId, string> = {
   office: officeSceneUrl,
@@ -56,7 +56,7 @@ export function WorldStartScreen({ config, worldProfileStatus, onConfigSaved, on
   const firstRun = setupPending;
   const profileTouched = useRef(false);
   const [selectedProfile, setSelectedProfile] = useState<WorldId>(
-    config.preferredWorldProfile ?? worldProfileStatus?.preferredWorldProfile ?? 'office'
+    config.preferredWorldProfile ?? worldProfileStatus?.preferredWorldProfile ?? 'monster-trainer'
   );
   const [selectedHome, setSelectedHome] = useState(config.harnessHome ?? '~/HarnessAgents');
   const [provider, setProvider] = useState<AgentProvider>(config.godProvider ?? 'claude');
@@ -247,9 +247,9 @@ export function WorldStartScreen({ config, worldProfileStatus, onConfigSaved, on
     <main className="cth-world-start" data-world-profile={selectedProfile} aria-label={t('startScreen.title')}>
       <div className="cth-world-start-frame">
         <header className="cth-world-start-header">
-          <div className="cth-world-start-brand" aria-label="ISyCo World">
+          <div className="cth-world-start-brand" aria-label="ISyCo Worlds">
             <span className="cth-world-start-globe" aria-hidden="true"><Icon name="web" /></span>
-            <span>ISyCo World</span>
+            <span>ISyCo Worlds</span>
           </div>
           <div className="cth-world-start-welcome">
             <h1>{t('startScreen.title')}</h1>

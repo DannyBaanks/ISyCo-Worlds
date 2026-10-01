@@ -9,15 +9,15 @@ import { WORLD_IDS } from '../shared/worlds';
 
 export const WORLD_PROFILES: readonly WorldProfileDescriptor[] = [
   {
+    id: 'monster-trainer', labelKey: 'worlds.monsterTrainer',
+    requiredCapabilities: ['trainer.core'], optionalCapabilities: ['trainer.mcp', 'trainer.skills', 'trainer.actions'],
+    sharedCapabilities: ['workspace.filesystem', 'workspace.git'], presentationId: 'monster-trainer'
+  },
+  {
     id: 'office', labelKey: 'worlds.office',
     requiredCapabilities: ['office.core'], optionalCapabilities: ['munder.mcp', 'munder.skills', 'munder.actions'],
     sharedCapabilities: ['workspace.filesystem', 'workspace.git'], presentationId: 'office'
   },
-  {
-    id: 'monster-trainer', labelKey: 'worlds.monsterTrainer',
-    requiredCapabilities: ['trainer.core'], optionalCapabilities: ['trainer.mcp', 'trainer.skills', 'trainer.actions'],
-    sharedCapabilities: ['workspace.filesystem', 'workspace.git'], presentationId: 'monster-trainer'
-  }
 ];
 
 export const WORLD_CAPABILITIES: readonly CapabilityDescriptor[] = [

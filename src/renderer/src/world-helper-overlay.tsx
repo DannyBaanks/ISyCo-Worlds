@@ -11,4 +11,5 @@ document.body.style.overflow = 'hidden';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing GUS overlay root');
+Object.assign(root.style, { position: 'fixed', inset: '0', pointerEvents: 'none', background: 'transparent' });
 createRoot(root).render(<StrictMode><WorldHelperOverlay /></StrictMode>);

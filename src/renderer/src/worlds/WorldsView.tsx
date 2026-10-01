@@ -28,12 +28,12 @@ export function WorldsView({
 }) {
   const { t } = useTranslation();
   const [status, setStatus] = useState<ProfileStatus | null>(null);
-  const [selected, setSelected] = useState<WorldId>(config.preferredWorldProfile ?? 'office');
+  const [selected, setSelected] = useState<WorldId>(config.preferredWorldProfile ?? 'monster-trainer');
   const [confirmation, setConfirmation] = useState<WorldId | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => { setSelected(config.preferredWorldProfile ?? 'office'); }, [config.preferredWorldProfile]);
+  useEffect(() => { setSelected(config.preferredWorldProfile ?? 'monster-trainer'); }, [config.preferredWorldProfile]);
   useEffect(() => {
     let cancelled = false;
     void window.cth.getWorldProfileStatus().then((next) => {

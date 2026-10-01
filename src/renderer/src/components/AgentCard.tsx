@@ -197,8 +197,8 @@ export function AgentCard({
         <div style={{ display: 'flex', gap: 8, height: '100%' }}>
           {/* Portrait tile — vertically centred so the card reads calm and even. */}
           <div style={{
-            width: worldProfileId === 'monster-trainer' ? 44 : 36,
-            height: isGod ? 50 : 46, alignSelf: 'center',
+            width: worldProfileId === 'monster-trainer' ? 56 : 36,
+            height: worldProfileId === 'monster-trainer' ? (isGod ? 68 : 60) : (isGod ? 50 : 46), alignSelf: 'center',
             // God's CARD is now accent-light, so the tile cannot be — it would
             // vanish into its own background. Paper reads as an inset frame
             // against the tint, which is what the tile is meant to look like.
@@ -210,7 +210,7 @@ export function AgentCard({
             flexShrink: 0
           }}>
             {worldProfileId === 'monster-trainer'
-              ? <WorldCharacterPortrait character={isGod ? 'professor' : monsterCharacter ?? 'leaf'} width={44} height={isGod ? 50 : 46} />
+              ? <WorldCharacterPortrait character={isGod ? 'professor' : monsterCharacter ?? 'leaf'} width={56} height={isGod ? 68 : 60} />
               : <SpritePortrait character={character} scale={2} />}
           </div>
 
