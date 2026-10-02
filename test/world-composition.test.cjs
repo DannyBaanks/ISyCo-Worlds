@@ -45,6 +45,11 @@ test('WorldCompositionV1 requires versioned placements and terrain', () => {
   assert.equal(Composition.isWorldCompositionV1({ ...layout, terrain: undefined }), false);
   assert.equal(Composition.isWorldCompositionV1({ ...layout, version: 2 }), false);
   assert.equal(Composition.isWorldCompositionV1({ ...layout, placements: [{ id: 'x', definitionId: '', x: 0, y: 0 }] }), false);
+  assert.equal(Composition.isWorldCompositionV1({ ...layout, columns: 20, rows: 12 }), true);
+  assert.equal(Composition.isWorldCompositionV1({ ...layout, columns: 0, rows: 12 }), false);
+  assert.equal(Composition.isWorldCompositionV1({ ...layout, note: 'extra' }), false);
+  assert.deepEqual(Composition.compositionSpan(layout, 8, 8), { columns: 8, rows: 8 });
+  assert.deepEqual(Composition.compositionSpan({ ...layout, columns: 20, rows: 12 }, 8, 8), { columns: 20, rows: 12 });
 });
 
 test('validates footprints, required semantic metadata and relative interaction point data', () => {
@@ -112,6 +117,29 @@ test('required semantic structures move with their stable anchor and authored in
   assert.deepEqual(Composition.resolveRelativePoint(moved.state.present.placements[0], definition.objects.lab.interactionPoints.work), { x: 6, y: 2 });
   const rejected = Composition.applyCompositionCommand(moved.state, { type: 'remove-object', placementId: 'lab-1' }, definition);
   assert.equal(rejected.ok, false);
+});
+
+test('resize-map grows the city and refuses a span that would clip what is already placed', () => {
+  const grown = Composition.applyCompositionCommand(state(), { type: 'resize-map', columns: 20, rows: 12 }, definition);
+  assert.equal(grown.ok, true);
+  assert.equal(grown.state.present.columns, 20);
+  assert.equal(grown.state.present.rows, 12);
+  const placed = Composition.applyCompositionCommand(grown.state, {
+    type: 'place-object', placement: { id: 'rock-far', definitionId: 'rock', x: 18, y: 10 }
+  }, definition);
+  assert.equal(placed.ok, true);
+  const painted = Composition.applyCompositionCommand(placed.state, {
+    type: 'paint-terrain', x: 19, y: 11, terrainId: 'path'
+  }, definition);
+  assert.equal(painted.ok, true);
+  const clipped = Composition.applyCompositionCommand(painted.state, { type: 'resize-map', columns: 8, rows: 8 }, definition);
+  assert.equal(clipped.ok, false);
+  assert.equal(clipped.state, painted.state);
+  const undone = Composition.undoComposition(grown.state);
+  assert.equal(undone.present.columns, undefined);
+  assert.equal(Composition.topPlacementAt(placed.state.present, definition, 18, 10).id, 'rock-far');
+  assert.equal(Composition.placementFits(grown.state.present, definition, 'rock', 18, 10), true);
+  assert.equal(Composition.placementFits(state().present, definition, 'rock', 18, 10), false);
 });
 
 test('undo restores the previous immutable layout snapshot', () => {

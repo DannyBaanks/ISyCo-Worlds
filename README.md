@@ -20,9 +20,9 @@
 
 Imagina un equipo donde cada integrante es una IA. **Tú hablas con el coordinador** y él reparte el trabajo: uno programa, otro investiga, otro revisa. Todo pasa dentro de un **mundo** en pixel art donde ves quién está trabajando, quién está libre y en qué va cada quien.
 
-ISyCo Worlds nació como fork de [Munder Difflin](https://github.com/chaitanyagiri/munder-difflin), de Chaitanya Giri. El proyecto ya tiene identidad y mundos propios; Munder Difflin permanece como un mundo independiente y conserva sus créditos.
+ISyCo Worlds nació como fork de [Munder Difflin](https://github.com/chaitanyagiri/munder-difflin), de Chaitanya Giri. Hoy es su propio producto: **ISyCo Worlds 0.3v**. Munder Difflin sigue disponible como mundo, con sus créditos.
 
-> 🚧 **Estado del proyecto:** la identidad de Worlds, el CLI `worlds` y **Monster Village** ya están en `main`. El pulido y la unificación del estilo visual de las aplicaciones (escritorio, celular y panel), junto con otros acabados y la actualización de sus capturas, siguen pendientes. Las imágenes de esta página pueden no reflejar todavía el aspecto final.
+> **ISyCo Worlds 0.3v** es la primera versión del producto. La app de escritorio se usa de punta a punta: eliges mundo, carpeta y equipo, y el trabajo se ve en el mapa. Monster Village se recorre, se construye con clic y puede crecer. Quedan acabados menores: el Marketplace sigue en vitrina, el panel de GUS está en inglés y las apps de celular todavía llevan la piel de la oficina.
 
 | | |
 |---|---|
@@ -41,15 +41,15 @@ ISyCo Worlds nació como fork de [Munder Difflin](https://github.com/chaitanyagi
 
 **1. Instala un «cerebro» para tus agentes.** La app no trae IA propia: usa la que ya tienes. Lo más fácil es [Claude Code](https://claude.com/claude-code). También sirven Codex, Gemini, OpenCode, Copilot y otros.
 
-**2. Descarga la app.** Entra a [**Releases**](https://github.com/DannyBaanks/ISyCo-Worlds/releases) y baja la de tu sistema:
+**2. Baja ISyCo Worlds 0.3v.** Esa es la primera release del producto y es la que corresponde a `main`: [**ISyCo Worlds 0.3v**](https://github.com/DannyBaanks/ISyCo-Worlds/releases/tag/v0.3).
 
-| Tu computadora | Descarga |
+| Tu computadora | Qué buscar en la release |
 |---|---|
-| 🪟 Windows | el instalador `.exe` (o la versión portable) |
+| 🪟 Windows | el instalador `.exe` o la versión portable |
 | 🐧 Linux | el `.AppImage` o el `.deb` |
 | 🍎 Mac | el `.dmg` |
 
-> ⚠️ **Ojo:** la última release publicada es **v0.5.2-ISyCo.2**. Es anterior a los cambios recientes de Worlds que ya están en `main`, incluidos Monster Village y el CLI rebrandeado. La página de Releases indica qué versión está empaquetada; el pulido visual de las apps sigue pendiente.
+> Esta versión reemplaza las releases anteriores. Si la página todavía no tiene el instalador de tu sistema, clona la etiqueta `v0.3` y arranca con `npm install` y `npm run dev`.
 
 **3. Ábrela.** Eliges idioma, tu **mundo** y la carpeta donde trabajará tu equipo, y tocas **Entrar a este mundo**. Luego toca **agregar agente** y listo.
 
@@ -79,7 +79,7 @@ Cada mundo es una forma distinta de ver y organizar a tu equipo. Cambias de mund
 | Mundo | Cómo es |
 |---|---|
 | **Munder Difflin** | La oficina original de Chaitanya Giri: Michael coordina y el equipo trabaja en sus escritorios. |
-| **Monster Village** | Empieza en Starter Village: el Profesor coordina, tus agentes son entrenadores y sus monstruos evolucionan conforme terminan trabajo. Puedes **explorar** la aldea o **construir** en ella. |
+| **Monster Village** | Empieza en Starter Village. El Profesor coordina, tus agentes son los siete entrenadores y sus monstruos evolucionan al terminar trabajo. En **Explorar** recorres la aldea. En **Construir** eliges una pieza y la pones con un clic. **Wider**, **Taller** y **Expand** agrandan el mapa. La rueda hace zoom y **Fit** vuelve a mostrar la ciudad entera, sin barras de desplazamiento. |
 
 <p align="center">
   <img src="./docs/readme/isyco-world-gus.png" alt="Monster Village: Starter Village en pixel art, con el Profesor como coordinador y el panel flotante de GUS" width="860"><br>
@@ -112,7 +112,7 @@ GUS es un ayudante **opcional**. Le cuentas qué quieres hacer («mantener un re
 
 ## 📱 En el celular: iPhone
 
-Tu coordinador te hace una pregunta y no estás en la compu. Contéstale desde el celular y tu equipo sigue trabajando. La app móvil se conecta a Worlds. **Su identidad visual y la adaptación de la experiencia a cada mundo todavía están pendientes**, como se indica arriba. Los nombres `MunderMobile` que aparecen en algunos instaladores y workflows son identificadores heredados.
+Tu coordinador te hace una pregunta y no estás en la compu. Contéstale desde el celular y tu equipo sigue trabajando. La app móvil se conecta a Worlds. En 0.3v el escritorio ya es el producto; el celular sigue con la piel de la oficina y los nombres `MunderMobile` de algunos instaladores.
 
 <p align="center">
   <img src="./docs/isyco/mobile/ios/office-light.png" alt="App de iPhone, pestaña Oficina: Michael, workers libres, preguntas y tareas" width="190">

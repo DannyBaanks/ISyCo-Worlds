@@ -1,6 +1,6 @@
 {
   "name": "isyco-worlds",
-  "version": "0.5.2-ISyCo.2",
+  "version": "0.3.0",
   "private": true,
   "description": "ISyCo Worlds — a local-first multi-agent workspace for building and coordinating worlds with the coding agents you already run.",
   "main": "out/main/boot.js",

@@ -5,6 +5,7 @@ import { MonsterTrainerWorld } from './MonsterTrainerWorld';
 import type { WorldPresentationCommand, WorldPresentationComposition, WorldPresentationIntent, WorldPresentationProjection } from '@shared/worldPresentationProtocol';
 import { createIdentityResolver } from '../identityResolver';
 import { deriveVisualTransitions, type CanonicalWorldSnapshot } from '../worldProjection';
+import { canonicalMonsterCharacter } from './rosterCharacters';
 
 /**
  * The boundary between live application state and the Monster canvas: the only
@@ -76,7 +77,19 @@ function ProjectedMonsterTrainerSurface({ projection, composition, compositionSa
   onDisposed?: () => void;
 }) {
   const previous = useRef<CanonicalWorldSnapshot | null>(null);
-  const snapshot: CanonicalWorldSnapshot = projection;
+  const snapshot: CanonicalWorldSnapshot = {
+    agents: projection.agents.map((agent) => {
+      const monsterCharacter = canonicalMonsterCharacter(agent.monsterCharacter);
+      return {
+        id: agent.id,
+        name: agent.name,
+        state: agent.state,
+        archived: agent.archived,
+        ...(monsterCharacter ? { monsterCharacter } : {})
+      };
+    }),
+    tasks: projection.tasks
+  };
   const transitions = previous.current ? deriveVisualTransitions(previous.current, snapshot) : [];
   previous.current = snapshot;
   const identityFor = useMemo(() => createIdentityResolver(projection.visualIdentities ?? {}), [projection.visualIdentities]);

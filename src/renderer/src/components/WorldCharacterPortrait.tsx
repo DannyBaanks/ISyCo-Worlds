@@ -1,14 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import startersUrl from '@/assets/worlds/characters/isyco-monster-starters.png?url';
-import professorRosterUrl from '@/assets/worlds/characters/isyco-professor-roster-sheet.png?url';
+import { monsterRosterSheet } from '@/worlds/monster/monsterRosterSprites';
 import type { IsycoRosterCharacter } from '@/worlds/monster/rosterCharacters';
 
-const MONSTER_INDEX: Record<Exclude<IsycoRosterCharacter, 'professor'>, number> = {
-  leaf: 0,
-  fire: 1,
-  water: 2
-};
-
+/** Idle cell of a 5×2 sheet. The cell is square; the portrait box crops it. */
 export function WorldCharacterPortrait({
   character,
   width = 44,
@@ -19,11 +13,7 @@ export function WorldCharacterPortrait({
   height?: number;
 }) {
   const { t } = useTranslation();
-  const isProfessor = character === 'professor';
-  const divisions = isProfessor ? 5 : 3;
-  const frame = height * 3 / divisions;
-  const index = isProfessor ? 4 : MONSTER_INDEX[character];
-  const left = width / 2 - frame * (index + 0.5);
+  const cell = height;
 
   return (
     <div
@@ -32,14 +22,20 @@ export function WorldCharacterPortrait({
       style={{ width, height, position: 'relative', overflow: 'hidden', flexShrink: 0 }}
     >
       <img
-        src={isProfessor ? professorRosterUrl : startersUrl}
+        src={monsterRosterSheet(character)}
         alt=""
         draggable={false}
         style={{
-          position: 'absolute', top: 0, left,
-          width: height * 3, height,
-          maxWidth: 'none', objectFit: 'fill',
-          imageRendering: 'pixelated', pointerEvents: 'none', userSelect: 'none'
+          position: 'absolute',
+          top: 0,
+          left: (width - cell) / 2,
+          width: cell * 5,
+          height: cell * 2,
+          maxWidth: 'none',
+          objectFit: 'fill',
+          imageRendering: 'pixelated',
+          pointerEvents: 'none',
+          userSelect: 'none'
         }}
       />
     </div>

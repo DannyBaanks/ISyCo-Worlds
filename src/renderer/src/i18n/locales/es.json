@@ -1744,6 +1744,12 @@
     "leaf": "Brote",
     "fire": "Brasa",
     "water": "Marea",
+    "agua": "Marea",
+    "fuego": "Ascua",
+    "electricidad": "Chispa",
+    "oscuridad": "Sombra",
+    "luz": "Alba",
+    "aire": "Brisa",
     "professor": "Profesor"
   }
 }

@@ -1,18 +1,18 @@
-import { Assets, Container, Graphics, Rectangle, Sprite, Text, Texture, TilingSprite } from 'pixi.js';
+import { Assets, Container, Graphics, Rectangle, Sprite, Texture, TilingSprite } from 'pixi.js';
 import type { IdentityForAgent } from '../identityResolver';
 import type { WorldAgent, WorldTask } from '../worldProjection';
 import { stateMarker, visualStateFor, type EvolutionStage } from './monsterArt';
-import type { WorkerMotionSnapshot } from './monsterMovement';
-import { resolveMonsterCharacter, type MonsterRosterCharacter } from './rosterCharacters';
-import { monsterRosterSpriteFrame } from './monsterRosterSprites';
+import type { WorkerDirection, WorkerMotionSnapshot } from './monsterMovement';
+import { resolveMonsterCharacter, type IsycoRosterCharacter, type MonsterRosterCharacter } from './rosterCharacters';
+import { MONSTER_ACTOR_PX, MONSTER_ROSTER_URLS, monsterRosterFrame, type MonsterRosterAction } from './monsterRosterSprites';
 import { locationReactionFrame, type LocationReactionBurst } from './locationReactions';
 import {
   resolveStarterVillageAnchor, STARTER_VILLAGE_ANCHOR_IDS, STARTER_VILLAGE_ATLAS_URL, STARTER_VILLAGE_BUILDINGS_ATLAS_URL,
-  MONSTER_PROFESSOR_ROSTER_URL, MONSTER_CREATURE_ROSTER_URL, STARTER_VILLAGE_COMPOSITION_DEFINITION, STARTER_VILLAGE_PRESET, STARTER_VILLAGE_SCENARIO,
+  STARTER_VILLAGE_COMPOSITION_DEFINITION, STARTER_VILLAGE_PRESET, STARTER_VILLAGE_SCENARIO,
   STARTER_VILLAGE_TILE_SIZE, type StarterVillageTileId
 } from './StarterVillageScenario';
 import { STARTER_VILLAGE_ATLAS_FRAMES, STARTER_VILLAGE_BUILDING_FRAMES } from './StarterVillageAtlasFrames';
-import type { WorldCompositionV1 } from '@shared/worldComposition';
+import { compositionSpan, type WorldCompositionV1 } from '@shared/worldComposition';
 
 export const STARTER_VILLAGE_WIDTH = STARTER_VILLAGE_SCENARIO.map.columns * STARTER_VILLAGE_TILE_SIZE;
 export const STARTER_VILLAGE_HEIGHT = STARTER_VILLAGE_SCENARIO.map.rows * STARTER_VILLAGE_TILE_SIZE;
@@ -52,30 +52,43 @@ export interface AnimatedStarterVillageScene extends Container {
   updateLocationReactions(reactions: readonly LocationReactionBurst[]): void;
 }
 function markerFor(state: ReturnType<typeof visualStateFor>, x: number, y: number): Graphics { const marker = stateMarker(state); const graphics = new Graphics().setFillStyle({ color: marker.color }); if (marker.shape === 'circle') graphics.circle(x + 4, y + 4, 4).fill(); else if (marker.shape === 'bar') graphics.rect(x, y + 2, 8, 4).fill(); else if (marker.shape === 'triangle') graphics.poly([x + 4, y, x + 8, y + 8, x, y + 8]).fill(); else graphics.poly([x + 4, y, x + 8, y + 4, x + 4, y + 8, x, y + 4]).fill(); return graphics; }
-function drawGuide(root: Container, composition: WorldCompositionV1): void {
-  const roster = Assets.get<Texture>(MONSTER_PROFESSOR_ROSTER_URL);
-  if (!roster) throw new Error('Monster Village professor art was not bootstrapped');
+function requireRoster(character: IsycoRosterCharacter): Texture {
+  const roster = Assets.get<Texture>(MONSTER_ROSTER_URLS[character]);
+  if (!roster) throw new Error(`Monster Village roster for ${character} was not bootstrapped`);
   roster.source.scaleMode = 'nearest';
+  return roster;
+}
+
+/** Feet stay on the cell baseline. A leftward step mirrors the right-facing walk. */
+function applyActorPose(body: Sprite, source: Texture['source'], action: MonsterRosterAction, frame: number, direction: WorkerDirection): void {
+  const rect = monsterRosterFrame(action, frame);
+  body.texture = new Texture({ source, frame: new Rectangle(rect.x, rect.y, rect.width, rect.height) });
+  body.width = MONSTER_ACTOR_PX;
+  body.height = MONSTER_ACTOR_PX;
+  body.scale.x = (direction === 'left' ? -1 : 1) * Math.abs(body.scale.x);
+}
+
+function drawGuide(root: Container, composition: WorldCompositionV1): void {
+  const roster = requireRoster('professor');
   const position = resolveStarterVillageAnchor(composition, 'professor');
-  const frame = new Rectangle(roster.source.width * 4 / 5, 0, roster.source.width / 5, roster.source.height);
-  const guide = new Sprite(new Texture({ source: roster.source, frame }));
-  const width = 44;
-  const height = 60;
+  const frame = monsterRosterFrame('idle', 0);
+  const guide = new Sprite(new Texture({ source: roster.source, frame: new Rectangle(frame.x, frame.y, frame.width, frame.height) }));
   guide.label = 'monster-village-professor';
-  guide.width = width;
-  guide.height = height;
-  guide.x = Math.round(position.x * STARTER_VILLAGE_TILE_SIZE + (STARTER_VILLAGE_TILE_SIZE - width) / 2);
-  guide.y = Math.round(position.y * STARTER_VILLAGE_TILE_SIZE + STARTER_VILLAGE_TILE_SIZE - height);
-  guide.zIndex = position.y * STARTER_VILLAGE_TILE_SIZE + STARTER_VILLAGE_TILE_SIZE + 1;
+  guide.anchor.set(0.5, 1);
+  guide.width = MONSTER_ACTOR_PX;
+  guide.height = MONSTER_ACTOR_PX;
+  guide.x = position.x * STARTER_VILLAGE_TILE_SIZE + STARTER_VILLAGE_TILE_SIZE / 2;
+  guide.y = (position.y + 1) * STARTER_VILLAGE_TILE_SIZE;
+  guide.zIndex = guide.y + 1;
   root.addChild(guide);
 }
 
 function createCreatureSprite(roster: Texture, character: MonsterRosterCharacter): Sprite {
-  const frame = monsterRosterSpriteFrame(character);
+  const frame = monsterRosterFrame('idle', 0);
   const sprite = new Sprite(new Texture({ source: roster.source, frame: new Rectangle(frame.x, frame.y, frame.width, frame.height) }));
   sprite.label = `monster-village-worker-${character}`;
-  sprite.width = 52;
-  sprite.height = 56;
+  sprite.width = MONSTER_ACTOR_PX;
+  sprite.height = MONSTER_ACTOR_PX;
   sprite.anchor.set(0.5, 1);
   return sprite;
 }
@@ -150,7 +163,6 @@ function buildStructureLayers(atlas: Texture, frame: typeof STARTER_VILLAGE_BUIL
 export function buildStarterVillageScene(options: StarterVillageSceneOptions): AnimatedStarterVillageScene {
   const atlas = Assets.get<Texture>(STARTER_VILLAGE_ATLAS_URL); if (!atlas) throw new Error('Starter Village atlas was not bootstrapped'); atlas.source.scaleMode = 'nearest';
   const buildingsAtlas = Assets.get<Texture>(STARTER_VILLAGE_BUILDINGS_ATLAS_URL); if (!buildingsAtlas) throw new Error('Starter Village buildings atlas was not bootstrapped'); buildingsAtlas.source.scaleMode = 'nearest';
-  const creatureRoster = Assets.get<Texture>(MONSTER_CREATURE_ROSTER_URL); if (!creatureRoster) throw new Error('Monster Village creature roster was not bootstrapped'); creatureRoster.source.scaleMode = 'nearest';
   const composition = options.composition ?? STARTER_VILLAGE_PRESET;
   const root = new Container({ sortableChildren: true }) as AnimatedStarterVillageScene; root.sortableChildren = true;
   const reactionOverlay = new Graphics();
@@ -162,7 +174,12 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
   const terrainLayer = new Container();
   terrainLayer.label = 'base-terrain';
   terrainLayer.zIndex = 0;
-  const ground = new TilingSprite({ texture: groundTexture, width: STARTER_VILLAGE_WIDTH, height: STARTER_VILLAGE_HEIGHT });
+  const citySpan = compositionSpan(composition, STARTER_VILLAGE_SCENARIO.map.columns, STARTER_VILLAGE_SCENARIO.map.rows);
+  const ground = new TilingSprite({
+    texture: groundTexture,
+    width: citySpan.columns * STARTER_VILLAGE_TILE_SIZE,
+    height: citySpan.rows * STARTER_VILLAGE_TILE_SIZE
+  });
   ground.tileScale.set(groundFrame.renderWidth / groundFrame.width, groundFrame.renderHeight / groundFrame.height);
   ground.zIndex = 0; terrainLayer.addChild(ground);
 
@@ -189,11 +206,6 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
       sprite = tileSprite(atlas, object.assetId as StarterVillageTileId, placement.x, placement.y);
     }
     sprite.zIndex = z;
-    if (options.buildMode) {
-      sprite.eventMode = 'static';
-      sprite.cursor = 'pointer';
-      sprite.on('pointertap', () => options.onPlacementSelect?.(placement.id));
-    }
     root.addChild(sprite);
     if (options.buildMode && options.selectedPlacementId === placement.id) {
       const highlight = new Graphics();
@@ -210,7 +222,7 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
 
   drawGuide(root, composition);
   const agentById = new Map(options.agents.map((agent) => [agent.id, agent]));
-  const actorVisuals = new Map<string, { body: Sprite; marker: Graphics; stage: EvolutionStage; action: string; direction: string; frame: number; visualState: string }>();
+  const actorVisuals = new Map<string, { body: Sprite; marker: Graphics; source: Texture['source']; stage: EvolutionStage; action: string; direction: string; frame: number; visualState: string }>();
   root.updateWorkers = (motions) => {
     for (const motion of motions) {
       const agent = agentById.get(motion.id);
@@ -225,6 +237,7 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
         else if (marker.shape === 'bar') visual.marker.rect(8, 0, 8, 3).fill();
         else if (marker.shape === 'triangle') visual.marker.poly([12, -3, 16, 4, 8, 4]).fill();
         else visual.marker.poly([12, -3, 16, 1, 12, 5, 8, 1]).fill();
+        applyActorPose(visual.body, visual.source, motion.action, motion.frame, motion.direction);
         visual.stage = stage; visual.action = motion.action; visual.direction = motion.direction; visual.frame = motion.frame; visual.visualState = motion.visualState;
       }
       const footX = motion.x + STARTER_VILLAGE_TILE_SIZE / 2;
@@ -232,7 +245,7 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
       visual.body.x = footX;
       visual.body.y = footY;
       visual.marker.x = Math.round(footX - 8);
-      visual.marker.y = visual.body.y - 60;
+      visual.marker.y = visual.body.y - MONSTER_ACTOR_PX - 2;
       visual.body.zIndex = footY;
       visual.marker.zIndex = footY + 1;
     }
@@ -256,16 +269,19 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
   options.agents.forEach((agent) => {
     const task = options.tasks.find((candidate) => candidate.assignee === agent.id);
     const character = resolveMonsterCharacter(agent.monsterCharacter, agent.id);
-    const body = createCreatureSprite(creatureRoster, character);
+    const roster = requireRoster(character);
+    const body = createCreatureSprite(roster, character);
     const marker = new Graphics();
-    body.eventMode = 'static'; body.cursor = 'pointer';
-    body.on('pointertap', () => options.onAgentSelect(agent.id));
-    marker.eventMode = 'static'; marker.cursor = 'pointer';
-    marker.on('pointertap', () => task ? options.onTaskOpen(task.id) : options.onAgentSelect(agent.id));
+    if (!options.buildMode) {
+      body.eventMode = 'static'; body.cursor = 'pointer';
+      body.on('pointertap', () => options.onAgentSelect(agent.id));
+      marker.eventMode = 'static'; marker.cursor = 'pointer';
+      marker.on('pointertap', () => task ? options.onTaskOpen(task.id) : options.onAgentSelect(agent.id));
+    }
     root.addChild(body, marker);
-    actorVisuals.set(agent.id, { body, marker, stage: 'baby', action: '', direction: '', frame: -1, visualState: '' });
+    actorVisuals.set(agent.id, { body, marker, source: roster.source, stage: 'baby', action: '', direction: '', frame: -1, visualState: '' });
   });
   root.updateWorkers(options.workerMotions ?? []);
   root.updateLocationReactions(options.locationReactions ?? []);
-  const title = new Text({ text: STARTER_VILLAGE_SCENARIO.ambient.title, style: { fill: 0xf1db9d, fontSize: 7, fontFamily: 'monospace' } }); title.x = 8; title.y = 236; title.zIndex = STARTER_VILLAGE_HEIGHT + 20; root.addChild(title); return root;
+  return root;
 }

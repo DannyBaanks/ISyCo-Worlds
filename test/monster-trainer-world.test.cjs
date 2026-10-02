@@ -16,7 +16,7 @@ test('Monster Trainer builds the complete Starter Village scene instead of agent
   assert.match(scene, /STARTER_VILLAGE_SCENARIO/);
   assert.match(scene, /Assets\.get/);
   assert.match(scene, /resolveStarterVillageAnchor/);
-  assert.match(world, /integerScaleForViewport/);
+  assert.match(world, /displayScaleForViewport/);
   assert.match(scene, /scaleMode\s*=\s*'nearest'/);
 });
 
@@ -53,7 +53,7 @@ test('Starter Village structures use authored layer order, footprint bounds and 
 test('layout and selection updates redraw in the owned renderer without entering its lifecycle dependencies', () => {
   const world = source('src/renderer/src/worlds/monster/MonsterTrainerWorld.tsx');
   assert.match(world, /ctx\.layout, ctx\.selectedPlacementId, ctx\.buildMode/);
-  assert.match(world, /\}, \[scale\]\)/, 'roster changes stay inside the visual renderer; only integer scale recreates the Pixi application');
+  assert.match(world, /\}, \[mapWidth, mapHeight\]\)/, 'roster and zoom stay inside the visual renderer; only the city pixel size recreates the Pixi application');
   assert.match(world, /roundPixels:\s*true/);
   assert.match(world, /app\.renderer\.render\(app\.stage\)/);
 });

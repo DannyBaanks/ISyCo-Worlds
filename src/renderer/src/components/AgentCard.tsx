@@ -210,7 +210,7 @@ export function AgentCard({
             flexShrink: 0
           }}>
             {worldProfileId === 'monster-trainer'
-              ? <WorldCharacterPortrait character={isGod ? 'professor' : monsterCharacter ?? 'leaf'} width={56} height={isGod ? 68 : 60} />
+              ? <WorldCharacterPortrait character={isGod ? 'professor' : monsterCharacter ?? 'luz'} width={56} height={isGod ? 68 : 60} />
               : <SpritePortrait character={character} scale={2} />}
           </div>
 

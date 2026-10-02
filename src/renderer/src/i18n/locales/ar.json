@@ -1744,6 +1744,12 @@
     "leaf": "برعم",
     "fire": "جمرة",
     "water": "مدّ",
+    "agua": "مدّ",
+    "fuego": "جذوة",
+    "electricidad": "شرارة",
+    "oscuridad": "ظل",
+    "luz": "فجر",
+    "aire": "نسيم",
     "professor": "الأستاذ"
   }
 }

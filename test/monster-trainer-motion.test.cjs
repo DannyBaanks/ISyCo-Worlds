@@ -18,10 +18,10 @@ test('Monster Trainer navigation routes around water and structure footprints us
   assert.equal(typeof motion.createStarterVillageNavigation, 'function', 'the world needs a composition-aware walk grid');
   assert.equal(typeof motion.findTilePath, 'function', 'workers need a deterministic tile route');
   const grid = motion.createStarterVillageNavigation(Scenario.STARTER_VILLAGE_PRESET);
-  const route = motion.findTilePath(grid, { x: 18, y: 9 }, { x: 6, y: 13 });
-  assert.ok(route && route.length > 2, 'stable worker can reach the training grass');
-  assert.deepEqual(route[0], { x: 18, y: 9 });
-  assert.deepEqual(route.at(-1), { x: 6, y: 13 });
+  const route = motion.findTilePath(grid, { x: 30, y: 38 }, { x: 50, y: 38 });
+  assert.ok(route && route.length > 2, 'a worker west of the lake can reach the east bank');
+  assert.deepEqual(route[0], { x: 30, y: 38 });
+  assert.deepEqual(route.at(-1), { x: 50, y: 38 });
   for (let index = 1; index < route.length; index += 1) {
     assert.equal(Math.abs(route[index].x - route[index - 1].x) + Math.abs(route[index].y - route[index - 1].y), 1,
       'movement never cuts diagonally across the pixel grid');
@@ -71,7 +71,7 @@ test('worker state drives an end-to-end walk, work pose, and all three visual ev
   assert.equal(snapshot.destination, 'training-grass');
   assert.equal(snapshot.action, 'walk', 'workers begin walking along the map rather than snapping to an anchor');
   const start = { x: snapshot.x, y: snapshot.y };
-  for (let index = 0; index < 100 && !snapshot.arrived; index += 1) [snapshot] = actorMotion.tick(125);
+  for (let index = 0; index < 800 && !snapshot.arrived; index += 1) [snapshot] = actorMotion.tick(125);
   assert.equal(snapshot.arrived, true, 'the semantic route reaches its destination');
   assert.notDeepEqual({ x: snapshot.x, y: snapshot.y }, start);
   assert.equal(snapshot.action, 'work', 'arrival changes the visual pose without writing task state');

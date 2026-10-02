@@ -7,7 +7,7 @@ export type WorldPresentationAgentState = 'idle' | 'working' | 'waiting' | 'bloc
 
 /** Read-only, deliberately small projection. The host must never receive Hive or session stores. */
 export interface WorldPresentationProjection {
-  agents: Array<{ id: string; name: string; state: WorldPresentationAgentState; archived: boolean; monsterCharacter?: 'leaf' | 'fire' | 'water' }>;
+  agents: Array<{ id: string; name: string; state: WorldPresentationAgentState; archived: boolean; monsterCharacter?: 'agua' | 'fuego' | 'electricidad' | 'oscuridad' | 'luz' | 'aire' | 'leaf' | 'fire' | 'water' }>;
   tasks: Array<{ id: string; title: string; assignee: string | null; status: string; awaitsHuman: boolean }>;
   visualIdentities?: Record<string, VisualIdentityProfileV1>;
 }
@@ -62,7 +62,7 @@ const validProjection = (value: unknown): value is WorldPresentationProjection =
   if (!value || typeof value !== 'object') return false;
   const p = value as WorldPresentationProjection;
   const states = ['idle', 'working', 'waiting', 'blocked', 'other'];
-  const monsterCharacters = ['leaf', 'fire', 'water'];
+  const monsterCharacters = ['agua', 'fuego', 'electricidad', 'oscuridad', 'luz', 'aire', 'leaf', 'fire', 'water'];
   return Array.isArray(p.agents) && Array.isArray(p.tasks)
     && p.agents.every((a) => !!a && validId(a.id) && typeof a.name === 'string' && states.includes(a.state) && typeof a.archived === 'boolean'
       && (a.monsterCharacter === undefined || monsterCharacters.includes(a.monsterCharacter)))

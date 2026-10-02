@@ -18,8 +18,8 @@ test('Starter Village keeps semantic anchor identities independent from in-bound
     'professor', 'stable', 'training-grass', 'village-idle', 'route-exit'
   ]);
   assert.deepEqual(Scenario.STARTER_VILLAGE_SCENARIO.semanticAnchors, Scenario.STARTER_VILLAGE_ANCHOR_IDS);
-  assert.equal(Scenario.STARTER_VILLAGE_SCENARIO.map.columns, 24);
-  assert.equal(Scenario.STARTER_VILLAGE_SCENARIO.map.rows, 24);
+  assert.equal(Scenario.STARTER_VILLAGE_SCENARIO.map.columns, 64);
+  assert.equal(Scenario.STARTER_VILLAGE_SCENARIO.map.rows, 48);
   assert.deepEqual(
     Scenario.STARTER_VILLAGE_SCENARIO.map.layers.map((layer) => layer.id),
     ['backdrop', 'terrain', 'roads', 'structures', 'foreground']
@@ -28,19 +28,44 @@ test('Starter Village keeps semantic anchor identities independent from in-bound
   for (const id of Scenario.STARTER_VILLAGE_ANCHOR_IDS) {
     const placement = Scenario.STARTER_VILLAGE_SCENARIO.anchorPlacements[id];
     assert.ok(placement, `${id} needs a replaceable visual placement`);
-    assert.ok(placement.x >= 0 && placement.x < 24, `${id} x stays inside the scenario`);
-    assert.ok(placement.y >= 0 && placement.y < 24, `${id} y stays inside the scenario`);
+    assert.ok(placement.x >= 0 && placement.x < Scenario.STARTER_VILLAGE_SCENARIO.map.columns, `${id} x stays inside the scenario`);
+    assert.ok(placement.y >= 0 && placement.y < Scenario.STARTER_VILLAGE_SCENARIO.map.rows, `${id} y stays inside the scenario`);
   }
 });
 
 test('Starter Village selects only integral scales and preserves 1x below map size', () => {
-  assert.equal(Scenario.integerScaleForViewport(2000, 1600), 4);
-  assert.equal(Scenario.integerScaleForViewport(1200, 1200), 3);
-  assert.equal(Scenario.integerScaleForViewport(800, 800), 2);
-  assert.equal(Scenario.integerScaleForViewport(800, 600), 2, 'a taller map must scroll vertically instead of shrinking when its width still fits at 2x');
-  assert.equal(Scenario.integerScaleForViewport(2000, 700), 4, 'the available width determines the crisp display scale');
+  assert.equal(Scenario.integerScaleForViewport(4096, 1600), 4);
+  assert.equal(Scenario.integerScaleForViewport(3072, 1200), 3);
+  assert.equal(Scenario.integerScaleForViewport(2048, 800), 2);
+  assert.equal(Scenario.integerScaleForViewport(2048, 600), 2, 'the legacy width ladder ignores height');
+  assert.equal(Scenario.integerScaleForViewport(4096, 700), 4, 'the legacy width ladder ignores height');
+  assert.equal(Scenario.integerScaleForViewport(2000, 700), 1);
   assert.equal(Scenario.integerScaleForViewport(500, 300), 1);
-  assert.equal(Scenario.integerScaleForViewport(200, 200), 1);
+});
+
+test('display scale fits the whole city, including one taller than the window', () => {
+  const mapWidth = Scenario.STARTER_VILLAGE_COLUMNS * Scenario.STARTER_VILLAGE_TILE_SIZE;
+  const mapHeight = Scenario.STARTER_VILLAGE_ROWS * Scenario.STARTER_VILLAGE_TILE_SIZE;
+  assert.equal(Scenario.displayScaleForViewport(4096, 1600, mapWidth, mapHeight), 2);
+  assert.equal(Scenario.displayScaleForViewport(2048, 800, mapWidth, mapHeight), 1);
+  const short = Scenario.displayScaleForViewport(4096, 700, mapWidth, mapHeight);
+  assert.ok(Math.abs(short - (700 / mapHeight)) < 1e-9, 'a short window shrinks the city instead of scrolling it');
+  assert.ok(short * mapHeight <= 700);
+  const huge = Scenario.displayScaleForViewport(1280, 720, 512 * 16, 512 * 16);
+  assert.ok(huge < 1);
+  assert.ok(huge * 512 * 16 <= 720);
+});
+
+test('an expanded city document is not replaced by the old 24×24 upgrade', () => {
+  const expanded = {
+    version: 1,
+    scenarioId: 'starter-village',
+    columns: 80,
+    rows: 64,
+    placements: [],
+    terrain: []
+  };
+  assert.equal(Scenario.upgradeStarterVillageLayout(expanded), expanded);
 });
 
 test('Starter Village fills the ground continuously and extends its south training strip', () => {
@@ -56,14 +81,14 @@ test('Starter Village lake sits inside grass, feeds a narrow southern river, and
   const water = Scenario.STARTER_VILLAGE_SCENARIO.map.layers.find((layer) => layer.id === 'terrain').tiles
     .filter((tile) => tile.tile === 'water');
   assert.ok(water.length > 20, 'the lake and river should read as a meaningful water feature');
-  assert.ok(water.every((tile) => tile.x > 0 && tile.x < 23), 'water must be surrounded by grass, not clipped at a map edge');
-  assert.ok(water.some((tile) => tile.x >= 9 && tile.x <= 16 && tile.y >= 13 && tile.y <= 19), 'the broad lake sits within the village grass');
-  assert.deepEqual(water.filter((tile) => tile.y === 22).map((tile) => tile.x), [12], 'a one-tile river reaches near the southern edge');
-  assert.equal(water.some((tile) => tile.y === 23), false, 'the final map row stays grass');
+  assert.ok(water.every((tile) => tile.x > 0 && tile.x < 63), 'water must be surrounded by grass, not clipped at a map edge');
+  assert.ok(water.some((tile) => tile.x >= 35 && tile.x <= 46 && tile.y >= 34 && tile.y <= 41), 'the broad lake sits within the village grass');
+  assert.deepEqual(water.filter((tile) => tile.y === 45).map((tile) => tile.x), [41], 'a one-tile river reaches near the southern edge');
+  assert.equal(water.some((tile) => tile.y === 47), false, 'the final map row stays grass');
 
   const coords = new Set(water.map(({ x, y }) => `${x},${y}`));
   const reached = new Set();
-  const queue = [water.find((tile) => tile.y === 22)];
+  const queue = [water.find((tile) => tile.y === 45)];
   while (queue.length) {
     const tile = queue.shift();
     const key = `${tile.x},${tile.y}`;
@@ -92,23 +117,18 @@ test('Starter Village closes a reusable-fence corral directly below the stable',
   const fences = layers.find((layer) => layer.id === 'structures').tiles;
   const paddock = layers.find((layer) => layer.id === 'terrain').tiles;
   const at = (x, y) => fences.find((tile) => tile.x === x && tile.y === y)?.tile;
-  for (let x = 16; x <= 19; x += 1) {
-    assert.equal(at(x, 9), 'fence-horizontal', `north rail at ${x},9`);
-    assert.equal(at(x, 14), 'fence-horizontal', `south rail at ${x},14`);
+  for (const x of [47, 48, 50, 51]) assert.equal(at(x, 24), 'fence-horizontal', `north rail at ${x},24`);
+  assert.equal(at(49, 24), undefined, 'the north rail keeps a gate in front of the stable');
+  for (let x = 47; x <= 51; x += 1) assert.equal(at(x, 29), 'fence-horizontal', `south rail at ${x},29`);
+  assert.equal(at(46, 24), 'fence-post');
+  assert.equal(at(52, 24), 'fence-post');
+  assert.equal(at(46, 29), 'fence-post');
+  assert.equal(at(52, 29), 'fence-post');
+  for (let y = 25; y <= 28; y += 1) {
+    assert.equal(at(46, y), 'fence-vertical', `west rail at 46,${y}`);
+    assert.equal(at(52, y), 'fence-vertical', `east rail at 52,${y}`);
   }
-  assert.equal(at(15, 9), 'fence-post');
-  assert.equal(at(20, 9), 'fence-post');
-  assert.equal(at(15, 14), 'fence-post');
-  assert.equal(at(20, 14), 'fence-post');
-  for (let y = 10; y <= 13; y += 1) {
-    assert.equal(at(15, y), 'fence-vertical', `west rail at 15,${y}`);
-    assert.equal(at(20, y), 'fence-vertical', `east rail at 20,${y}`);
-  }
-  for (let y = 10; y <= 13; y += 1) {
-    for (let x = 16; x <= 19; x += 1) {
-      assert.ok(paddock.some((tile) => tile.tile === 'training-grass' && tile.x === x && tile.y === y), `corral floor at ${x},${y}`);
-    }
-  }
+  assert.ok(paddock.some((tile) => tile.tile === 'training-grass' && tile.x === 49 && tile.y === 26), 'grass fills the corral');
 });
 
 test('Starter Village atlas is original project artwork with reusable source-pixel tiles', () => {
@@ -138,9 +158,12 @@ test('Starter Village keeps a validated original PNG atlas alongside legacy art'
   assert.match(attribution, /original.*pixel.art/i);
   assert.match(attribution, /starter-village-atlas\.svg/);
   assert.equal(Scenario.STARTER_VILLAGE_ATLAS_URL, atlasPath, 'the scenario manifest must resolve the PNG atlas');
-  assert.deepEqual(Scenario.STARTER_VILLAGE_SCENARIO.resources.map((resource) => resource.id), ['starter-village-atlas', 'starter-village-buildings', 'monster-professor-roster', 'monster-creature-roster']);
+  assert.deepEqual(Scenario.STARTER_VILLAGE_SCENARIO.resources.map((resource) => resource.id), [
+    'starter-village-atlas', 'starter-village-buildings',
+    'roster-agua', 'roster-fuego', 'roster-electricidad', 'roster-oscuridad', 'roster-luz', 'roster-aire', 'roster-professor'
+  ]);
   assert.match(Scenario.STARTER_VILLAGE_SCENARIO.resources[0].url, /starter-village-atlas\.png$/);
-  assert.match(Scenario.STARTER_VILLAGE_SCENARIO.resources[3].url, /isyco-monster-starters\.png$/);
+  assert.match(Scenario.STARTER_VILLAGE_SCENARIO.resources.find((resource) => resource.id === 'roster-professor').url, /profesor\.png$/);
   assert.deepEqual(Object.keys(AtlasFrames.STARTER_VILLAGE_ATLAS_FRAMES), [
     'grass', 'training-grass', 'dirt', 'road', 'water', 'tree', 'shrub', 'flowers',
     'guide-house', 'stable', 'fence-horizontal', 'fence-vertical', 'fence-post', 'rock', 'lantern', 'crate', 'sign'
@@ -154,16 +177,21 @@ test('Starter Village keeps a validated original PNG atlas alongside legacy art'
   }
 });
 
-test('Monster Village maps each selected worker to its real generated roster sprite', () => {
-  const spritePath = path.join(root, 'src/renderer/src/assets/worlds/characters/isyco-monster-starters.png');
-  const sheet = fs.readFileSync(spritePath);
-  assert.deepEqual([sheet.readUInt32BE(16), sheet.readUInt32BE(20)], [2172, 724]);
-  assert.deepEqual(RosterSprites.monsterRosterSpriteFrame('leaf'), { x: 0, y: 0, width: 724, height: 724 });
-  assert.deepEqual(RosterSprites.monsterRosterSpriteFrame('fire'), { x: 724, y: 0, width: 724, height: 724 });
-  assert.deepEqual(RosterSprites.monsterRosterSpriteFrame('water'), { x: 1448, y: 0, width: 724, height: 724 });
+test('Monster Village maps each action to a cell of the cleaned 10-frame roster', () => {
+  const sheetPath = path.join(root, 'src/renderer/src/assets/worlds/characters/roster/agua.png');
+  const sheet = fs.readFileSync(sheetPath);
+  assert.deepEqual([sheet.readUInt32BE(16), sheet.readUInt32BE(20)], [1980, 792]);
+  assert.equal(RosterSprites.MONSTER_ROSTER_CELL, 396);
+  assert.equal(RosterSprites.MONSTER_ACTOR_PX, 33);
+  assert.deepEqual(RosterSprites.monsterRosterFrame('idle', 0), { x: 0, y: 0, width: 396, height: 396 });
+  assert.deepEqual(RosterSprites.monsterRosterFrame('walk', 0), { x: 792, y: 0, width: 396, height: 396 });
+  assert.deepEqual(RosterSprites.monsterRosterFrame('walk', 1), { x: 1188, y: 0, width: 396, height: 396 });
+  assert.deepEqual(RosterSprites.monsterRosterFrame('blocked', 1), { x: 1584, y: 396, width: 396, height: 396 });
 
   const scene = fs.readFileSync(path.join(root, 'src/renderer/src/worlds/monster/StarterVillageScene.ts'), 'utf8');
   assert.match(scene, /new Sprite\(new Texture\(\{ source: roster\.source, frame:/, 'workers render from the PNG roster texture');
+  assert.match(scene, /applyActorPose\(/, 'walk, work, wait and blocked swap the cell');
+  assert.match(scene, /direction === 'left'/, 'a leftward step mirrors the right-facing walk');
   assert.match(scene, /resolveMonsterCharacter\(agent\.monsterCharacter, agent\.id\)/, 'the map uses the same persistent character choice as the roster cards');
   assert.doesNotMatch(scene, /creatureFramePlan\(|visual\.body\.clear\(/, 'the procedural square-block worker renderer is removed');
 });
@@ -229,8 +257,8 @@ test('Starter Village preset is immutable, valid, and binds stable semantic anch
     preset.placements.filter((placement) => ['laboratory', 'stable'].includes(placement.definitionId)).map((placement) => placement.id),
     ['lab-nw', 'stable-east']
   );
-  assert.equal(Scenario.resolveStarterVillageAnchor(preset, 'professor').x, 6);
-  assert.equal(Scenario.resolveStarterVillageAnchor(preset, 'stable').x, 18);
+  assert.equal(Scenario.resolveStarterVillageAnchor(preset, 'professor').x, 9);
+  assert.equal(Scenario.resolveStarterVillageAnchor(preset, 'stable').x, 49);
 });
 
 test('moving an authored building carries its semantic anchor and local interaction points', () => {
@@ -238,14 +266,14 @@ test('moving an authored building carries its semantic anchor and local interact
   const definition = Scenario.STARTER_VILLAGE_COMPOSITION_DEFINITION;
   const before = preset.placements.find((placement) => placement.id === 'lab-nw');
   const afterEdit = applyCompositionCommand({ present: preset, past: [] }, {
-    type: 'move-object', placementId: 'lab-nw', x: 4, y: 2
+    type: 'move-object', placementId: 'lab-nw', x: 8, y: 7
   }, definition);
   assert.equal(afterEdit.ok, true);
   const after = afterEdit.state.present.placements.find((placement) => placement.id === 'lab-nw');
-  assert.deepEqual(Scenario.resolveStarterVillageAnchor(afterEdit.state.present, 'professor'), { x: 7, y: 7 });
-  assert.deepEqual(resolveRelativePoint(after, definition.objects.laboratory.interactionPoints.entrance), { x: 7, y: 7 });
-  assert.deepEqual(resolveRelativePoint(after, definition.objects.laboratory.interactionPoints.work), { x: 8, y: 5 });
-  assert.equal(before.x, 3, 'the immutable preset and the previous placement remain unchanged');
+  assert.deepEqual(Scenario.resolveStarterVillageAnchor(afterEdit.state.present, 'professor'), { x: 11, y: 12 });
+  assert.deepEqual(resolveRelativePoint(after, definition.objects.laboratory.interactionPoints.entrance), { x: 11, y: 12 });
+  assert.deepEqual(resolveRelativePoint(after, definition.objects.laboratory.interactionPoints.work), { x: 12, y: 10 });
+  assert.equal(before.x, 6, 'the immutable preset and the previous placement remain unchanged');
 });
 
 test('ORGANIC COMPOSITION witness rejects blocky, corner-clamped, or disconnected authored layouts', () => {
@@ -306,8 +334,8 @@ test('ORGANIC COMPOSITION witness rejects blocky, corner-clamped, or disconnecte
   }
   assert.ok(training.some(({ x, y }) => [[0, -1], [1, 0], [0, 1], [-1, 0]].some(([dx, dy]) => pathCells.has(`${x + dx},${y + dy}`))));
   const water = byType('water');
-  assert.ok(water.length >= 20 && water.every(({ x, y }) => x > 0 && x < 23 && y < 23));
-  assert.equal(water.some(({ y }) => y === 23), false, 'the southernmost edge remains grassy');
+  assert.ok(water.length >= 20 && water.every(({ x, y }) => x > 0 && x < definition.columns - 1 && y < definition.rows - 1));
+  assert.equal(water.some(({ y }) => y === definition.rows - 1), false, 'the southernmost edge remains grassy');
 
   const props = preset.placements.filter((placement) => definition.objects[placement.definitionId].kind === 'prop');
   const clusters = props.filter((center) => props.filter((item) => Math.abs(item.x - center.x) <= 2 && Math.abs(item.y - center.y) <= 2).length >= 3);

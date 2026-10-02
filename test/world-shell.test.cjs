@@ -94,15 +94,16 @@ test('WorldHost delegates scene lifecycle to WorldEngine and selects isolated pr
   assert.match(runtime, /onDisposed: \(\) => onDisposed\(mount\.token\)/);
 });
 
-test('Monster Trainer keeps a scrollable integer-scale viewport for Starter Village', () => {
+test('Monster Trainer fits the city with zoom and does not use scrollbars', () => {
   const world = source('src/renderer/src/worlds/monster/MonsterTrainerWorld.tsx');
-  assert.match(world, /overflow:\s*'auto'/);
+  assert.match(world, /overflow:\s*'hidden'/);
+  assert.doesNotMatch(world, /overflow:\s*'auto'/);
+  assert.doesNotMatch(world, /scrollTop|scrollLeft/);
   assert.match(world, /ResizeObserver/);
   assert.match(world, /observer\.disconnect\(\)/);
-  assert.match(world, /integerScaleForViewport/);
-  assert.match(world, /addEventListener\('wheel', onWheel, \{ capture: true, passive: false \}\)/, 'wheel input is forwarded to the scrollable map viewport');
-  assert.match(world, /viewport\.scrollTop = nextTop/);
-  assert.match(world, /viewport\.scrollLeft = nextLeft/);
+  assert.match(world, /displayScaleForViewport/);
+  assert.match(world, /setZoomMultiplier/);
+  assert.match(world, /addEventListener\('wheel', onWheel, \{ capture: true, passive: false \}\)/, 'wheel input changes the city zoom');
 });
 
 test('GUS opens as the default floating helper and has no redundant titlebar button', () => {

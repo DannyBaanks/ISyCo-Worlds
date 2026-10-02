@@ -24,7 +24,7 @@ test('normalizes real agent-like records into stable, sortable visual agents', (
     ['terra', 'blocked', false],
     ['zeta', 'waiting', true]
   ]);
-  assert.equal(snapshot.agents.find((agent) => agent.id === 'zeta').monsterCharacter, 'water', 'the world projection must preserve each worker’s selected creature');
+  assert.equal(snapshot.agents.find((agent) => agent.id === 'zeta').monsterCharacter, 'agua', 'a legacy water id resolves to the agua sheet');
   assert.deepEqual(snapshot.tasks, []);
 });
 

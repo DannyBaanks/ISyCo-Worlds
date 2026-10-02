@@ -1744,6 +1744,12 @@
     "leaf": "芽",
     "fire": "炎",
     "water": "波",
+    "agua": "潮",
+    "fuego": "焔",
+    "electricidad": "雷",
+    "oscuridad": "影",
+    "luz": "光",
+    "aire": "風",
     "professor": "教授"
   }
 }

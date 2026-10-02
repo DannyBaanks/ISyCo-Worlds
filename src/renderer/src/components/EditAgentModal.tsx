@@ -9,9 +9,9 @@ import { OFFICE_CAST, type OfficeCharacterName } from '@/scene/office/cast';
 import { type AccentColorName } from '@/design/tokens';
 import { WorldCharacterPortrait } from './WorldCharacterPortrait';
 import {
+  canonicalMonsterCharacter,
   MONSTER_ROSTER_CHARACTERS,
   MONSTER_ROSTER_LABEL_KEYS,
-  isMonsterRosterCharacter,
   monsterCharacterForAgent,
   type MonsterRosterCharacter
 } from '@/worlds/monster/rosterCharacters';
@@ -48,7 +48,7 @@ export function EditAgentModal({ agent, onClose, profileId = 'office' }: EditAge
   const [name, setName] = useState(agent.name);
   const [character, setCharacter] = useState<OfficeCharacterName>(agent.character);
   const [monsterCharacter, setMonsterCharacter] = useState<MonsterRosterCharacter>(
-    isMonsterRosterCharacter(agent.monsterCharacter) ? agent.monsterCharacter : monsterCharacterForAgent(agent.id)
+    canonicalMonsterCharacter(agent.monsterCharacter) ?? monsterCharacterForAgent(agent.id)
   );
   const [accent, setAccent] = useState<AccentColorName>(agent.accent);
   const [provider, setProvider] = useState<AgentProvider>(
@@ -66,9 +66,7 @@ export function EditAgentModal({ agent, onClose, profileId = 'office' }: EditAge
   useEffect(() => {
     setName(agent.name);
     setCharacter(agent.character);
-    setMonsterCharacter(isMonsterRosterCharacter(agent.monsterCharacter)
-      ? agent.monsterCharacter
-      : monsterCharacterForAgent(agent.id));
+    setMonsterCharacter(canonicalMonsterCharacter(agent.monsterCharacter) ?? monsterCharacterForAgent(agent.id));
     setAccent(agent.accent);
     setProvider(inferAgentProvider(agent.command, agent.provider));
     setModel(agent.model);

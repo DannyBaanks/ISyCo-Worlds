@@ -1,12 +1,11 @@
 import starterVillageAtlasUrl from '../../assets/worlds/starter-village/starter-village-atlas.png?url';
 import starterVillageBuildingsUrl from '../../assets/worlds/starter-village/starter-village-buildings.png?url';
-import professorRosterUrl from '../../assets/worlds/characters/isyco-professor-roster-sheet.png?url';
-import monsterRosterUrl from '../../assets/worlds/characters/isyco-monster-starters.png?url';
+import { MONSTER_ROSTER_URLS } from './monsterRosterSprites';
 import { resolveRelativePoint, type CompositionScenarioDefinition, type GridPoint, type WorldCompositionV1 } from '@shared/worldComposition';
 
 export const STARTER_VILLAGE_TILE_SIZE = 16;
-export const STARTER_VILLAGE_COLUMNS = 24;
-export const STARTER_VILLAGE_ROWS = 24;
+export const STARTER_VILLAGE_COLUMNS = 64;
+export const STARTER_VILLAGE_ROWS = 48;
 
 export const STARTER_VILLAGE_ANCHOR_IDS = [
   'professor',
@@ -105,7 +104,7 @@ export interface ScenarioAnchorPlacement {
 
 export interface StarterVillageScenario {
   id: 'starter-village';
-  resources: readonly { id: 'starter-village-atlas' | 'starter-village-buildings' | 'monster-professor-roster' | 'monster-creature-roster'; url: string }[];
+  resources: readonly { id: string; url: string }[];
   map: {
     columns: typeof STARTER_VILLAGE_COLUMNS;
     rows: typeof STARTER_VILLAGE_ROWS;
@@ -122,110 +121,164 @@ export interface StarterVillageScenario {
 
 export const STARTER_VILLAGE_ATLAS_URL = starterVillageAtlasUrl;
 export const STARTER_VILLAGE_BUILDINGS_ATLAS_URL = starterVillageBuildingsUrl;
-export const MONSTER_PROFESSOR_ROSTER_URL = professorRosterUrl;
-export const MONSTER_CREATURE_ROSTER_URL = monsterRosterUrl;
+export const MONSTER_ROSTER_SHEET_URLS = MONSTER_ROSTER_URLS;
 
-function rectangle(tile: StarterVillageTileId, left: number, top: number, width: number, height: number): ScenarioTilePlacement[] {
-  return Array.from({ length: width * height }, (_, index) => ({
-    tile,
-    x: left + (index % width),
-    y: top + Math.floor(index / width)
-  }));
+function terrainRows(terrainId: string, rows: readonly [y: number, left: number, right: number][]) {
+  return rows.flatMap(([y, left, right]) => Array.from({ length: right - left + 1 }, (_, i) => ({ x: left + i, y, terrainId })));
 }
 
-const trainingGrass = [
-  ...rectangle('training-grass', 4, 11, 6, 8),
-  ...rectangle('training-grass', 16, 10, 4, 4)
-];
-const lakeAndRiver: ScenarioTilePlacement[] = [
-  ...rectangle('water', 12, 13, 2, 1),
-  ...rectangle('water', 11, 14, 4, 1),
-  ...rectangle('water', 10, 15, 6, 3),
-  ...rectangle('water', 11, 18, 4, 1),
-  ...rectangle('water', 12, 19, 2, 1),
-  ...rectangle('water', 12, 20, 1, 3)
-];
+function propRow(definitionId: string, idPrefix: string, y: number, xs: readonly number[]) {
+  return xs.map((x, index) => ({ id: `${idPrefix}-${index + 1}`, definitionId, x, y }));
+}
+
+function propColumn(definitionId: string, idPrefix: string, x: number, ys: readonly number[]) {
+  return ys.map((y, index) => ({ id: `${idPrefix}-${index + 1}`, definitionId, x, y }));
+}
+
+function deepFreeze<T>(value: T): T {
+  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const nested of Object.values(value as Record<string, unknown>)) deepFreeze(nested);
+  }
+  return value;
+}
+
+const STRUCTURE_LAYER_TILE: Partial<Record<string, StarterVillageTileId>> = {
+  laboratory: 'guide-house',
+  stable: 'stable',
+  'village-home': 'guide-house',
+  sign: 'sign',
+  lantern: 'lantern',
+  crate: 'crate',
+  'fence-horizontal': 'fence-horizontal',
+  'fence-vertical': 'fence-vertical',
+  'fence-post': 'fence-post'
+};
+const FOREGROUND_LAYER_TILE = new Set(['tree', 'shrub', 'flowers', 'rock']);
+
+function layersFromPreset(preset: WorldCompositionV1): ScenarioLayer[] {
+  const structures: ScenarioTilePlacement[] = [];
+  const foreground: ScenarioTilePlacement[] = [];
+  for (const placement of preset.placements) {
+    const structureTile = STRUCTURE_LAYER_TILE[placement.definitionId];
+    if (structureTile) structures.push({ tile: structureTile, x: placement.x, y: placement.y });
+    else if (FOREGROUND_LAYER_TILE.has(placement.definitionId)) foreground.push({ tile: placement.definitionId as StarterVillageTileId, x: placement.x, y: placement.y });
+  }
+  return [
+    { id: 'backdrop', zIndex: 0, fill: 'grass', tiles: [] },
+    {
+      id: 'terrain', zIndex: 10,
+      tiles: preset.terrain
+        .filter((cell) => cell.terrainId === 'training-grass' || cell.terrainId === 'water')
+        .map((cell) => ({ tile: cell.terrainId as StarterVillageTileId, x: cell.x, y: cell.y }))
+    },
+    {
+      id: 'roads', zIndex: 20,
+      tiles: preset.terrain
+        .filter((cell) => cell.terrainId === 'dirt' || cell.terrainId === 'road')
+        .map((cell) => ({ tile: cell.terrainId as StarterVillageTileId, x: cell.x, y: cell.y }))
+    },
+    { id: 'structures', zIndex: 30, tiles: structures },
+    { id: 'foreground', zIndex: 40, tiles: foreground }
+  ];
+}
+
+/** Curated visual layout. Grass is the implicit ground; only the brushes below are stored. */
+export const STARTER_VILLAGE_PRESET: WorldCompositionV1 = deepFreeze({
+  version: 1,
+  scenarioId: 'starter-village',
+  placements: [
+    { id: 'lab-nw', definitionId: 'laboratory', x: 6, y: 6 },
+    { id: 'home-north', definitionId: 'village-home', x: 18, y: 6 },
+    { id: 'stable-east', definitionId: 'stable', x: 46, y: 16 },
+    { id: 'home-south', definitionId: 'village-home', x: 28, y: 32 },
+    { id: 'home-east', definitionId: 'village-home', x: 56, y: 26 },
+    ...propRow('tree', 'north-canopy', 2, [2, 5, 8, 12, 16, 22, 26, 32, 36, 42, 48, 54, 58, 62]),
+    ...propRow('tree', 'north-canopy-b', 3, [4, 10, 20, 30, 40, 50, 60]),
+    ...propColumn('tree', 'west-hedge', 2, [6, 8, 14, 18, 22, 26, 30, 34, 38, 42, 46]),
+    ...propColumn('tree', 'east-hedge', 62, [4, 8, 14, 18, 22, 26, 34, 38, 42, 46]),
+    ...propRow('tree', 'south-canopy', 46, [6, 12, 18, 24, 36, 44, 56]),
+    ...propRow('tree', 'grove', 28, [36, 38, 40]),
+    ...propRow('tree', 'grove-b', 30, [35, 37, 41]),
+    ...propRow('sign', 'lab-sign', 12, [8]),
+    ...propRow('lantern', 'lab-lantern', 12, [10]),
+    ...propRow('flowers', 'lab-flowers', 13, [9]),
+    ...propRow('shrub', 'lab-shrub', 13, [11]),
+    ...propRow('sign', 'north-home-sign', 16, [16]),
+    ...propRow('flowers', 'north-home-flowers', 13, [17, 22]),
+    ...propRow('crate', 'stable-crate', 22, [47]),
+    ...propRow('lantern', 'stable-lantern', 22, [50]),
+    ...propRow('rock', 'stable-rock', 23, [48]),
+    ...propRow('flowers', 'stable-flowers', 23, [51]),
+    ...propRow('rock', 'lake-rock', 36, [34]),
+    ...propRow('flowers', 'lake-flowers', 37, [33]),
+    ...propRow('shrub', 'lake-shrub', 38, [35]),
+    ...propRow('sign', 'south-home-sign', 36, [26]),
+    ...propRow('lantern', 'south-home-lantern', 37, [32]),
+    ...propRow('fence-post', 'corral-nw', 24, [46]),
+    ...propRow('fence-post', 'corral-ne', 24, [52]),
+    ...propRow('fence-post', 'corral-sw', 29, [46]),
+    ...propRow('fence-post', 'corral-se', 29, [52]),
+    ...propRow('fence-horizontal', 'corral-north', 24, [47, 48, 50, 51]),
+    ...propRow('fence-horizontal', 'corral-south', 29, [47, 48, 49, 50, 51]),
+    ...propColumn('fence-vertical', 'corral-west', 46, [25, 26, 27, 28]),
+    ...propColumn('fence-vertical', 'corral-east', 52, [25, 26, 27, 28])
+  ],
+  terrain: [
+    ...terrainRows('training-grass', [
+      [12, 4, 10], [13, 3, 12], [14, 4, 11], [15, 5, 13], [16, 6, 12], [17, 7, 10]
+    ]),
+    ...terrainRows('training-grass', [
+      [25, 47, 51], [26, 47, 50], [27, 47, 51], [28, 48, 51]
+    ]),
+    ...terrainRows('water', [
+      [34, 38, 42], [35, 36, 44], [36, 35, 45], [37, 35, 46],
+      [38, 36, 46], [39, 37, 45], [40, 38, 43], [41, 39, 41],
+      [42, 40, 40], [43, 40, 40], [44, 40, 41], [45, 41, 41]
+    ]),
+    ...terrainRows('dirt', [
+      [11, 4, 58],
+      [10, 20, 20],
+      [12, 21, 21], [13, 21, 21], [14, 21, 21], [15, 21, 21], [16, 21, 21], [17, 21, 21],
+      [18, 21, 21], [19, 21, 21], [20, 21, 21], [21, 21, 21], [22, 21, 21], [23, 21, 21],
+      [24, 21, 21], [25, 21, 21], [26, 21, 21], [27, 21, 21], [28, 21, 21], [29, 21, 21],
+      [30, 21, 21], [31, 21, 21], [32, 21, 21], [33, 21, 21], [34, 21, 21], [35, 21, 21],
+      [36, 21, 30],
+      [12, 44, 44], [13, 44, 44], [14, 44, 44], [15, 44, 44], [16, 44, 44], [17, 44, 44],
+      [18, 44, 44], [19, 44, 44], [20, 44, 44], [21, 44, 49],
+      [12, 61, 61], [13, 61, 61], [14, 61, 61], [15, 61, 61], [16, 61, 61], [17, 61, 61],
+      [18, 61, 61], [19, 61, 61], [20, 61, 61], [21, 61, 61], [22, 61, 61], [23, 61, 61],
+      [24, 61, 61], [25, 61, 61], [26, 61, 61], [27, 61, 61], [28, 61, 61], [29, 61, 61],
+      [30, 58, 61]
+    ]),
+    ...terrainRows('road', [[11, 59, 62]])
+  ]
+});
 
 export const STARTER_VILLAGE_SCENARIO: StarterVillageScenario = {
   id: 'starter-village',
   resources: [
     { id: 'starter-village-atlas', url: STARTER_VILLAGE_ATLAS_URL },
     { id: 'starter-village-buildings', url: STARTER_VILLAGE_BUILDINGS_ATLAS_URL },
-    { id: 'monster-professor-roster', url: MONSTER_PROFESSOR_ROSTER_URL },
-    { id: 'monster-creature-roster', url: MONSTER_CREATURE_ROSTER_URL }
+    ...Object.entries(MONSTER_ROSTER_SHEET_URLS).map(([character, url]) => ({ id: `roster-${character}`, url }))
   ],
   map: {
     columns: STARTER_VILLAGE_COLUMNS,
     rows: STARTER_VILLAGE_ROWS,
-    layers: [
-      { id: 'backdrop', zIndex: 0, fill: 'grass', tiles: [] },
-      { id: 'terrain', zIndex: 10, tiles: [...trainingGrass, ...lakeAndRiver] },
-      {
-        id: 'roads',
-        zIndex: 20,
-        tiles: [
-          ...rectangle('dirt', 7, 7, 11, 2),
-          ...rectangle('road', 17, 4, 2, 4),
-          ...rectangle('road', 18, 3, 5, 2),
-          ...rectangle('road', 10, 8, 2, 6),
-          ...rectangle('dirt', 4, 20, 7, 1)
-        ]
-      },
-      {
-        id: 'structures',
-        zIndex: 30,
-        tiles: [
-          { tile: 'guide-house', x: 2, y: 1 },
-          { tile: 'stable', x: 16, y: 4 },
-          { tile: 'guide-house', x: 0, y: 18 },
-          { tile: 'sign', x: 7, y: 6 },
-          { tile: 'lantern', x: 8, y: 7 },
-          { tile: 'lantern', x: 16, y: 8 },
-          { tile: 'sign', x: 6, y: 18 },
-          { tile: 'lantern', x: 9, y: 19 },
-          { tile: 'crate', x: 21, y: 8 },
-          ...rectangle('fence-horizontal', 16, 9, 4, 1),
-          ...rectangle('fence-horizontal', 16, 14, 4, 1),
-          ...rectangle('fence-vertical', 15, 10, 1, 4),
-          ...rectangle('fence-vertical', 20, 10, 1, 4),
-          { tile: 'fence-post', x: 15, y: 9 },
-          { tile: 'fence-post', x: 20, y: 9 },
-          { tile: 'fence-post', x: 15, y: 14 },
-          { tile: 'fence-post', x: 20, y: 14 }
-        ]
-      },
-      {
-        id: 'foreground',
-        zIndex: 40,
-        tiles: [
-          ...rectangle('tree', 0, 0, 2, 5),
-          ...rectangle('tree', 22, 0, 2, 7),
-          ...rectangle('tree', 22, 10, 2, 3),
-          ...rectangle('shrub', 2, 10, 2, 1),
-          ...rectangle('shrub', 11, 11, 1, 4),
-          { tile: 'flowers', x: 5, y: 10 },
-          { tile: 'flowers', x: 8, y: 15 },
-          { tile: 'flowers', x: 7, y: 19 },
-          { tile: 'rock', x: 2, y: 15 },
-          { tile: 'rock', x: 21, y: 10 },
-          { tile: 'rock', x: 10, y: 19 },
-          { tile: 'shrub', x: 15, y: 20 }
-        ]
-      }
-    ]
+    layers: layersFromPreset(STARTER_VILLAGE_PRESET)
   },
   semanticAnchors: STARTER_VILLAGE_ANCHOR_IDS,
   anchorPlacements: {
-    professor: { x: 5, y: 6, zIndex: 60 },
-    stable: { x: 18, y: 9, zIndex: 60 },
-    'training-grass': { x: 6, y: 13, zIndex: 60 },
-    'village-idle': { x: 12, y: 9, zIndex: 60 },
-    'route-exit': { x: 22, y: 3, zIndex: 60 }
+    professor: { x: 9, y: 11, zIndex: 60 },
+    stable: { x: 49, y: 21, zIndex: 60 },
+    'training-grass': { x: 8, y: 14, zIndex: 60 },
+    'village-idle': { x: 34, y: 13, zIndex: 60 },
+    'route-exit': { x: 61, y: 11, zIndex: 60 }
   },
   ambient: {
     title: 'Starter Village',
     mood: 'first-light',
-    palette: [0x132532, 0x2f755b, 0x89bc5f, 0xd99a58, 0xf1db9d]
+    palette: [0x1c3b2c, 0x2f755b, 0x89bc5f, 0xd99a58, 0xf1db9d]
   }
 };
 
@@ -237,82 +290,14 @@ export const STARTER_VILLAGE_ANCHOR_BINDINGS: Readonly<Partial<Record<ScenarioAn
   stable: { placementId: 'stable-east', localPoint: STARTER_VILLAGE_COMPOSITION_DEFINITION.objects.stable.semanticAnchors!.stable }
 };
 
-function terrainRows(terrainId: string, rows: readonly [y: number, left: number, right: number][]) {
-  return rows.flatMap(([y, left, right]) => Array.from({ length: right - left + 1 }, (_, i) => ({ x: left + i, y, terrainId })));
+/** A layout that never leaves the old 24×24 village is the previous map, not an edit of this one. */
+export function upgradeStarterVillageLayout(layout: WorldCompositionV1): WorldCompositionV1 {
+  if (layout.columns !== undefined || layout.rows !== undefined) return layout;
+  const fitsOldMap = layout.placements.every((placement) => placement.x < 24 && placement.y < 24)
+    && layout.terrain.every((cell) => cell.x < 24 && cell.y < 24);
+  if (fitsOldMap && (STARTER_VILLAGE_COLUMNS > 24 || STARTER_VILLAGE_ROWS > 24)) return STARTER_VILLAGE_PRESET;
+  return layout;
 }
-
-function propRow(definitionId: string, idPrefix: string, y: number, xs: readonly number[]) {
-  return xs.map((x, index) => ({ id: `${idPrefix}-${index + 1}`, definitionId, x, y }));
-}
-
-function deepFreeze<T>(value: T): T {
-  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
-    Object.freeze(value);
-    for (const nested of Object.values(value as Record<string, unknown>)) deepFreeze(nested);
-  }
-  return value;
-}
-
-/** Curated version-one visual override. The base grass is implicit; only brush overrides are persisted. */
-export const STARTER_VILLAGE_PRESET: WorldCompositionV1 = deepFreeze({
-  version: 1,
-  scenarioId: 'starter-village',
-  placements: [
-    { id: 'lab-nw', definitionId: 'laboratory', x: 3, y: 2 },
-    { id: 'stable-east', definitionId: 'stable', x: 15, y: 4 },
-    { id: 'home-west', definitionId: 'village-home', x: 2, y: 9 },
-    { id: 'home-south', definitionId: 'village-home', x: 8, y: 17 },
-    ...propRow('tree', 'northwest-tree', 2, [0, 1]),
-    ...propRow('tree', 'northwest-tree-row', 3, [0, 1]),
-    ...propRow('tree', 'northeast-tree', 6, [22, 23]),
-    ...propRow('sign', 'laboratory-sign', 7, [5]),
-    ...propRow('lantern', 'laboratory-lantern', 8, [5]),
-    ...propRow('flowers', 'laboratory-flowers', 8, [8]),
-    ...propRow('shrub', 'laboratory-shrub', 8, [9]),
-    ...propRow('sign', 'west-home-sign', 13, [3]),
-    ...propRow('flowers', 'west-home-flowers', 14, [2, 8]),
-    ...propRow('rock', 'west-home-rock', 15, [9]),
-    ...propRow('shrub', 'west-home-shrub', 16, [1]),
-    ...propRow('flowers', 'south-home-flowers', 21, [7]),
-    ...propRow('lantern', 'south-home-lantern', 22, [9]),
-    ...propRow('crate', 'stable-crates', 9, [22]),
-    ...propRow('lantern', 'stable-lantern', 9, [20]),
-    ...propRow('rock', 'stable-rock', 12, [22]),
-    ...propRow('shrub', 'stable-shrub', 13, [22]),
-    ...propRow('fence-post', 'corral-nw-post', 10, [14]),
-    ...propRow('fence-post', 'corral-ne-post', 10, [21]),
-    ...propRow('fence-post', 'corral-sw-post', 15, [14]),
-    ...propRow('fence-post', 'corral-se-post', 15, [21]),
-    ...propRow('fence-horizontal', 'corral-north', 10, [15, 16, 17, 19, 20]),
-    ...propRow('fence-horizontal', 'corral-south', 15, [15, 16, 17, 18, 19, 20]),
-    ...propRow('fence-vertical', 'corral-west', 11, [14]),
-    ...propRow('fence-vertical', 'corral-west-12', 12, [14]),
-    ...propRow('fence-vertical', 'corral-west-13', 13, [14]),
-    ...propRow('fence-vertical', 'corral-west-14', 14, [14]),
-    ...propRow('fence-vertical', 'corral-east', 11, [21]),
-    ...propRow('fence-vertical', 'corral-east-12', 12, [21]),
-    ...propRow('fence-vertical', 'corral-east-13', 13, [21]),
-    ...propRow('fence-vertical', 'corral-east-14', 14, [21])
-  ],
-  terrain: [
-    ...terrainRows('training-grass', [
-      [14, 2, 6], [15, 2, 8], [16, 2, 8], [17, 3, 8], [18, 3, 7], [19, 4, 7], [20, 5, 8], [21, 6, 8]
-    ]),
-    ...terrainRows('training-grass', [
-      [11, 15, 17], [11, 19, 20], [12, 15, 17], [12, 19, 20],
-      [13, 15, 18], [13, 20, 20], [14, 15, 17], [14, 19, 20]
-    ]),
-    ...terrainRows('water', [
-      [16, 15, 16], [17, 14, 17], [18, 13, 18], [19, 13, 18], [20, 14, 17], [21, 15, 16], [22, 15, 15]
-    ]),
-    ...terrainRows('dirt', [
-      [7, 6, 10], [8, 10, 14], [9, 10, 12], [9, 15, 19], [10, 10, 10], [11, 10, 10], [12, 10, 10], [13, 4, 12],
-      [14, 12, 12], [15, 12, 12], [16, 12, 12], [17, 12, 12], [18, 12, 12], [19, 12, 12], [20, 12, 12], [21, 10, 12],
-      [9, 20, 21], [8, 22, 22], [7, 22, 22], [6, 22, 22], [5, 22, 22], [4, 22, 22]
-    ]),
-    ...terrainRows('road', [[3, 21, 22]])
-  ]
-});
 
 /** Resolves structure-bound semantic anchors from their stable placement identity. */
 export function resolveStarterVillageAnchor(layout: WorldCompositionV1, anchorId: ScenarioAnchorId): GridPoint {
@@ -325,11 +310,25 @@ export function resolveStarterVillageAnchor(layout: WorldCompositionV1, anchorId
   return { x: fallback.x, y: fallback.y };
 }
 
-/** Selects an integral scale from available width; extra map height scrolls instead of shrinking the art. */
+/** Selects an integral scale from available width. The live village uses displayScaleForViewport instead. */
 export function integerScaleForViewport(width: number, _height: number): 1 | 2 | 3 | 4 {
   const mapWidth = STARTER_VILLAGE_COLUMNS * STARTER_VILLAGE_TILE_SIZE;
   if (width >= mapWidth * 4) return 4;
   if (width >= mapWidth * 3) return 3;
   if (width >= mapWidth * 2) return 2;
   return 1;
+}
+
+/**
+ * Scale that keeps the whole city inside the viewport.
+ * An integer from 1 to 4 is used when that integer still fits both axes.
+ * A larger city returns a fraction below 1 so the frame shrinks with the zoom
+ * and the view does not grow scrollbars.
+ */
+export function displayScaleForViewport(viewportWidth: number, viewportHeight: number, mapWidth: number, mapHeight: number): number {
+  if (!(viewportWidth > 0) || !(viewportHeight > 0) || !(mapWidth > 0) || !(mapHeight > 0)) return 1;
+  const fit = Math.min(viewportWidth / mapWidth, viewportHeight / mapHeight);
+  const crisp = Math.min(4, Math.floor(fit));
+  if (crisp >= 1 && mapWidth * crisp <= viewportWidth && mapHeight * crisp <= viewportHeight) return crisp;
+  return fit;
 }

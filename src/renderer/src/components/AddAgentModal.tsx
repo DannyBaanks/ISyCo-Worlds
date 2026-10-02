@@ -198,7 +198,7 @@ export function AddAgentModal({ onClose, config, onConfigChange, profileId = 'of
 
   const [name, setName] = useState(pendingHire?.name ?? 'Jim');
   const [character, setCharacter] = useState<OfficeCharacterName>(knownCharacter(pendingHire?.character));
-  const [monsterCharacter, setMonsterCharacter] = useState<MonsterRosterCharacter>('leaf');
+  const [monsterCharacter, setMonsterCharacter] = useState<MonsterRosterCharacter>('luz');
   const [accent, setAccent] = useState<AccentColorName>(knownAccent(pendingHire?.accent));
   const [cwd, setCwd] = useState<string>(config.registeredRepos[0] ?? '');
   // Local mirror of the registered projects so one added from here shows as a

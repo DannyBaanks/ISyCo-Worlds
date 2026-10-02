@@ -68,12 +68,13 @@ export function normalizeWorldSnapshot(agents: unknown, rawTasks: unknown): Cano
     const agent = record(value);
     const id = agent && stringField(agent.id);
     if (!agent || !id) return [];
+    const monsterCharacter = canonicalMonsterCharacter(agent.monsterCharacter);
     return [{
       id,
       name: stringField(agent.name) ?? id,
       state: normalizeAgentState(agent.status),
       archived: agent.archived === true,
-      ...(isMonsterRosterCharacter(agent.monsterCharacter) ? { monsterCharacter: agent.monsterCharacter } : {})
+      ...(monsterCharacter ? { monsterCharacter } : {})
     }];
   }).sort((a, b) => a.id.localeCompare(b.id));
 
@@ -144,4 +145,4 @@ export function deriveVisualTransitions(
   }
   return transitions;
 }
-import { isMonsterRosterCharacter, type MonsterRosterCharacter } from './monster/rosterCharacters';
+import { canonicalMonsterCharacter, type MonsterRosterCharacter } from './monster/rosterCharacters';

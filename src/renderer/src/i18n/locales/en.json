@@ -1744,6 +1744,12 @@
     "leaf": "Sprout",
     "fire": "Ember",
     "water": "Ripple",
+    "agua": "Tide",
+    "fuego": "Cinder",
+    "electricidad": "Spark",
+    "oscuridad": "Shade",
+    "luz": "Dawn",
+    "aire": "Breeze",
     "professor": "Professor"
   }
 }

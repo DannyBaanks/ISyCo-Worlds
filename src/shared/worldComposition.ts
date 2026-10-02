@@ -52,19 +52,26 @@ export interface PaintedTerrainCell {
   terrainId: string;
 }
 
+/** Largest city edge a saved layout may declare. The starter village stays smaller until someone expands it. */
+export const MAX_CITY_SPAN = 512;
+
 /** Durable, visual-only composition. `terrain` stores brush overrides over the scenario ground. */
 export interface WorldCompositionV1 {
   version: 1;
   scenarioId: string;
   placements: CompositionPlacement[];
   terrain: PaintedTerrainCell[];
+  /** Absent on older saves: the scenario definition supplies the span. */
+  columns?: number;
+  rows?: number;
 }
 
 export type CompositionCommand =
   | { type: 'place-object'; placement: CompositionPlacement }
   | { type: 'move-object'; placementId: string; x: number; y: number }
   | { type: 'remove-object'; placementId: string }
-  | { type: 'paint-terrain'; x: number; y: number; terrainId: string | null };
+  | { type: 'paint-terrain'; x: number; y: number; terrainId: string | null }
+  | { type: 'resize-map'; columns: number; rows: number };
 
 export interface CompositionEditorState {
   present: WorldCompositionV1;
@@ -101,6 +108,10 @@ function isGridCoordinate(value: unknown): value is number {
   return Number.isSafeInteger(value) && (value as number) >= 0 && (value as number) <= MAX_GRID_VALUE;
 }
 
+function isCitySpan(value: unknown): value is number {
+  return Number.isSafeInteger(value) && (value as number) >= 1 && (value as number) <= MAX_CITY_SPAN;
+}
+
 function isGridPoint(value: unknown): value is GridPoint {
   return isRecord(value) && isGridCoordinate(value.x) && isGridCoordinate(value.y);
 }
@@ -134,7 +145,9 @@ function validObjectDefinition(value: unknown, key: string): value is Compositio
 export function isWorldCompositionV1(value: unknown): value is WorldCompositionV1 {
   if (!isRecord(value) || value.version !== 1 || !isId(value.scenarioId)
     || !Array.isArray(value.placements) || !Array.isArray(value.terrain)) return false;
-  if (Object.keys(value).some((key) => !['version', 'scenarioId', 'placements', 'terrain'].includes(key))) return false;
+  if (Object.keys(value).some((key) => !['version', 'scenarioId', 'placements', 'terrain', 'columns', 'rows'].includes(key))) return false;
+  if (value.columns !== undefined && !isCitySpan(value.columns)) return false;
+  if (value.rows !== undefined && !isCitySpan(value.rows)) return false;
   const placementIds = new Set<string>();
   for (const placement of value.placements) {
     if (!isRecord(placement) || !isId(placement.id) || !isId(placement.definitionId)
@@ -166,17 +179,67 @@ function withinMap(x: number, y: number, width: number, height: number, columns:
     && x + width <= columns && y + height <= rows;
 }
 
+/** Saved cities keep their own span. Older documents inherit the scenario definition. */
+export function compositionSpan(layout: WorldCompositionV1, columns: number, rows: number): { columns: number; rows: number } {
+  return { columns: layout.columns ?? columns, rows: layout.rows ?? rows };
+}
+
+export function topPlacementAt(
+  layout: WorldCompositionV1,
+  definition: CompositionScenarioDefinition,
+  x: number,
+  y: number
+): CompositionPlacement | null {
+  let found: CompositionPlacement | null = null;
+  for (const placement of layout.placements) {
+    const object = definition.objects[placement.definitionId];
+    if (!object) continue;
+    const { width, height } = object.footprint;
+    if (x >= placement.x && y >= placement.y && x < placement.x + width && y < placement.y + height) found = placement;
+  }
+  return found;
+}
+
+export function placementFits(
+  layout: WorldCompositionV1,
+  definition: CompositionScenarioDefinition,
+  definitionId: string,
+  x: number,
+  y: number,
+  ignorePlacementId?: string
+): boolean {
+  const object = definition.objects[definitionId];
+  if (!object) return false;
+  const span = compositionSpan(layout, definition.columns, definition.rows);
+  const { width, height } = object.footprint;
+  if (!withinMap(x, y, width, height, span.columns, span.rows)) return false;
+  for (const placement of layout.placements) {
+    if (placement.id === ignorePlacementId) continue;
+    const other = definition.objects[placement.definitionId];
+    if (!other) continue;
+    const separated = x + width <= placement.x || placement.x + other.footprint.width <= x
+      || y + height <= placement.y || placement.y + other.footprint.height <= y;
+    if (!separated) return false;
+  }
+  return true;
+}
+
 export function validateComposition(layout: WorldCompositionV1, definition: CompositionScenarioDefinition): CompositionResult {
   if (!validScenarioDefinition(definition)) return { ok: false, error: 'invalid-definition' };
   if (!isWorldCompositionV1(layout)) return { ok: false, error: 'invalid-document' };
   if (layout.scenarioId !== definition.scenarioId) return { ok: false, error: 'scenario-mismatch' };
+  const span = compositionSpan(layout, definition.columns, definition.rows);
+  if (!Number.isSafeInteger(span.columns) || !Number.isSafeInteger(span.rows)
+    || span.columns < 1 || span.rows < 1 || span.columns > MAX_CITY_SPAN || span.rows > MAX_CITY_SPAN) {
+    return { ok: false, error: 'out-of-bounds' };
+  }
 
   const occupied = new Set<string>();
   for (const placement of layout.placements) {
     const object = definition.objects[placement.definitionId];
     if (!object) return { ok: false, error: 'unknown-object' };
     const { width, height } = object.footprint;
-    if (!withinMap(placement.x, placement.y, width, height, definition.columns, definition.rows)) {
+    if (!withinMap(placement.x, placement.y, width, height, span.columns, span.rows)) {
       return { ok: false, error: 'out-of-bounds' };
     }
     for (let y = placement.y; y < placement.y + height; y += 1) {
@@ -192,7 +255,7 @@ export function validateComposition(layout: WorldCompositionV1, definition: Comp
   const terrainCells = new Set<string>();
   for (const cell of layout.terrain) {
     if (!terrain.has(cell.terrainId)) return { ok: false, error: 'unknown-terrain' };
-    if (cell.x >= definition.columns || cell.y >= definition.rows) return { ok: false, error: 'out-of-bounds' };
+    if (cell.x >= span.columns || cell.y >= span.rows) return { ok: false, error: 'out-of-bounds' };
     const key = `${cell.x},${cell.y}`;
     if (terrainCells.has(key)) return { ok: false, error: 'duplicate-terrain-cell' };
     terrainCells.add(key);
@@ -211,6 +274,7 @@ export function applyCompositionCommand(
 ): CompositionEditResult {
   if (!state || !isWorldCompositionV1(state.present) || !Array.isArray(state.past)) return rejected(state, 'invalid-document');
   const next = structuredClone(state.present);
+  const span = compositionSpan(next, definition.columns, definition.rows);
 
   if (command.type === 'place-object') {
     if (next.placements.some((placement) => placement.id === command.placement.id)) return rejected(state, 'duplicate-placement');
@@ -233,7 +297,7 @@ export function applyCompositionCommand(
     next.placements.splice(index, 1);
   } else if (command.type === 'paint-terrain') {
     if (!Number.isSafeInteger(command.x) || !Number.isSafeInteger(command.y) || command.x < 0 || command.y < 0
-      || command.x >= definition.columns || command.y >= definition.rows) return rejected(state, 'out-of-bounds');
+      || command.x >= span.columns || command.y >= span.rows) return rejected(state, 'out-of-bounds');
     const index = next.terrain.findIndex((cell) => cell.x === command.x && cell.y === command.y);
     if (command.terrainId === null) {
       if (index >= 0) next.terrain.splice(index, 1);
@@ -243,6 +307,10 @@ export function applyCompositionCommand(
       if (index >= 0) next.terrain[index] = cell;
       else next.terrain.push(cell);
     }
+  } else if (command.type === 'resize-map') {
+    if (!isCitySpan(command.columns) || !isCitySpan(command.rows)) return rejected(state, 'out-of-bounds');
+    next.columns = command.columns;
+    next.rows = command.rows;
   } else {
     return rejected(state, 'invalid-command');
   }

@@ -1,4 +1,4 @@
-import type { WorldCompositionV1, GridPoint } from '@shared/worldComposition';
+import { compositionSpan, type WorldCompositionV1, type GridPoint } from '@shared/worldComposition';
 import type { WorldAgent, WorldTask } from '../worldProjection';
 import {
   resolveStarterVillageAnchor,
@@ -69,6 +69,7 @@ const inBounds = (grid: VillageNavigationGrid, point: GridPoint): boolean =>
 
 /** Build collision from semantic terrain/object footprints, never raster pixels. */
 export function createStarterVillageNavigation(composition: WorldCompositionV1): VillageNavigationGrid {
+  const span = compositionSpan(composition, STARTER_VILLAGE_COLUMNS, STARTER_VILLAGE_SCENARIO.map.rows);
   const blocked = new Set<string>();
   const terrain = new Map(STARTER_VILLAGE_PRESET.terrain.map((cell) => [cellId(cell), cell.terrainId]));
   for (const cell of composition.terrain) terrain.set(cellId(cell), cell.terrainId);
@@ -80,11 +81,11 @@ export function createStarterVillageNavigation(composition: WorldCompositionV1):
     if (!definition) continue;
     for (let y = placement.y; y < placement.y + definition.footprint.height; y += 1) {
       for (let x = placement.x; x < placement.x + definition.footprint.width; x += 1) {
-        if (x >= 0 && y >= 0 && x < STARTER_VILLAGE_COLUMNS && y < STARTER_VILLAGE_SCENARIO.map.rows) blocked.add(`${x},${y}`);
+        if (x >= 0 && y >= 0 && x < span.columns && y < span.rows) blocked.add(`${x},${y}`);
       }
     }
   }
-  return { columns: STARTER_VILLAGE_COLUMNS, rows: STARTER_VILLAGE_SCENARIO.map.rows, blocked };
+  return { columns: span.columns, rows: span.rows, blocked };
 }
 
 /** Breadth-first four-way navigation. Blocked destinations fail closed. */
