@@ -2582,47 +2582,15 @@ export class HiveManager {
     return { config, data };
   }
 
-  /** Grok lifecycle-hook bridge → live hive status, session capture, guarded
-   *  inbox delivery, and operator gates for `grok` workers.
-   *
-   *  Grok supports the same hook events and decision vocabulary as Claude Code,
-   *  but its stdin payload uses camelCase keys. A small adapter normalizes those
-   *  keys to HookServer's Claude-shaped contract. The hook is installed in the
-   *  user's global Grok hook directory because global hooks are trusted and
-   *  Grok sessions/resume stay in the user's normal GROK_HOME. The adapter is
-   *  strictly scoped by AGENT_ID, so ordinary Grok sessions exit without doing
-   *  anything. Best-effort and idempotent. */
+  /** Drop the global Grok hook file. It used to live at
+   *  ~/.grok/hooks/munder-hive.json and ran on every Grok session, hive worker
+   *  or not. When the hive directory or its launcher is gone, Grok prints
+   *  "session_start hook failed" (exit 127) on the user's own chat. Spawning a
+   *  worker must not put that file back. */
   private installGrokHooks(): void {
-    const root = this.root();
-    if (!root) return;
     try {
-      const shim = join(root, 'bin', 'grok-hook.cjs');
-      mkdirSync(join(root, 'bin'), { recursive: true });
-      writeFileSync(shim, GROK_HOOK_SHIM, 'utf8');
-      const tool = (matcher?: string) => ({
-        ...(matcher ? { matcher } : {}),
-        // Let Grok apply its event-aware defaults (5s normally, 600s for Stop).
-        // Grok is a HOOK bridge (not a proxy sidecar), so it is hit by the same
-        // `node: command not found` 127 — bundled node here too.
-        hooks: [{ type: 'command', command: this.nodeRun(shim) }]
-      });
-      const hooks = {
-        PreToolUse: [tool('.*')],
-        PostToolUse: [tool('.*')],
-        Stop: [tool()],
-        SubagentStop: [tool('.*')],
-        SessionStart: [tool('.*')],
-        UserPromptSubmit: [tool()],
-        PreCompact: [tool('.*')],
-        PostCompact: [tool('.*')]
-      };
-      const hookDir = join(homedir(), '.grok', 'hooks');
-      mkdirSync(hookDir, { recursive: true });
-      writeFileSync(
-        join(hookDir, 'munder-hive.json'),
-        JSON.stringify({ hooks }, null, 2),
-        'utf8'
-      );
+      const hookFile = join(homedir(), '.grok', 'hooks', 'munder-hive.json');
+      if (existsSync(hookFile)) unlinkSync(hookFile);
     } catch (e) { console.error('[hive] installGrokHooks failed:', e); }
   }
 
@@ -3685,76 +3653,3 @@ process.stdin.on('end', () => {
 });
 `;
 
-// ─── grok-hook shim (written to <hive>/bin/grok-hook.cjs) ───────────────────
-// Grok's lifecycle events and decisions are Claude-compatible, but the wire
-// payload is camelCase and uses snake_case event values. Normalize the input for
-// HookServer and translate its Claude-style permission denial into Grok's direct
-// decision form. Scoped by AGENT_ID so the trusted global hook is inert outside
-// Munder-spawned workers.
-const GROK_HOOK_SHIM = `#!/usr/bin/env node
-'use strict';
-const net = require('net');
-const agentId = process.env.AGENT_ID || null;
-let data = '';
-process.stdin.setEncoding('utf8');
-process.stdin.on('data', (d) => { data += d; });
-process.stdin.on('end', () => {
-  const sock = process.env.HIVE_SOCK;
-  if (!agentId || !sock) { process.exit(0); }
-  let grok = {};
-  try { grok = JSON.parse(data || '{}'); } catch (_) {}
-  const names = {
-    pre_tool_use: 'PreToolUse',
-    post_tool_use: 'PostToolUse',
-    post_tool_use_failure: 'PostToolUseFailure',
-    permission_denied: 'PermissionDenied',
-    stop: 'Stop',
-    stop_failure: 'StopFailure',
-    session_start: 'SessionStart',
-    session_end: 'SessionEnd',
-    user_prompt_submit: 'UserPromptSubmit',
-    notification: 'Notification',
-    subagent_start: 'SubagentStart',
-    subagent_stop: 'SubagentStop',
-    pre_compact: 'PreCompact',
-    post_compact: 'PostCompact'
-  };
-  const payload = {
-    hook_event_name: names[grok.hookEventName] || grok.hookEventName || 'Unknown',
-    agent_id: agentId,
-    session_id: grok.sessionId,
-    cwd: grok.cwd || grok.workspaceRoot,
-    tool_name: grok.toolName,
-    tool_input: grok.toolInput,
-    stop_hook_active: grok.stopHookActive,
-    prompt: grok.prompt,
-    source: grok.source,
-    notification_type: grok.notificationType,
-    message: grok.message
-  };
-  let resp = '';
-  const done = () => {
-    let out = null;
-    try {
-      const r = JSON.parse(resp || '{}');
-      if (r.continue === false) out = { continue: false, stopReason: r.stopReason };
-      else if (r.decision === 'block') out = { decision: 'block', reason: r.reason };
-      else if (r.hookSpecificOutput && r.hookSpecificOutput.permissionDecision === 'deny') {
-        out = { decision: 'deny', reason: r.hookSpecificOutput.permissionDecisionReason };
-      } else if (r.hookSpecificOutput && r.hookSpecificOutput.additionalContext) {
-        out = r;
-      }
-    } catch (_) {}
-    if (out) { try { process.stdout.write(JSON.stringify(out)); } catch (_) {} }
-    process.exit(0);
-  };
-  try {
-    const c = net.createConnection(sock, () => c.write(JSON.stringify(payload) + '\\n'));
-    c.setEncoding('utf8');
-    c.on('data', (d) => { resp += d; });
-    c.on('end', done);
-    c.on('error', () => process.exit(0));
-    setTimeout(() => process.exit(0), 5000).unref();
-  } catch (_) { process.exit(0); }
-});
-`;

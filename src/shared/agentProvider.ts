@@ -94,8 +94,10 @@ export interface AgentProviderPreset {
    *    - 'codex' → installCodexHooks() writes a per-agent CODEX_HOME config and
    *                reuses the Claude `cth-hook` shim verbatim (Codex's hook payload
    *                + response contract are already Claude-shaped).
-   *    - 'grok'  → installGrokHooks() installs an AGENT_ID-scoped adapter for
-   *                Grok's camelCase lifecycle payloads.
+   *    - 'grok'  → installGrokHooks() removes ~/.grok/hooks/munder-hive.json.
+   *                A global Grok hook runs in every session; a missing launcher
+   *                surfaces as "session_start hook failed". Grok workers are not
+   *                given a replacement global hook.
    *  Claude leaves this undefined (it uses its native `--settings` path, gated by
    *  hiveAware); `custom` leaves it undefined (no bridge → no hooks). This is the
    *  single switch hive.ensureAgent dispatches on to wire the bridge. */

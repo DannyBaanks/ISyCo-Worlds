@@ -154,19 +154,26 @@ test('every hook installer routes through the launcher — none left on bare nod
   });
   assert.equal(os.homedir(), home, 'home redirect failed — aborting before touching the real home');
 
+  const grokHook = path.join(home, '.grok', 'hooks', 'munder-hive.json');
+  fs.mkdirSync(path.dirname(grokHook), { recursive: true });
+  fs.writeFileSync(grokHook, '{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"missing-hive-node"}]}]}}\n');
+
   hive.installAgyHooks();
   hive.installGrokHooks();
   hive.installGeminiHooks(path.join(home, 'hive/agents/a1'));
   hive.installCodexHooks(path.join(home, 'hive/agents/a1'), 'a1');
 
+  assert.equal(fs.existsSync(grokHook), false, 'a global Grok hook runs in every session and must not be reinstalled');
+
   const launcher = launcherIn(home);
   const commands = hookCommandsUnder(home);
-  // claude (Stop/statusLine/…) + agy + grok + codex.
+  // claude (Stop/statusLine/…) + agy + gemini + codex. Grok is intentionally absent.
   assert.ok(commands.length >= 4, `expected commands from all installers, got ${commands.length}`);
   const bare = commands.filter((c) => !usesLauncher(c, launcher));
   assert.deepEqual(bare, [], 'these hook commands would exit 127 wherever node is not on the bare PATH');
+  assert.equal(commands.some((c) => c.includes('grok-hook.cjs')), false);
 
-  for (const shim of ['agy-hook.cjs', 'grok-hook.cjs', 'gemini-hook.cjs']) {
+  for (const shim of ['agy-hook.cjs', 'gemini-hook.cjs']) {
     assert.ok(commands.some((c) => c.includes(shim)), `${shim} installer produced no command`);
   }
 });
