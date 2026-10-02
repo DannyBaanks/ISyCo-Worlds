@@ -214,10 +214,8 @@ function IsolatedWorldViewport({ profileId, suspended }: { profileId: 'monster-t
     return () => { observer.disconnect(); window.removeEventListener('resize', update); };
   }, [status.phase, suspended]);
 
-  const config = { worldsEnabled: false } as HarnessConfig;
   return (
     <div ref={viewportRef} data-world-presentation-viewport={profileId} style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
-      {status.phase !== 'READY' && <WorldSceneHost config={config} profileId="office" />}
       {status.phase === 'RECOVERY' && (
         <WorldRecoverySurface error={status.error ? {
           phase: status.error.phase, worldId: status.error.profileId, cause: new Error(status.error.cause.message),

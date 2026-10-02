@@ -22,7 +22,7 @@ test('startup route stays visible until onboarding, harness, and world runtime a
   assert.equal(shouldShowWorldStartScreen({ onboardingComplete: false, hiveOpened: true, activeProfileId: 'office' }), true);
   assert.equal(shouldShowWorldStartScreen({ onboardingComplete: true, hiveOpened: false, activeProfileId: 'office' }), true);
   assert.equal(shouldShowWorldStartScreen({ onboardingComplete: true, hiveOpened: true, activeProfileId: null }), true);
-  assert.equal(shouldShowWorldStartScreen({ onboardingComplete: true, hiveOpened: true, activeProfileId: undefined }), false, 'wait for runtime status instead of flashing the entry screen');
+  assert.equal(shouldShowWorldStartScreen({ onboardingComplete: true, hiveOpened: true, activeProfileId: undefined }), true, 'unknown runtime status must not fall through to the Office projection');
   assert.equal(shouldShowWorldStartScreen({ onboardingComplete: true, hiveOpened: true, activeProfileId: 'monster-trainer' }), false);
 });
 

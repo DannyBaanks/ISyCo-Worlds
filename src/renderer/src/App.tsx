@@ -94,8 +94,9 @@ export function App() {
    *  the floor, terminals and agents stay mounted while Marketplace is up. */
   const [globalView, setGlobalView] = useState<GlobalView>('office');
   const [worldProfileStatus, setWorldProfileStatus] = useState<Awaited<ReturnType<typeof window.cth.getWorldProfileStatus>> | null>(null);
+  const [worldProfileStatusReady, setWorldProfileStatusReady] = useState(false);
   const [worldHelperSnapshot, setWorldHelperSnapshot] = useState<WorldHelperSafeSnapshot | null>(null);
-  const setupOverlayOpened = useRef(false);
+  const worldHelperOverlayAutoShown = useRef(false);
   // Route hydration is deliberately one-shot. `config` arrives asynchronously;
   // rendering its temporary default must never write over a saved visual route.
   const globalViewHydrated = useRef(false);
@@ -182,8 +183,14 @@ export function App() {
     if (!config) return;
     let cancelled = false;
     void window.cth.getWorldProfileStatus().then((status) => {
-      if (!cancelled) setWorldProfileStatus(status);
-    }).catch(() => { /* renderer remains usable; Settings can retry the query */ });
+      if (!cancelled) {
+        setWorldProfileStatus(status);
+        setWorldProfileStatusReady(true);
+      }
+    }).catch(() => {
+      if (!cancelled) setWorldProfileStatusReady(true);
+      /* renderer remains usable; Settings can retry the query */
+    });
     return () => { cancelled = true; };
   }, [config?.preferredWorldProfile, hiveOpened]);
 
@@ -200,11 +207,9 @@ export function App() {
   }, [hiveOpened]);
 
   useEffect(() => {
-    if (!hiveOpened || !worldHelperSnapshot || setupOverlayOpened.current) return;
-    if (!worldHelperSnapshot.onboardingComplete && !worldHelperSnapshot.setupDismissed) {
-      setupOverlayOpened.current = true;
-      void window.cth.worldHelperOverlayVisible(true);
-    }
+    if (!hiveOpened || !worldHelperSnapshot || worldHelperOverlayAutoShown.current) return;
+    worldHelperOverlayAutoShown.current = true;
+    void window.cth.worldHelperOverlayVisible(true);
   }, [hiveOpened, worldHelperSnapshot]);
 
   // Restore a persisted visual preference only after the real async config is
@@ -338,6 +343,10 @@ export function App() {
     return <div style={{ width: '100vw', height: '100vh', background: 'var(--cth-cream-100)' }} />;
   }
 
+  if (config.onboardingComplete && hiveOpened && !worldProfileStatusReady) {
+    return <div role="status" style={{ width: '100vw', height: '100vh', display: 'grid', placeItems: 'center', background: '#132532', color: '#f4e5bf', fontFamily: 'var(--cth-font-display)', fontSize: 12 }}>Loading your World…</div>;
+  }
+
   if (shouldShowWorldStartScreen({
     onboardingComplete: config.onboardingComplete,
     hiveOpened,
@@ -425,20 +434,6 @@ export function App() {
           onMenuOpenChange={setSettingsMenuOpen}
           density={density}
         />
-        {worldHelperSnapshot && <button
-          className="cth-titlebar-nodrag cth-tip"
-          aria-label="Open GUS World Helper"
-          data-tip="GUS World Helper"
-          onClick={() => { void window.cth.worldHelperOverlayVisible(true); }}
-          style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-            height: 28, padding: '0 8px', marginLeft: 5,
-            background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
-            border: 'none', borderRadius: 2, cursor: 'pointer', color: 'var(--cth-ink-900)', fontSize: 12
-          }}
-        >
-          ✦ GUS{worldHelperSnapshot.notices.some((notice) => notice.severity === 'requires_action') ? ' •' : ''}
-        </button>}
         {/* v0.3.4: theme + fullscreen live HERE (top right), not buried in the
             terminal header — and the theme darkens the whole app, terminals
             included (design/theme.ts + tokens.css dark block). */}
@@ -558,21 +553,13 @@ export function App() {
           width: sidebarWidth, flexShrink: 0,
           minHeight: 0, display: 'flex', flexDirection: 'column',
         }}>
-          {agent?.isGod && <button
-            type="button"
-            className="worlds-sidebar-toggle"
-            aria-label={commandNavCollapsed ? 'Show command tabs' : 'Hide command tabs'}
-            aria-controls="worlds-command-navigation"
-            aria-expanded={!commandNavCollapsed}
-            title={commandNavCollapsed ? 'Show command tabs' : 'Hide command tabs'}
-            onClick={() => setCommandNavCollapsed((collapsed) => !collapsed)}
-          >{commandNavCollapsed ? '‹' : '›'}</button>}
           <div className="worlds-command-slot">
           {agent ? (
             <AgentDetailPanel
               agent={agent}
               profileId={activeWorldProfileId}
               commandNavCollapsed={commandNavCollapsed}
+              onToggleCommandNav={() => setCommandNavCollapsed((collapsed) => !collapsed)}
             />
           ) : godStatus === 'booting' ? (
             <PixelPanel variant="default" noPadding style={{

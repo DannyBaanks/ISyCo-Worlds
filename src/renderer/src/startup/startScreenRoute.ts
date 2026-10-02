@@ -9,7 +9,8 @@ export interface WorldStartScreenRouteState {
 /** One entry surface owns every pre-runtime state; the live app starts only
  * after setup, a harness, and a semantic world profile are all ready. */
 export function shouldShowWorldStartScreen(state: WorldStartScreenRouteState): boolean {
-  return !state.onboardingComplete || !state.hiveOpened || state.activeProfileId === null;
+  return !state.onboardingComplete || !state.hiveOpened
+    || state.activeProfileId === null || state.activeProfileId === undefined;
 }
 
 export type StartupSelectionPlan =

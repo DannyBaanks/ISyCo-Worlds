@@ -90,6 +90,7 @@ test('WorldHost delegates scene lifecycle to WorldEngine and selects isolated pr
   assert.match(host, /markDisposed/);
   assert.match(host, /onDisposed=\{\(token\) => engine\.markDisposed\(token\)\}/, 'the renderer itself acknowledges disposal');
   assert.doesNotMatch(host, /queueMicrotask/, 'a scheduled callback is not proof Pixi has been destroyed');
+  assert.doesNotMatch(host, /status\.phase !== 'READY' && <WorldSceneHost config=\{config\} profileId="office"/, 'Monster Village must not mount the Office as a startup placeholder');
   assert.match(runtime, /onDisposed: \(\) => onDisposed\(mount\.token\)/);
 });
 
@@ -99,6 +100,17 @@ test('Monster Trainer keeps a scrollable integer-scale viewport for Starter Vill
   assert.match(world, /ResizeObserver/);
   assert.match(world, /observer\.disconnect\(\)/);
   assert.match(world, /integerScaleForViewport/);
+  assert.match(world, /addEventListener\('wheel', onWheel, \{ capture: true, passive: false \}\)/, 'wheel input is forwarded to the scrollable map viewport');
+  assert.match(world, /viewport\.scrollTop = nextTop/);
+  assert.match(world, /viewport\.scrollLeft = nextLeft/);
+});
+
+test('GUS opens as the default floating helper and has no redundant titlebar button', () => {
+  const app = source('src/renderer/src/App.tsx');
+  const gus = source('src/renderer/src/components/WorldHelperSurface.tsx');
+  assert.doesNotMatch(app, /Open GUS World Helper/);
+  assert.match(app, /worldHelperOverlayVisible\(true\)/);
+  assert.match(gus, /useState\(true\).*expanded/s);
 });
 
 test('World translations expose the same key set in every supported locale', () => {

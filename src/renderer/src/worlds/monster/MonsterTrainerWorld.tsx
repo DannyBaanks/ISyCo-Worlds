@@ -32,6 +32,25 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
   const activeAgents = props.snapshot.agents.filter((agent) => !agent.archived);
   useEffect(() => { const viewport = viewportRef.current; if (!viewport || typeof ResizeObserver === 'undefined') return; const observer = new ResizeObserver(([entry]) => { const next = integerScaleForViewport(entry.contentRect.width, entry.contentRect.height); setScale((current) => current === next ? current : next); }); observer.observe(viewport); return () => observer.disconnect(); }, []);
   useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const onWheel = (event: WheelEvent): void => {
+      if (event.target instanceof Element && event.target.closest('[data-free-build-toolbar]')) return;
+      const multiplier = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16
+        : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? viewport.clientHeight : 1;
+      const maxTop = Math.max(0, viewport.scrollHeight - viewport.clientHeight);
+      const maxLeft = Math.max(0, viewport.scrollWidth - viewport.clientWidth);
+      const nextTop = Math.min(maxTop, Math.max(0, viewport.scrollTop + event.deltaY * multiplier));
+      const nextLeft = Math.min(maxLeft, Math.max(0, viewport.scrollLeft + event.deltaX * multiplier));
+      if (nextTop === viewport.scrollTop && nextLeft === viewport.scrollLeft) return;
+      event.preventDefault();
+      viewport.scrollTop = nextTop;
+      viewport.scrollLeft = nextLeft;
+    };
+    viewport.addEventListener('wheel', onWheel, { capture: true, passive: false });
+    return () => viewport.removeEventListener('wheel', onWheel, true);
+  }, []);
+  useEffect(() => {
     const host = hostRef.current; if (!host) return; const app = new Application(); let ticker: ((ticker: Ticker) => void) | null = null; let alive = true; let initSettled = false; let disposedReported = false; let failed = false; let releaseLease: (() => boolean) | undefined;
     const release = () => disposeWorldRendererOnce(app, () => {
       try { if (ticker) app.ticker.remove(ticker); } catch { /* partial Pixi init */ }
@@ -124,7 +143,7 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
     props.onIntent({ type: 'save-composition', requestId, layout: editor.present });
   };
 
-  return <div ref={viewportRef} style={{ position: 'absolute', inset: 0, overflow: 'auto', background: '#132532' }}>
+  return <div ref={viewportRef} style={{ position: 'absolute', inset: 0, overflow: 'auto', overscrollBehavior: 'contain', background: '#132532' }}>
     <div ref={hostRef} style={{ width: STARTER_VILLAGE_WIDTH * scale, height: STARTER_VILLAGE_HEIGHT * scale, imageRendering: 'pixelated' }} />
     <FreeBuildToolbar
       catalog={catalog}

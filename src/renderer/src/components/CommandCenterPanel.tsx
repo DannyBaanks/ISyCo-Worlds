@@ -85,7 +85,7 @@ const TABS: { key: CCTab; labelKey: string; icon: Parameters<typeof Icon>[0]['na
  *  and renders the real terminal. The docked instance renders the "open in
  *  fullscreen" placeholder instead — two live xterms on one pty fight over its
  *  cols/rows and corrupt the display. */
-export function CommandCenterPanel({ agent, fullscreen = false, profileId = 'office', displayName, navigationCollapsed = false }: { agent: Agent; fullscreen?: boolean; profileId?: WorldId; displayName?: string; navigationCollapsed?: boolean }) {
+export function CommandCenterPanel({ agent, fullscreen = false, profileId = 'office', displayName, navigationCollapsed = false, onToggleNavigation }: { agent: Agent; fullscreen?: boolean; profileId?: WorldId; displayName?: string; navigationCollapsed?: boolean; onToggleNavigation?: () => void }) {
   const { t } = useTranslation();
   const [tab, setTab] = useState<CCTab>('terminal');
   // The trigger-history ledger has nothing to say until an outside party can
@@ -161,6 +161,15 @@ export function CommandCenterPanel({ agent, fullscreen = false, profileId = 'off
         padding: '6px 8px', background: 'var(--cth-cream-100)',
         borderBottom: '1px solid var(--cth-ink-700)', flexShrink: 0
       }}>
+        {!fullscreen && onToggleNavigation && <button
+          type="button"
+          className="worlds-command-nav-toggle cth-tip cth-titlebar-nodrag"
+          aria-label={navigationCollapsed ? 'Show command tabs' : 'Hide command tabs'}
+          aria-controls="worlds-command-navigation"
+          aria-expanded={!navigationCollapsed}
+          data-tip={navigationCollapsed ? 'Show command tabs' : 'Hide command tabs'}
+          onClick={onToggleNavigation}
+        >{navigationCollapsed ? '›' : '‹'}</button>}
         <div style={{
           width: profileId === 'monster-trainer' ? 44 : 32, height: profileId === 'monster-trainer' ? 50 : 32, background: `var(--cth-${agent.accent}-light)`,
           boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',

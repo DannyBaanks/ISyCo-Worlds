@@ -48,7 +48,7 @@ export function WorldHelperSurface({ snapshot, setupRequired, onSnapshot, bridge
   const [streamDraft, setStreamDraft] = useState('');
   const [selected, setSelected] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
-  const [expanded, setExpanded] = useState(setupRequired);
+  const [expanded, setExpanded] = useState(true);
   const [showSetup, setShowSetup] = useState(setupRequired);
   const [error, setError] = useState('');
   const streamRequestId = useRef<string | null>(null);
