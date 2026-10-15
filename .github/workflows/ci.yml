@@ -80,6 +80,12 @@ jobs:
         run: npx electron-builder ${{ matrix.args }} --publish never
       - name: Verify release installers
         run: node scripts/verify-release-artifacts.cjs ${{ matrix.platform }}
+      - name: Smoke-test packaged Windows app
+        if: ${{ matrix.platform == 'win' }}
+        run: node scripts/smoke-release-app.cjs win
+      - name: Smoke-test packaged Linux app
+        if: ${{ matrix.platform == 'linux' }}
+        run: xvfb-run -a node scripts/smoke-release-app.cjs linux
 
   test:
     # "Download it and it works" on both Linux and Windows is only true if the
