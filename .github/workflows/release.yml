@@ -109,12 +109,16 @@ jobs:
       - name: Verify release installers
         run: node scripts/verify-release-artifacts.cjs ${{ matrix.platform }}
 
-      - name: Smoke-test packaged Windows app
+      - name: Install and smoke-test Windows release
         if: ${{ matrix.platform == 'win' }}
-        run: node scripts/smoke-release-app.cjs win
-      - name: Smoke-test packaged Linux app
+        run: ./scripts/smoke-release-installer.ps1
+        shell: pwsh
+      - name: Smoke-test Linux AppImage
         if: ${{ matrix.platform == 'linux' }}
-        run: xvfb-run -a node scripts/smoke-release-app.cjs linux
+        run: |
+          appimage="$(find dist -maxdepth 1 -type f -name '*.AppImage' -print -quit)"
+          test -n "$appimage"
+          xvfb-run -a node scripts/smoke-release-app.cjs linux --executable "$appimage" --app-args '["--appimage-extract-and-run"]'
 
       - name: Generate checksums
         shell: bash
