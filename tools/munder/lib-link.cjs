@@ -23,8 +23,15 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 
 const PROTOCOL = 'munder-link@1';
-const DEFAULT_PORT = Number(process.env.MUNDER_LINK_PORT) || 47831;
-const DISCOVERY_PORT = Number(process.env.MUNDER_LINK_DISCOVERY_PORT) || 47832;
+function configuredPort(name, fallback) {
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim() === '') return fallback;
+  const port = Number(raw);
+  return Number.isInteger(port) && port >= 0 && port <= 65535 ? port : fallback;
+}
+
+const DEFAULT_PORT = configuredPort('MUNDER_LINK_PORT', 47831);
+const DISCOVERY_PORT = configuredPort('MUNDER_LINK_DISCOVERY_PORT', 47832);
 const PROBE = 'MUNDER-LINK?v1';
 const MAX_SKEW_MS = 120_000;
 const NONCE_TTL_MS = 10 * 60_000;

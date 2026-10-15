@@ -10,16 +10,18 @@ const L = require('./lib-link.cjs');
 
 const version = process.env.MUNDER_LINK_VERSION || 'app';
 const { server, identity } = L.createLinkServer({ version });
-const udp = L.createDiscoveryResponder({ version });
+let udp = null;
 
 server.listen(L.DEFAULT_PORT, '0.0.0.0', () => {
-  console.log(`[munder-link] ${identity.name} (${L.prettyFingerprint(identity.office_id)}) escuchando en 0.0.0.0:${L.DEFAULT_PORT}; hive: ${L.localHiveRoot() || '—'}`);
+  const port = server.address().port;
+  udp = L.createDiscoveryResponder({ version, port });
+  console.log(`[munder-link] ${identity.name} (${L.prettyFingerprint(identity.office_id)}) escuchando en 0.0.0.0:${port}; hive: ${L.localHiveRoot() || '—'}`);
 });
 server.on('error', (e) => {
   console.error(`[munder-link] ${e.code === 'EADDRINUSE' ? `el puerto ${L.DEFAULT_PORT} está ocupado (¿ya está encendido?)` : e.message}`);
   process.exit(1);
 });
 
-const bye = () => { try { udp.close(); } catch { /* closed */ } server.close(() => process.exit(0)); };
+const bye = () => { if (udp) { try { udp.close(); } catch { /* closed */ } } server.close(() => process.exit(0)); };
 process.on('SIGTERM', bye);
 process.on('SIGINT', bye);

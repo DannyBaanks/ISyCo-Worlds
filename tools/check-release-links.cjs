@@ -6,9 +6,8 @@
  *
  * WHY THIS EXISTS. RELEASE.md is published verbatim as the GitHub release body,
  * and its download table links to
- * `/releases/latest/download/Munder-Difflin-<version>-<platform>.<ext>`. That URL
- * form requires the EXACT filename present in whichever release is currently
- * "latest", and electron-builder bakes ${version} into every artifact name — so a
+ * `/releases/download/v<tag>/ISyCo-Worlds-<version>-<platform>.<ext>`. That URL
+ * requires the exact filename produced by electron-builder for this repo — so a
  * version string left behind in RELEASE.md turns all four download links into
  * hard 404s the moment the next release ships.
  *
@@ -32,9 +31,7 @@ const path = require('node:path');
 const root = path.join(__dirname, '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 const version = pkg.version;
-// A version is x.y.z with an optional prerelease tag: the ISyCo fork ships
-// 0.5.2-ISyCo.1, and a plain x.y.z pattern never matched its artifact names,
-// so the table read as "no download assets at all" and CI stayed red.
+// A version is x.y.z with an optional fork prerelease tag.
 const VER = String.raw`\d+\.\d+\.\d+(?:-[A-Za-z][A-Za-z0-9]*\.\d+)?`;
 const releaseMd = fs.readFileSync(path.join(root, 'RELEASE.md'), 'utf8');
 
@@ -48,15 +45,22 @@ function compareVersions(a, b) {
 }
 
 // — 1. every pinned artifact name must carry the current version —
-const assetRe = new RegExp(`Munder-Difflin-(${VER})-([^\\s\`)]+)`, 'g');
+const assetRe = new RegExp(`ISyCo-Worlds-(${VER})-([^\\s\`)]+)`, 'g');
 const assets = new Set();
 for (const m of releaseMd.matchAll(assetRe)) {
   if (m[1] !== version) {
-    problems.push(`RELEASE.md advertises Munder-Difflin-${m[1]}-${m[2]} but package.json says ${version}`);
+    problems.push(`RELEASE.md advertises ISyCo-Worlds-${m[1]}-${m[2]} but package.json says ${version}`);
   }
-  assets.add(`Munder-Difflin-${m[1]}-${m[2]}`);
+  assets.add(`ISyCo-Worlds-${m[1]}-${m[2]}`);
 }
 if (assets.size === 0) problems.push('RELEASE.md advertises no download assets at all — did the table move?');
+
+// A tag can use a short release label (this repo's current tag is v0.3 while
+// package.json is 0.3.0). All direct download links still need to target one tag.
+const releaseTags = new Set([...releaseMd.matchAll(/releases\/download\/(v[^/\s)]+)/g)].map((m) => m[1]));
+if (releaseTags.size === 0) problems.push('RELEASE.md has no versioned GitHub release download links.');
+if (releaseTags.size > 1) problems.push(`RELEASE.md mixes release tags: ${[...releaseTags].join(', ')}`);
+const releaseTag = [...releaseTags][0] || `v${version}`;
 
 // — 2. source tarball tags too; a stale tag silently ships last release's source —
 for (const m of releaseMd.matchAll(new RegExp(`archive/refs/tags/v(${VER})`, 'g'))) {
@@ -116,7 +120,7 @@ async function checkLive() {
   // The repo that actually publishes (package.json `repository`), at this exact
   // tag: a prerelease is never "latest", so /releases/latest/ would 404 on a fork.
   const repo = /github\.com\/([^/]+\/[^/.]+)/.exec(String(pkg.repository?.url || pkg.repository || ''));
-  const base = `https://github.com/${repo ? repo[1] : 'chaitanyagiri/munder-difflin'}/releases/download/v${version}/`;
+  const base = `https://github.com/${repo ? repo[1] : 'DannyBaanks/ISyCo-Worlds'}/releases/download/${releaseTag}/`;
   for (const name of [...assets, 'SHA256SUMS.txt']) await head(base + name, name);
   for (const url of siteAssets) await head(url, url);
 }

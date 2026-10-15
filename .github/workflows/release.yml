@@ -21,10 +21,13 @@ jobs:
       matrix:
         include:
           - os: macos-latest
+            platform: mac
             args: --mac
           - os: windows-2022
+            platform: win
             args: --win
           - os: ubuntu-latest
+            platform: linux
             args: --linux
     steps:
       - uses: actions/checkout@v4
@@ -103,6 +106,20 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ matrix.os == 'macos-latest' && secrets.APPLE_APP_SPECIFIC_PASSWORD || '' }}
           APPLE_TEAM_ID: ${{ matrix.os == 'macos-latest' && secrets.APPLE_TEAM_ID || '' }}
 
+      - name: Verify release installers
+        run: node scripts/verify-release-artifacts.cjs ${{ matrix.platform }}
+
+      - name: Install and smoke-test Windows release
+        if: ${{ matrix.platform == 'win' }}
+        run: ./scripts/smoke-release-installer.ps1
+        shell: pwsh
+      - name: Smoke-test Linux AppImage
+        if: ${{ matrix.platform == 'linux' }}
+        run: |
+          appimage="$(find dist -maxdepth 1 -type f -name '*.AppImage' -print -quit)"
+          test -n "$appimage"
+          xvfb-run -a node scripts/smoke-release-app.cjs linux --executable "$appimage" --app-args '["--appimage-extract-and-run"]'
+
       - name: Generate checksums
         shell: bash
         run: |
@@ -138,7 +155,10 @@ jobs:
   publish:
     name: Publish release
     needs: [build, mobile-ios, mobile-android]
-    if: startsWith(github.ref, 'refs/tags/')
+    # A desktop release is usable without Android signing credentials. Keep the
+    # Android job fail-closed when signing is configured, but let its deliberate
+    # skip leave Windows/Linux/macOS artifacts publishable.
+    if: ${{ always() && startsWith(github.ref, 'refs/tags/') && needs.build.result == 'success' && needs.mobile-ios.result == 'success' && (needs.mobile-android.result == 'success' || needs.mobile-android.result == 'skipped') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -152,9 +172,15 @@ jobs:
           mkdir -p release
           find artifacts -type f \( -name '*.dmg' -o -name '*.zip' -o -name '*.exe' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.blockmap' -o -name 'latest*.yml' -o -name '*.ipa' -o -name '*.apk' \) -exec cp {} release/ \;
           cat artifacts/*/SHA256SUMS-*.txt > release/SHA256SUMS.txt 2>/dev/null || true
-          # Los móviles suben el binario suelto (sin su propio SHA256SUMS): se
-          # hashea aquí para que todo lo descargable quede cubierto.
-          (cd release && sha256sum MunderMobile-*.ipa MunderMobile-*.apk >> SHA256SUMS.txt)
+          # Mobile artifacts upload without their own checksums. Android is
+          # optional when stable signing is not configured, so hash only files
+          # that were actually produced.
+          (
+            cd release
+            for file in MunderMobile-*.ipa MunderMobile-*.apk; do
+              if [ -f "$file" ]; then sha256sum "$file" >> SHA256SUMS.txt; fi
+            done
+          )
           ls -la release
 
       - name: Publish to GitHub Release
@@ -231,15 +257,15 @@ jobs:
           retention-days: 30
 
   mobile-android:
-    # El Android de la release: `assembleRelease` firmado SIEMPRE con la misma
-    # llave, para que cada versión se instale encima de la anterior sin perder
-    # el emparejamiento. La llave vive solo en GitHub Secrets; nunca en el repo.
+    # Android is included only when the stable certificate fingerprint is
+    # configured. The signing key stays in GitHub Secrets; it never enters the
+    # repository. Windows/Linux desktop releases do not depend on this setting.
     #
-    # Fail-closed: sin los secretos, o si la llave no es la esperada, el job
-    # FALLA y la release no se publica. Publicar un APK con otra firma (o el
-    # debug, cuya llave cambia en cada runner) dejaría a los usuarios sin poder
-    # actualizar. Configuración: docs/release-signing/README.md.
+    # If the fingerprint is present, fail closed on missing secrets or a
+    # different key. Never publish a debug APK whose signing identity changes
+    # between runners. Configuration: docs/release-signing/README.md.
     name: Build Android APK
+    if: ${{ vars.ANDROID_SIGNING_CERT_SHA256 != '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
