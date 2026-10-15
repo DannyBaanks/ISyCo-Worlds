@@ -30,7 +30,7 @@ function parseArgs(argv) {
   if (!Array.isArray(appArgs) || !appArgs.every((arg) => typeof arg === 'string')) {
     throw new Error('--app-args must be a JSON array of strings');
   }
-  return { platform, executable: executable || resolveExecutable(platform), appArgs };
+  return { platform, executable: executable ? path.resolve(root, executable) : resolveExecutable(platform), appArgs };
 }
 
 function resolveExecutable(platform) {
