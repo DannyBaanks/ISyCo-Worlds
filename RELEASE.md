@@ -1,5 +1,5 @@
 <!-- Notas del release del fork. Se publican tal cual como cuerpo del GitHub Release. -->
-# Munder Difflin v0.5.2-ISyCo.2
+# ISyCo Worlds 0.3.0
 
 Segunda iteración pública del fork ISyCo sobre Munder Difflin 0.5.2.
 
@@ -21,7 +21,7 @@ Segunda iteración pública del fork ISyCo sobre Munder Difflin 0.5.2.
 
 - Cliente móvil para ver la oficina, preguntas y tablero; escribirle a Michael o a un agente y cambiar entre oficinas enlazadas. En Android además está la pestaña **Panel** para manejar la computadora.
 - Apps nativas con el mismo protocolo `munder-remote@1`: SwiftUI en iPhone (`ios/MunderMobile/`, llaves en el Keychain, Face ID) y Kotlin + Compose en Android (`android/MunderMobile/`, llaves en el Keystore, huella o PIN). El celular es solo un sustrato: mismos ops, misma autoridad, mismos bytes cifrados.
-- Cada release trae las dos para instalar directo: **`MunderMobile-unsigned.ipa`** (se firma con tu Apple ID gratuito vía iloader/SideStore/AltStore) y **`MunderMobile-debug.apk`** (se instala directo y no caduca).
+- Cada release trae **`MunderMobile-unsigned.ipa`** para instalar vía iloader/SideStore/AltStore. Si están configuradas las credenciales de firma Android estables, también incluye **`MunderMobile-release.apk`**; si faltan, el APK se omite y no se publica uno debug con una firma incompatible.
 - Emparejamiento único con direcciones LAN/Tailscale y selección de la ruta que responde.
 - **Face ID / código del dispositivo** antes de mostrar la oficina y nuevamente para acciones sensibles.
 - La app se vuelve a bloquear tras pasar tiempo en segundo plano y cubre el snapshot del app switcher.
@@ -102,13 +102,13 @@ Segunda iteración pública del fork ISyCo sobre Munder Difflin 0.5.2.
 
 | Plataforma | Descarga |
 |---|---|
-| macOS (universal) | [`Munder-Difflin-0.5.2-ISyCo.2-mac-universal.dmg`](https://github.com/DannyBaanks/munder-difflin/releases/download/v0.5.2-ISyCo.2/Munder-Difflin-0.5.2-ISyCo.2-mac-universal.dmg) |
-| Windows (instalador) | [`Munder-Difflin-0.5.2-ISyCo.2-win-x64-setup.exe`](https://github.com/DannyBaanks/munder-difflin/releases/download/v0.5.2-ISyCo.2/Munder-Difflin-0.5.2-ISyCo.2-win-x64-setup.exe) |
-| Windows (portable) | [`Munder-Difflin-0.5.2-ISyCo.2-win-x64-portable.exe`](https://github.com/DannyBaanks/munder-difflin/releases/download/v0.5.2-ISyCo.2/Munder-Difflin-0.5.2-ISyCo.2-win-x64-portable.exe) |
-| Linux (AppImage) | [`Munder-Difflin-0.5.2-ISyCo.2-linux-x86_64.AppImage`](https://github.com/DannyBaanks/munder-difflin/releases/download/v0.5.2-ISyCo.2/Munder-Difflin-0.5.2-ISyCo.2-linux-x86_64.AppImage) |
-| Linux (`.deb`) | [`Munder-Difflin-0.5.2-ISyCo.2-linux-amd64.deb`](https://github.com/DannyBaanks/munder-difflin/releases/download/v0.5.2-ISyCo.2/Munder-Difflin-0.5.2-ISyCo.2-linux-amd64.deb) |
+| macOS (universal) | [`ISyCo-Worlds-0.3.0-mac-universal.dmg`](https://github.com/DannyBaanks/ISyCo-Worlds/releases/download/v0.3/ISyCo-Worlds-0.3.0-mac-universal.dmg) |
+| Windows (instalador) | [`ISyCo-Worlds-0.3.0-win-x64-setup.exe`](https://github.com/DannyBaanks/ISyCo-Worlds/releases/download/v0.3/ISyCo-Worlds-0.3.0-win-x64-setup.exe) |
+| Windows (portable) | [`ISyCo-Worlds-0.3.0-win-x64-portable.exe`](https://github.com/DannyBaanks/ISyCo-Worlds/releases/download/v0.3/ISyCo-Worlds-0.3.0-win-x64-portable.exe) |
+| Linux (AppImage) | [`ISyCo-Worlds-0.3.0-linux-x86_64.AppImage`](https://github.com/DannyBaanks/ISyCo-Worlds/releases/download/v0.3/ISyCo-Worlds-0.3.0-linux-x86_64.AppImage) |
+| Linux (`.deb`) | [`ISyCo-Worlds-0.3.0-linux-amd64.deb`](https://github.com/DannyBaanks/ISyCo-Worlds/releases/download/v0.3/ISyCo-Worlds-0.3.0-linux-amd64.deb) |
 
-Verifica los artefactos con [`SHA256SUMS.txt`](https://github.com/DannyBaanks/munder-difflin/releases/download/v0.5.2-ISyCo.2/SHA256SUMS.txt).
+Verifica los artefactos con [`SHA256SUMS.txt`](https://github.com/DannyBaanks/ISyCo-Worlds/releases/download/v0.3/SHA256SUMS.txt).
 
 ```bash
 sha256sum -c SHA256SUMS.txt

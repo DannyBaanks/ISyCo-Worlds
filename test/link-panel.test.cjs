@@ -126,16 +126,30 @@ test('turning the link on/off shares the pid file with `munder link`', async (t)
 
 test('link-serve.cjs is a working server, the one the tab starts', async (t) => {
   const o = office('served');
-  const port = 40000 + Math.floor(Math.random() * 20000);
   const child = spawn(process.execPath, [path.join(__dirname, '..', 'tools', 'munder', 'link-serve.cjs')], {
-    env: { ...process.env, MUNDER_LINK_DIR: o.dir, MUNDER_LINK_HIVE: o.hive, MUNDER_LINK_PORT: String(port), MUNDER_LINK_DISCOVERY_PORT: String(port + 1) },
+    env: { ...process.env, MUNDER_LINK_DIR: o.dir, MUNDER_LINK_HIVE: o.hive, MUNDER_LINK_PORT: '0', MUNDER_LINK_DISCOVERY_PORT: '0' },
     stdio: ['ignore', 'pipe', 'pipe']
   });
   t.after(() => { try { child.kill('SIGKILL'); } catch { /* gone */ } });
-  await new Promise((resolve, reject) => {
-    child.stdout.on('data', (d) => { if (String(d).includes('escuchando')) resolve(); });
-    child.on('exit', (code) => reject(new Error(`exited ${code}`)));
-    setTimeout(() => reject(new Error('timeout')), 5000);
+  let stdout = '';
+  let stderr = '';
+  const port = await new Promise((resolve, reject) => {
+    let settled = false;
+    const timer = setTimeout(() => finish(reject, new Error(`timeout; stdout=${stdout.trim()}; stderr=${stderr.trim()}`)), 5000);
+    const finish = (fn, value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      fn(value);
+    };
+    child.stdout.on('data', (d) => {
+      stdout += String(d);
+      const match = /escuchando en 0\.0\.0\.0:(\d+)/.exec(stdout);
+      if (match && Number(match[1]) > 0) finish(resolve, Number(match[1]));
+    });
+    child.stderr.on('data', (d) => { stderr += String(d); });
+    child.on('error', (e) => finish(reject, e));
+    child.on('close', (code) => finish(reject, new Error(`exited ${code}; stdout=${stdout.trim()}; stderr=${stderr.trim()}`)));
   });
   const card = await L.hello(`127.0.0.1:${port}`);
   assert.equal(card.name, 'michael-served');
