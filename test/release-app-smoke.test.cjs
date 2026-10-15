@@ -13,9 +13,10 @@ const fixture = path.join(__dirname, 'fixtures', 'release-smoke-app.cjs');
 
 test('packaged-app smoke waits for an authenticated /salud response before succeeding', () => {
   const smokeDirsBefore = new Set(fs.readdirSync(os.tmpdir()).filter((name) => name.startsWith('isyco-worlds-release-smoke-')));
+  const platform = process.platform === 'win32' ? 'win' : 'linux';
   const result = spawnSync(process.execPath, [
     smoke,
-    'win',
+    platform,
     '--executable', process.execPath,
     '--app-args', JSON.stringify([fixture])
   ], {
