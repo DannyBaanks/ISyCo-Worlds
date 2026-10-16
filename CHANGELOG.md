@@ -21,6 +21,10 @@ regenerated in sync (restores `ws@8.21.3` under `@openai/agents-core`).
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-10-15
+
+Publicada como **ISyCo Worlds 0.4v** (`v0.4`). Incluye mejoras en el tablero y los modelos disponibles, además de compilación y pruebas de arranque de los instaladores de Windows y Linux en GitHub Actions.
+
 ### Added
 
 - **Tasks show their id.** The one thing people actually refer to a card by — `bmt-12` — was not
