@@ -8,6 +8,7 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
 const root = path.join(__dirname, '..');
+const version = require('../package.json').version;
 const smoke = path.join(root, 'scripts', 'smoke-release-app.cjs');
 const fixture = path.join(__dirname, 'fixtures', 'release-smoke-app.cjs');
 const { parseArgs } = require(smoke);
@@ -33,7 +34,10 @@ test('packaged-app smoke waits for an authenticated /salud response before succe
   });
 
   assert.equal(result.status, 0, `smoke runner failed; stdout=${result.stdout}; stderr=${result.stderr}`);
-  assert.match(result.stdout, /release app health OK: service=munder-control version=0\.3\.0/);
+  assert.ok(
+    result.stdout.includes(`release app health OK: service=munder-control version=${version}`),
+    `smoke runner reported the wrong version: ${result.stdout}`
+  );
   const leaked = fs.readdirSync(os.tmpdir())
     .filter((name) => name.startsWith('isyco-worlds-release-smoke-') && !smokeDirsBefore.has(name));
   assert.deepEqual(leaked, [], 'smoke runner should remove its isolated profile after shutdown');
