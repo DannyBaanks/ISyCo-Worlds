@@ -41,7 +41,7 @@ ISyCo Worlds nació como fork de [Munder Difflin](https://github.com/chaitanyagi
 
 **1. Instala un «cerebro» para tus agentes.** La app no trae IA propia: usa la que ya tienes. Lo más fácil es [Claude Code](https://claude.com/claude-code). También sirven Codex, Gemini, OpenCode, Copilot y otros.
 
-**2. Baja ISyCo Worlds 0.3v.** Esa es la primera release del producto y es la que corresponde a `main`: [**ISyCo Worlds 0.3v**](https://github.com/DannyBaanks/ISyCo-Worlds/releases/tag/v0.3).
+**2. Baja ISyCo Worlds 0.4v.** [**ISyCo Worlds 0.4v**](https://github.com/DannyBaanks/ISyCo-Worlds/releases/tag/v0.4) incluye builds de GitHub Actions para Windows, Linux y macOS. El instalador de Windows y el AppImage de Linux pasan pruebas de instalación y arranque en CI.
 
 | Tu computadora | Qué buscar en la release |
 |---|---|
@@ -49,7 +49,7 @@ ISyCo Worlds nació como fork de [Munder Difflin](https://github.com/chaitanyagi
 | 🐧 Linux | el `.AppImage` o el `.deb` |
 | 🍎 Mac | el `.dmg` |
 
-> Esta versión reemplaza las releases anteriores. Si la página todavía no tiene el instalador de tu sistema, clona la etiqueta `v0.3` y arranca con `npm install` y `npm run dev`.
+> Si la página todavía no muestra el instalador de tu sistema, clona la etiqueta `v0.4` y arranca con `npm install` y `npm run dev`.
 
 **3. Ábrela.** Eliges idioma, tu **mundo** y la carpeta donde trabajará tu equipo, y tocas **Entrar a este mundo**. Luego toca **agregar agente** y listo.
 
