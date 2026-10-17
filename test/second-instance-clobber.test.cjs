@@ -25,7 +25,10 @@
  *      bootstrapHiveServices — the fixture alone cannot guard the real file.
  *
  * Linux hosts without DISPLAY run the fixture under xvfb-run, same as the
- * world-presentation witness.
+ * world-presentation witness. The fixture spawn is detached and reaped by
+ * process group so the xvfb-run wrapper can never orphan Xvfb or Electron,
+ * whose inherited stdio would otherwise hang the test worker after a green
+ * run (the Linux CI step hung exactly that way before the group reap).
  */
 
 const test = require('node:test');
@@ -55,8 +58,15 @@ function spawnInstance(env) {
   };
   delete childEnv.ELECTRON_RUN_AS_NODE; // must launch as Electron, not as Node
 
-  const child = spawn(command, args, { stdio: ['ignore', 'pipe', 'pipe'], env: childEnv });
+  const child = spawn(command, args, {
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env: childEnv,
+    // The child leads its own process group so reap() can tear down xvfb-run,
+    // Xvfb and Electron together; see reap().
+    detached: process.platform === 'linux'
+  });
   let output = '';
+  child.on('error', (err) => { output += String(err); });
   child.stdout.on('data', (d) => { output += d; });
   child.stderr.on('data', (d) => { output += d; });
   child.collectedOutput = () => output;
@@ -73,6 +83,10 @@ function waitExit(child, timeoutMs) {
       clearTimeout(timer);
       resolve(code ?? signal);
     });
+    child.on('error', () => {
+      clearTimeout(timer);
+      resolve('spawn-error');
+    });
   });
 }
 
@@ -82,9 +96,26 @@ function reap(child) {
     // Same process-tree reap as quit-sweep: on Windows a child is not killed
     // when its parent exits, and taskkill /T is the synchronous sweep.
     try { execFileSync('taskkill', ['/pid', String(child.pid), '/T', '/F'], { timeout: 10_000 }); } catch { /* already gone */ }
+  } else if (process.platform === 'linux') {
+    // The child leads its own process group (detached spawn), so the signal
+    // reaches xvfb-run, Xvfb and every Electron process at once. Killing only
+    // the xvfb-run wrapper orphans Electron, whose inherited stdout/stderr
+    // pipes keep this test worker's event loop alive: the run then never
+    // finishes even though every test already passed.
+    try { process.kill(-child.pid, 'SIGTERM'); } catch { /* already gone */ }
   } else {
     child.kill('SIGTERM');
   }
+}
+
+async function reapAndWait(child, timeoutMs = 10_000) {
+  reap(child);
+  let exit = await waitExit(child, timeoutMs);
+  if (exit === 'timeout' && process.platform === 'linux') {
+    try { process.kill(-child.pid, 'SIGKILL'); } catch { /* already gone */ }
+    exit = await waitExit(child, 5_000);
+  }
+  return exit;
 }
 
 async function waitForControlFile(file, timeoutMs) {
@@ -120,7 +151,7 @@ async function launchPair(guarded) {
     const after = JSON.parse(fs.readFileSync(controlFile, 'utf8'));
     return { first, after, primary };
   } catch (e) {
-    reap(primary);
+    await reapAndWait(primary);
     throw e;
   }
 }
@@ -142,8 +173,7 @@ test('pre-fix shape: the second launch clobbers the primary control file (fixtur
     assert.notEqual(after.pid, first.pid, 'the losing instance must have overwritten the control file for this fixture to model the defect');
     assert.notEqual(after.nonce, first.nonce, 'the rewritten file must be the dying instance\'s');
   } finally {
-    reap(primary);
-    await waitExit(primary, 10_000);
+    await reapAndWait(primary);
   }
 });
 
@@ -153,8 +183,7 @@ test('fixed shape: the second launch leaves the primary control file intact', { 
     assert.deepEqual(after, first, 'the losing instance must never write the control file');
     assert.equal(primary.exitCode, null, 'the primary instance must still be running');
   } finally {
-    reap(primary);
-    await waitExit(primary, 10_000);
+    await reapAndWait(primary);
   }
 });
 
