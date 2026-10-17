@@ -6238,6 +6238,15 @@ function onSystemResume(reason: string): void {
 }
 
 app.whenReady().then(async () => {
+  // A second launch that lost the single-instance race is already quitting
+  // (see requestSingleInstanceLock above). Module evaluation continues after
+  // that app.quit(), and Electron still fires this callback during the
+  // graceful quit — so without this guard the dying process would run the
+  // whole boot anyway: bind broker/control/telemetry ports and overwrite
+  // munder-control.json with ports that die with it, breaking the running
+  // instance's discovery until it restarts.
+  if (!gotInstanceLock) return;
+
   // Realtime Michael mic-gate hygiene (rt-8 / Pam rt-10 nit): the voice session
   // opens the mic permission gate by persisting realtimeVoiceEnabled=true and
   // closes it on disconnect — but a hard crash/reload mid-session skips that
