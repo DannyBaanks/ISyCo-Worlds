@@ -77,14 +77,21 @@ test('ISyCode spawns its bare TUI: no model, no auto flag, no argv prompt', () =
   assert.strictEqual(p.hiveAware, false, 'no Claude-only identity injection');
 });
 
-test('ISyCode is honestly NOT god-eligible until it has a hive bridge', () => {
+test('ISyCode is a full worker citizen but still NOT god-eligible', () => {
   const p = ap.providerPreset('isycode');
-  assert.strictEqual(ap.canReceiveInbox('isycode'), false, 'no Stop→drain path → mail bounces');
-  assert.strictEqual(ap.bridgeOf('isycode'), undefined, 'no hook/proxy bridge installed');
+  // Self-emitting bridge → Munder only exports the socket + agent id; no shim
+  // file to install. That makes an ISyCo worker drain inbox on idle (god-eligible
+  // transport) ...
+  assert.strictEqual(ap.canReceiveInbox('isycode'), true, 'worker drains inbox on Stop→idle');
+  assert.deepStrictEqual(ap.bridgeOf('isycode'), { kind: 'self' }, 'self-emitting bridge (no shim file)');
+  // ...but it is NOT god-eligible, because god is selected from
+  // supportsModel && canReceiveInbox and god's model is spliced via --model,
+  // which ISyCode does not expose (models live inside the TUI).
+  assert.strictEqual(p.supportsModel, false, 'no --model flag → excluded from god picker');
   assert.strictEqual(p.recommendedOrchestratorModel, undefined, 'never offered as the orchestrator model');
-  // …which is exactly why DEFAULT_AGENT_PROVIDER is not the god default: the
-  // orchestrator must drain hive mail, and the god provider stays claude.
-  assert.notStrictEqual(ap.DEFAULT_AGENT_PROVIDER, 'claude');
+  // usesHookStandingGoal is false for 'self' (no injected goal), so queued inbox
+  // deliveries still get the standing <goal> prepended by the renderer.
+  assert.notStrictEqual(ap.bridgeOf('isycode').kind, 'hooks', 'goal is not hook-injected');
 });
 
 test('ISyCode carries its verified command reference and a node-free installer', () => {

@@ -77,7 +77,14 @@ export type BridgeDescriptor =
       api: 'openai' | 'anthropic';
       baseUrlEnv: string;
       inboxDelivery: 'terminal' | 'serve';
-    };
+    }
+  // The CLI posts cth-hook-shaped payloads to HIVE_SOCK ITSELF (an in-process
+  // lifecycle emitter, like ISyCode built into its own chat loop). Munder only
+  // needs to export the socket + agent id into the spawn env; there is no hook
+  // config file or proxy sidecar to install. UsesHookStandingGoal is false for
+  // these (no injected goal), so queued inbox deliveries still get the agent's
+  // standing <goal> prepended by the renderer.
+  | { kind: 'self' };
 
 export interface AgentProviderPreset {
   id: AgentProvider;
@@ -219,12 +226,21 @@ export const AGENT_PROVIDER_PRESETS: AgentProviderPreset[] = [
     supportsModel: false,
     // Not hiveAware: no `--append-system-prompt`/`--settings` surface.
     hiveAware: false,
-    // NO BRIDGE. ISyCode exposes neither Claude-shaped lifecycle hooks nor a
-    // plugin event API that Munder installs into, so there is no Stop→drain path
-    // and no proxy tier either (its provider traffic is its own, through its own
-    // keyring). Honest consequence: routed inbox mail BOUNCES to the god, and
-    // ISyCode is therefore not god-eligible. It is a full worker engine.
-    canReceiveInbox: false,
+    // SELF-EMITTING bridge: ISyCode's chat loop posts cth-hook-shaped payloads to
+    // HIVE_SOCK ITSELF (isycode/hive_bridge.py), so Munder only needs to export the
+    // socket + AGENT_ID into the spawn env — no hook config file or proxy sidecar to
+    // install. That makes an ISyCode worker a FULL hive citizen: live status on
+    // every tool call, and Stop on every cleanly-completed turn → idle → inbox
+    // drain. canReceiveInbox is therefore true.
+    //
+    // Why it is STILL not god-eligible: god is chosen from
+    // `modelProvidersForAgent(true)` = supportsModel && canReceiveInbox, and god gets
+    // its model spliced on argv via `--model`. ISyCode has no `--model` flag
+    // (models are picked inside the TUI), so it can never receive the orchestrator's
+    // model selection and is excluded from the god picker. That is the honest bar,
+    // not lack of a bridge.
+    canReceiveInbox: true,
+    bridge: { kind: 'self' },
     // The launcher takes NO initial prompt: `isycode` / `isycode tui` start the
     // TUI, `-p` runs one headless turn and EXITS, and anything else is
     // `Unknown command:` + exit 2. So the hive protocol must never ride on argv —
