@@ -162,6 +162,7 @@ const SETTING_POLICY: Record<string, {
 const PENDING_TTL_MS = 120_000;
 
 const PROVIDER_COMMAND: Record<string, string> = {
+  isycode: 'isycode',
   claude: 'claude', codex: 'codex', antigravity: 'antigravity', gemini: 'gemini',
   opencode: 'opencode', openisy: 'openisy', crush: 'crush', pi: 'pi', qwen: 'qwen', copilot: 'copilot',
   cursor: 'cursor-agent'

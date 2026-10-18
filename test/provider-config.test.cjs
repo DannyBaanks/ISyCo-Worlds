@@ -144,7 +144,11 @@ test('onboarding lists every engine — orchestrator-capable first, workers-only
     modelProvidersForAgent(true).map((preset) => preset.id),
     'selectable rows are exactly the god-eligible engines, same order'
   );
-  assert.deepEqual(workersOnly.map((preset) => preset.id), ['kimi', 'copilot']);
+  // ISyCode leads the preset order (it is the floor's main TUI), and it is a
+  // workers-only row here for the same honest reason as kimi/copilot: it has no
+  // hive bridge, so it cannot drain inbox mail and cannot run Michael. Being the
+  // default WORKER engine and being god-eligible are different claims.
+  assert.deepEqual(workersOnly.map((preset) => preset.id), ['isycode', 'kimi', 'copilot']);
   assert.ok(!eligible.concat(workersOnly).some((preset) => preset.id === 'custom'));
 });
 

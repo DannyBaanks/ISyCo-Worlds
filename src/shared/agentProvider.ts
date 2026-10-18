@@ -1,6 +1,7 @@
 /**
  * Agent providers — the CLI a worker runs on. The app is no longer Claude-only:
- * a worker can run Claude Code, the OpenAI Codex CLI (`codex`), Kimi Code
+ * a worker can run the first-party ISyCode TUI (`isycode`, the floor's main
+ * engine), Claude Code, the OpenAI Codex CLI (`codex`), Kimi Code
  * (`kimi`), xAI Grok (`grok`), the Antigravity CLI (`agy`, Gemini models), the
  * local OpenISy CLI (`openisy`), or any custom command.
  * Each provider declares how to build its spawn command (model/auto-mode flags) and
@@ -11,17 +12,24 @@
  * Mirrors the shape of the upstream provider-preset work (PR #47 / issue #21) so
  * the two reconcile cleanly — this build adds the `antigravity` preset alongside
  * the existing `codex` preset.
+ *
+ * ORDER IS THE PICKER ORDER: every engine picker maps this array verbatim, so the
+ * first entry is the first button the user sees. Nothing else may depend on the
+ * position — `providerPreset`'s unknown-id fallback resolves `claude` by ID, not
+ * by index, precisely so reordering the list can't silently change spawn behavior.
  */
 import type { CmdGroup } from './claudeCommands';
 import { COMMAND_GROUPS as CLAUDE_COMMAND_GROUPS } from './claudeCommands';
 import { CODEX_COMMAND_GROUPS } from './codexCommands';
 import { GROK_COMMAND_GROUPS } from './grokCommands';
+import { ISYCODE_COMMAND_GROUPS } from './isycodeCommands';
 
 // NOTE: 'claw' (claw-code) was removed as a selectable provider — its upstream is
 // an unmaintained "museum exhibit" repo, not a production CLI. Re-add a supported
 // fork here (plus its preset/models/logo) after review. The proxy-bridge tier it
 // shared with qwen stays in place for qwen.
 export type AgentProvider =
+  | 'isycode'
   | 'claude'
   | 'codex'
   | 'grok'
@@ -36,6 +44,17 @@ export type AgentProvider =
   | 'copilot'
   | 'cursor'
   | 'custom';
+
+/** The floor's MAIN TUI: the engine offered first in every picker and preselected
+ *  for a brand-new agent when the user hasn't configured a default command of
+ *  their own. ISyCode is a first-party engine (DannyBaanks/ISyCode), so it leads
+ *  the list; the vendor CLIs follow.
+ *
+ *  Deliberately NOT the god/orchestrator default — that stays `claude`. Being the
+ *  orchestrator requires draining hive inbox mail at a safe idle prompt, and
+ *  ISyCode has no hive bridge yet (see its preset's `canReceiveInbox`). Making it
+ *  the god today would silently disable orchestration. */
+export const DEFAULT_AGENT_PROVIDER: AgentProvider = 'isycode';
 
 /** Structured descriptor for how a NON-hiveAware provider gets hive lifecycle
  *  events (live status + Stop→inbox-drain + cost), introduced alongside the legacy
@@ -171,6 +190,65 @@ export interface AgentProviderPreset {
 }
 
 export const AGENT_PROVIDER_PRESETS: AgentProviderPreset[] = [
+  {
+    // ISyCode — the first-party terminal agent (DannyBaanks/ISyCode), a Python
+    // Textual TUI with its own workspace-authority + deny-by-default decision
+    // layer. It is the floor's MAIN engine: first in every picker and the
+    // preselection for a new agent (DEFAULT_AGENT_PROVIDER).
+    //
+    // Verified against the shipped source, not web docs:
+    //   - binary + subcommands: `src/isycode/launcher.py::USAGE` and
+    //     `pyproject.toml [project.scripts] isycode = "isycode.launcher:main"`.
+    //   - slash commands: `src/isycode/tui_app_menu.py::_register_builtin_plugins`.
+    id: 'isycode',
+    label: 'ISyCode',
+    defaultCommand: 'isycode',
+    commandGroups: ISYCODE_COMMAND_GROUPS,
+    // NO auto flag. ISyCode's autonomy is a per-workspace mode (Classic vs
+    // Security) plus per-action approvals chosen INSIDE the TUI, and its own
+    // IsySentinel decision layer is deny-by-default. There is no
+    // skip-permissions CLI flag to splice, and inventing one would be a lie the
+    // floor's Auto Mode toggle would then appear to honor. So the toggle is a
+    // no-op for this engine: it keeps its own approval posture.
+    autoModeFlag: '',
+    autoFlag: '',
+    // NO model flag. `isycode --help` documents no `--model`; provider and model
+    // are picked in the TUI (Settings → Conversación → Proveedor, `/providers`,
+    // `/models`) and persisted per workspace. Splicing a `--model` would make the
+    // launcher print `Unknown command:` and exit 2.
+    supportsModel: false,
+    // Not hiveAware: no `--append-system-prompt`/`--settings` surface.
+    hiveAware: false,
+    // NO BRIDGE. ISyCode exposes neither Claude-shaped lifecycle hooks nor a
+    // plugin event API that Munder installs into, so there is no Stop→drain path
+    // and no proxy tier either (its provider traffic is its own, through its own
+    // keyring). Honest consequence: routed inbox mail BOUNCES to the god, and
+    // ISyCode is therefore not god-eligible. It is a full worker engine.
+    canReceiveInbox: false,
+    // The launcher takes NO initial prompt: `isycode` / `isycode tui` start the
+    // TUI, `-p` runs one headless turn and EXITS, and anything else is
+    // `Unknown command:` + exit 2. So the hive protocol must never ride on argv —
+    // spawn the bare TUI and type the seed in after boot (the Crush/Cursor path).
+    initialPromptFlag: undefined,
+    positionalInitialPrompt: false,
+    seedDelivery: 'type-into-tui',
+    // No CLI resume flag. Conversations are ISyCode's own local store, continued
+    // from inside the TUI (`/sessions resume`), so a respawn starts fresh.
+    resumeFlag: undefined,
+    // Python tool — deliberately NO `installCommand`: that field is the npm rung
+    // of the missing-CLI ladder, and routing a pip install through "install Node
+    // first, then npm" would be absurd. `nativeInstallCommand` is the node-free
+    // rung, which is the only correct one here. pipx isolates it in its own venv
+    // and links `isycode` into ~/.local/bin, matching a source checkout's
+    // `scripts/install-path`. Trusted hardcoded constants, no double-quotes (the
+    // win32 form is wrapped verbatim in `cmd /d /s /c "…"`); ISyCode documents
+    // git + Python 3.10+ as prerequisites, so the git URL form needs nothing else.
+    nativeInstallCommand: {
+      posix: 'pipx install git+https://github.com/DannyBaanks/ISyCode.git',
+      win32: 'pipx install git+https://github.com/DannyBaanks/ISyCode.git'
+    },
+    docsUrl: 'https://github.com/DannyBaanks/ISyCode'
+  },
   {
     id: 'claude',
     label: 'Claude Code',
@@ -620,6 +698,7 @@ export const AGENT_PROVIDER_PRESETS: AgentProviderPreset[] = [
 
 export function isAgentProvider(value: unknown): value is AgentProvider {
   return (
+    value === 'isycode' ||
     value === 'claude' ||
     value === 'codex' ||
     value === 'grok' ||
@@ -642,7 +721,16 @@ export function normalizeAgentProvider(value: unknown): AgentProvider | undefine
 }
 
 export function providerPreset(provider: AgentProvider): AgentProviderPreset {
-  return AGENT_PROVIDER_PRESETS.find((p) => p.id === provider) ?? AGENT_PROVIDER_PRESETS[0];
+  // The unknown-id fallback is resolved BY ID, never by array position: the
+  // presets are ordered for the picker (ISyCode leads), and a fallback that read
+  // `[0]` would silently start spawning the top-ranked engine whenever an id
+  // failed to resolve. Claude stays the conservative last resort it has always
+  // been — the one engine the hive's identity injection is written against.
+  return (
+    AGENT_PROVIDER_PRESETS.find((p) => p.id === provider) ??
+    AGENT_PROVIDER_PRESETS.find((p) => p.id === 'claude') ??
+    AGENT_PROVIDER_PRESETS[0]
+  );
 }
 
 export function isClaudeProvider(provider: AgentProvider | undefined): boolean {
@@ -674,6 +762,7 @@ export function inferAgentProvider(command: string | undefined, explicit?: unkno
   const normalized = normalizeAgentProvider(explicit);
   if (normalized) return normalized;
   const bin = commandBinary(command);
+  if (bin === 'isycode') return 'isycode';
   if (bin === 'codex') return 'codex';
   if (bin === 'grok') return 'grok';
   if (bin === 'kimi') return 'kimi';

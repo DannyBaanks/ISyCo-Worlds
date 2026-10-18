@@ -13,6 +13,15 @@ import type { AgentProvider } from '@/store/config';
 
 // Single-path fills (24×24 viewBox), official brand marks.
 const BRAND_PATHS: Partial<Record<AgentProvider, string>> = {
+  // ISyCode — the floor's main engine. Derived from the project's own mark
+  // (ISyCode `packaging/isycode.svg`): that asset is a rounded tile with two
+  // horizontal rules top and bottom framing an "ISY" wordmark. The wordmark
+  // doesn't survive at 14px, so the two rules are kept verbatim (scaled 128→24)
+  // and the space between them carries a `>_` prompt — the same gesture the
+  // `custom` fallback uses, but framed, which is what makes it read as ISyCode's
+  // tile rather than as "bring your own engine".
+  isycode:
+    'M3 4h18v2H3zM3 18h18v2H3zM7 8.6l4.2 3.4L7 15.4v-2L9.5 12 7 10.6zM12.6 14h5.2v1.8h-5.2z',
   // Google Gemini CLI.
   gemini:
     'M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81',

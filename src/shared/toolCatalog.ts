@@ -16,7 +16,7 @@
  * drift the moment a provider is added.
  */
 
-import { AGENT_PROVIDER_PRESETS } from './agentProvider';
+import { AGENT_PROVIDER_PRESETS, DEFAULT_AGENT_PROVIDER } from './agentProvider';
 
 export type ToolKind = 'prerequisite' | 'memory' | 'engine';
 
@@ -112,9 +112,10 @@ export function toolCatalog(): ToolSpec[] {
       label: p.label,
       kind: 'engine' as const,
       why: `Agent engine — ${p.defaultCommand}.`,
-      // Claude Code is the recommended engine and the only one the floor assumes
-      // by default, so it is the one engine "set up everything" will install.
-      essential: p.id === 'claude',
+      // Claude Code is the engine the hive's orchestrator runs, and ISyCode is the
+      // floor's main TUI (DEFAULT_AGENT_PROVIDER) — the two engines the app assumes
+      // by default, so they are the ones "set up everything" will install.
+      essential: p.id === 'claude' || p.id === DEFAULT_AGENT_PROVIDER,
       install: {
         posix: p.installCommand ?? p.nativeInstallCommand?.posix ?? '',
         win32: p.installCommand ?? p.nativeInstallCommand?.win32 ?? ''

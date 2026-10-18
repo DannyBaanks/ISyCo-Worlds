@@ -18,7 +18,7 @@ const ts = require('typescript');
 
 const SHARED = path.join(__dirname, '..', 'src', 'shared');
 const out = fs.mkdtempSync(path.join(os.tmpdir(), 'agentprov-'));
-for (const name of ['claudeCommands', 'codexCommands', 'grokCommands', 'agentProvider']) {
+for (const name of ['claudeCommands', 'codexCommands', 'grokCommands', 'isycodeCommands', 'agentProvider']) {
   const src = fs.readFileSync(path.join(SHARED, `${name}.ts`), 'utf8');
   const js = ts.transpileModule(src, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 }
@@ -34,6 +34,77 @@ function test(name, fn) {
 }
 
 console.log('agent-provider registry tests');
+
+test('ISyCode is a recognized, selectable provider and leads the picker order', () => {
+  assert.ok(ap.isAgentProvider('isycode'), 'isAgentProvider("isycode")');
+  assert.ok(ap.AGENT_PROVIDER_PRESETS.some((p) => p.id === 'isycode'), 'preset registered');
+  // Every engine picker maps AGENT_PROVIDER_PRESETS verbatim, so index 0 IS the
+  // first button the user sees. This is what "the floor's main TUI" means in code.
+  assert.strictEqual(ap.AGENT_PROVIDER_PRESETS[0].id, 'isycode', 'first in every picker');
+  assert.strictEqual(ap.DEFAULT_AGENT_PROVIDER, 'isycode', 'the preselected engine');
+});
+
+test('inferAgentProvider maps the isycode binary (with path/flags) to isycode', () => {
+  assert.strictEqual(ap.inferAgentProvider('isycode'), 'isycode');
+  assert.strictEqual(ap.inferAgentProvider('isycode tui'), 'isycode');
+  assert.strictEqual(ap.inferAgentProvider('/home/danny/.local/bin/isycode'), 'isycode');
+  assert.strictEqual(ap.inferAgentProvider('C:\\Users\\me\\.local\\bin\\isycode.exe'), 'isycode');
+});
+
+test('providerPreset falls back to CLAUDE by id, not to the first preset', () => {
+  // The presets are ordered for the picker, so `[0]` is now isycode. An
+  // unresolved id must still land on the conservative engine the hive's identity
+  // injection is written against — a positional fallback would silently start
+  // spawning the top-ranked CLI.
+  const fallback = ap.providerPreset('no-such-engine');
+  assert.strictEqual(fallback.id, 'claude', 'unknown ids resolve to claude');
+});
+
+test('ISyCode spawns its bare TUI: no model, no auto flag, no argv prompt', () => {
+  const p = ap.providerPreset('isycode');
+  assert.strictEqual(p.defaultCommand, 'isycode', 'default command binary');
+  assert.strictEqual(p.supportsModel, false, 'models are chosen inside the TUI');
+  assert.strictEqual(p.modelFlag, undefined, 'no --model: the launcher would exit 2');
+  assert.strictEqual(ap.autoModeFlagForProvider('isycode'), '', 'no skip-permissions flag exists');
+  assert.strictEqual(p.autoFlag, '', 'autoFlag mirrors autoModeFlag');
+  assert.strictEqual(p.initialPromptFlag, undefined, 'nothing rides in on a flag');
+  assert.ok(!p.positionalInitialPrompt, 'and nothing as a positional either');
+  // `isycode` accepts NO prompt argument: an unrecognized one prints
+  // `Unknown command:` and exits 2, so the hive seed must be typed after boot.
+  assert.strictEqual(p.seedDelivery, 'type-into-tui', 'seed is typed into the TUI');
+  assert.strictEqual(p.resumeFlag, undefined, 'sessions resume from inside the TUI');
+  assert.strictEqual(p.resumeSubcommand, undefined);
+  assert.strictEqual(p.hiveAware, false, 'no Claude-only identity injection');
+});
+
+test('ISyCode is honestly NOT god-eligible until it has a hive bridge', () => {
+  const p = ap.providerPreset('isycode');
+  assert.strictEqual(ap.canReceiveInbox('isycode'), false, 'no Stop→drain path → mail bounces');
+  assert.strictEqual(ap.bridgeOf('isycode'), undefined, 'no hook/proxy bridge installed');
+  assert.strictEqual(p.recommendedOrchestratorModel, undefined, 'never offered as the orchestrator model');
+  // …which is exactly why DEFAULT_AGENT_PROVIDER is not the god default: the
+  // orchestrator must drain hive mail, and the god provider stays claude.
+  assert.notStrictEqual(ap.DEFAULT_AGENT_PROVIDER, 'claude');
+});
+
+test('ISyCode carries its verified command reference and a node-free installer', () => {
+  const p = ap.providerPreset('isycode');
+  assert.ok(p.commandGroups.length > 0, 'command reference is populated');
+  const flat = p.commandGroups.flatMap((g) => g.items.map((i) => i.cmd));
+  assert.ok(flat.includes('/compact'), '/compact is documented');
+  assert.ok(flat.includes('/sessions'), '/sessions is documented');
+  // Python tool: NO npm rung (that would route a pip install through "install
+  // Node first"), only the self-contained one.
+  assert.strictEqual(p.installCommand, undefined, 'no npm install command');
+  assert.ok(p.nativeInstallCommand?.posix.includes('pipx install'), 'posix pipx installer');
+  assert.ok(p.nativeInstallCommand?.win32.includes('pipx install'), 'win32 pipx installer');
+  // The win32 form is wrapped verbatim in `cmd /d /s /c "…"`.
+  assert.ok(!p.nativeInstallCommand.win32.includes('"'), 'win32 installer carries no double-quotes');
+  const info = ap.installInfoForProvider('isycode', 'linux');
+  assert.strictEqual(info.command, undefined);
+  assert.strictEqual(info.nativeCommand, p.nativeInstallCommand.posix, 'native rung is what a linux box gets');
+  assert.strictEqual(info.label, 'ISyCode');
+});
 
 test('copilot is a recognized, selectable provider', () => {
   assert.ok(ap.isAgentProvider('copilot'), 'isAgentProvider("copilot")');

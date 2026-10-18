@@ -47,6 +47,20 @@ const NO_CONTEXT_COMMANDS: ProviderContextCommands = {
  * outranks web docs because it cannot lag the installed version.
  */
 const CONTEXT_COMMANDS: Record<AgentProvider, ProviderContextCommands> = {
+  // ISyCode's shipped source (DannyBaanks/ISyCode), not web docs:
+  //   tui_app_menu.py::_register_builtin_plugins registers
+  //     PluginCommand("compact", "summarize earlier messages to free up context", _compact_cmd)
+  //     PluginCommand("sessions", "list/new/resume/search/rename/fork/export/import conversations", _sessions_cmd)
+  //   and `_compact_cmd(app, arg)` forwards `arg.strip()` as
+  //   `_compact_conversation(instructions)` → `_summarize_older(…, instructions=instructions)`,
+  //   so the trailing focus IS read → compactTakesFocus is true.
+  //   There is no `/clear`: the discard-and-restart verb is `/sessions new`
+  //   (tui_app_sessions.py:1015, `if operation == "new"`). It is typed as one
+  //   line, so the embedded space is part of the command, not a focus argument.
+  //   Compaction summarizes in place and the saved conversation keeps the full
+  //   transcript (tui_app_chat.py::_summarize_older), so nothing is destroyed.
+  isycode: { compact: '/compact', clear: '/sessions new', compactTakesFocus: true },
+
   // claudeCommands.ts:34,37 (this repo's own catalog): `/compact` takes a focus
   // ("usage: /compact keep the auth decisions"), `/clear` starts a fresh
   // conversation and reclaims the window.

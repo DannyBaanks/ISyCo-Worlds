@@ -22,6 +22,7 @@ import {
   type AgentProvider,
   type HarnessConfig,
   AGENT_PROVIDER_PRESETS,
+  DEFAULT_AGENT_PROVIDER,
   buildSpawnCommand,
   tokenizeCommand,
   modelsForProvider,
@@ -182,19 +183,27 @@ export function AddAgentModal({ onClose, config, onConfigChange, profileId = 'of
     const hit = OFFICE_CAST.find(c => c.displayName.toLowerCase() === q || c.name === q);
     return hit ? hit.name : null;
   };
+  // Which engine a brand-new agent gets. The floor's MAIN TUI (ISyCode) leads,
+  // unless the user configured a global default command of their own — that is an
+  // explicit choice, and inferring the engine from it is the whole point of the
+  // field, so it wins. The stock value 'claude' carries no such intent (it is
+  // what a fresh install ships with), so it does not override the preselection.
+  // The model only carries over for Claude; every other engine seeds its own.
+  const configuredCommand = config.defaultCommand.trim();
+  const initialProvider: AgentProvider =
+    configuredCommand && configuredCommand !== 'claude'
+      ? inferAgentProvider(configuredCommand)
+      : DEFAULT_AGENT_PROVIDER;
+  const initialModel = isClaudeProvider(initialProvider) ? config.defaultModel : undefined;
+
   /** The locally-built spawn command for a manifest: provider preset + model
    *  from the LOCAL config builder, with the manifest's validated flags
    *  appended. A manifest can never name the binary itself. */
   const hireCommand = (m: HireManifest): string => {
-    const prov: AgentProvider = m.provider ?? inferAgentProvider(config.defaultCommand);
+    const prov: AgentProvider = m.provider ?? initialProvider;
     const base = buildSpawnCommand(config, m.model, prov);
     return m.commandFlags?.length ? `${base} ${m.commandFlags.join(' ')}` : base;
   };
-
-  // Default provider follows whatever the global default command is (claude
-  // unless the user reconfigured it); the model only carries over for Claude.
-  const initialProvider = inferAgentProvider(config.defaultCommand);
-  const initialModel = isClaudeProvider(initialProvider) ? config.defaultModel : undefined;
 
   const [name, setName] = useState(pendingHire?.name ?? 'Jim');
   const [character, setCharacter] = useState<OfficeCharacterName>(knownCharacter(pendingHire?.character));
@@ -1052,15 +1061,7 @@ export function AddAgentModal({ onClose, config, onConfigChange, profileId = 'of
                       <input
                         value={command}
                         onChange={(e) => setCommand(e.target.value)}
-                        placeholder={
-                          provider === 'antigravity'
-                            ? 'agy'
-                            : provider === 'codex'
-                              ? 'codex'
-                              : provider === 'custom'
-                                ? 'your-agent-cli'
-                                : 'claude'
-                        }
+                        placeholder={preset.defaultCommand || 'your-agent-cli'}
                         style={{ ...inputStyle, fontFamily: 'var(--cth-font-mono)' }}
                       />
                     </Row>

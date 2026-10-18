@@ -2,6 +2,7 @@
 // so we don't have to reach into the preload package to type-check.
 import {
   AGENT_PROVIDER_PRESETS,
+  DEFAULT_AGENT_PROVIDER,
   providerPreset,
   inferAgentProvider,
   isClaudeProvider,
@@ -20,6 +21,7 @@ import type { WorldId } from '@shared/worlds';
 
 export {
   AGENT_PROVIDER_PRESETS,
+  DEFAULT_AGENT_PROVIDER,
   providerPreset,
   inferAgentProvider,
   isClaudeProvider,
