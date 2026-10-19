@@ -26,7 +26,7 @@ ISyCo Worlds nació como fork de [Munder Difflin](https://github.com/chaitanyagi
 
 | | |
 |---|---|
-| 🌍 **Elige tu mundo** | **Munder Difflin**, la oficina original con Michael y su equipo, o **Monster Village**, donde el Profesor coordina a entrenadores y sus monstruos evolucionan al terminar trabajo. |
+| 🌍 **Elige tu mundo** | **Munder Difflin**, la oficina original con Michael y su equipo, o **Monster Village**, donde el Profesor coordina a entrenadores. Monster Village mantiene recompensas y evolución como estado propio del mundo, acreditadas solo por tareas `done` durables del Hive. |
 | ✦ **GUS, tu guía** | Un ayudante opcional que te explica qué está pasando y te propone qué agentes poner a trabajar. Nada se lanza sin tu aprobación. |
 | 📱 **Tu equipo en el celular** | iPhone y Android: contesta preguntas, revisa el tablero y manda trabajo, protegido con **Face ID**, huella o PIN. |
 | 🔗 **Dos computadoras, un equipo** | Tu laptop le pasa trabajo a la PC grande. Cada una tiene su coordinador y se ayudan. |
@@ -79,7 +79,7 @@ Cada mundo es una forma distinta de ver y organizar a tu equipo. Cambias de mund
 | Mundo | Cómo es |
 |---|---|
 | **Munder Difflin** | La oficina original de Chaitanya Giri: Michael coordina y el equipo trabaja en sus escritorios. |
-| **Monster Village** | Empieza en Starter Village. El Profesor coordina, tus agentes son los siete entrenadores y sus monstruos evolucionan al terminar trabajo. En **Explorar** recorres la aldea. En **Construir** eliges una pieza y la pones con un clic. **Wider**, **Taller** y **Expand** agrandan el mapa. La rueda hace zoom y **Fit** vuelve a mostrar la ciudad entera, sin barras de desplazamiento. |
+| **Monster Village** | Empieza en Starter Village. El Profesor coordina y tus agentes aparecen como entrenadores. El HUD separa el Hive operativo de la simulación del mundo: las recompensas y evoluciones locales avanzan solo cuando una tarea real llega a `done`, nunca por texto de conversación. En **Explorar** recorres la aldea. En **Construir** eliges una pieza y la pones con un clic. **Wider**, **Taller** y **Expand** agrandan el mapa. La rueda hace zoom y **Fit** vuelve a mostrar la ciudad entera, sin barras de desplazamiento. |
 
 <p align="center">
   <img src="./docs/readme/isyco-world-gus.png" alt="Monster Village: Starter Village en pixel art, con el Profesor como coordinador y el panel flotante de GUS" width="860"><br>

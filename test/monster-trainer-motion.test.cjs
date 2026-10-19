@@ -37,6 +37,20 @@ test('worker destinations are projections of semantic state, not Hive mutations'
     { id: 'question', assignee: 'a', awaitsHuman: true }
   ]), 'professor');
   assert.equal(motion.destinationForWorker({ id: 'a', state: 'waiting' }, []), 'village-idle');
+  assert.equal(motion.destinationForWorker({ id: 'a', state: 'working', station: 'terminal', tool: 'Bash' }, []), 'stable');
+  assert.equal(motion.destinationForWorker({ id: 'a', state: 'working', station: 'shelf', tool: 'Read' }, []), 'professor');
+  assert.equal(motion.destinationForWorker({ id: 'a', state: 'working' }, []), 'training-grass');
+});
+
+test('a reported terminal station reaches the authored stable interaction area', () => {
+  const actorMotion = new motion.MonsterWorkerMotion();
+  const agent = { id: 'terminal-worker', name: 'Willow', state: 'working', station: 'terminal', tool: 'Bash', archived: false };
+  actorMotion.updateProjection([agent], [], Scenario.STARTER_VILLAGE_PRESET);
+  let [snapshot] = actorMotion.snapshot();
+  assert.equal(snapshot.destination, 'stable');
+  for (let index = 0; index < 1_000 && !snapshot.arrived; index += 1) [snapshot] = actorMotion.tick(125);
+  assert.equal(snapshot.arrived, true, 'the stable route is valid in the authored composition');
+  assert.equal(snapshot.action, 'work');
 });
 
 test('pixel walker advances in bounded steps and stops at its semantic destination', () => {

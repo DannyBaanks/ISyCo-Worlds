@@ -25,6 +25,7 @@ export function useWorldProjection(): WorldProjectionState {
   const agents = useStore((state) => state.agents);
   const archivedAgents = useStore((state) => state.archivedAgents);
   const [rawTasks, setRawTasks] = useState<unknown>([]);
+  const [rawActivity, setRawActivity] = useState<unknown>([]);
   const [profiles, setProfiles] = useState<Record<string, VisualIdentityProfileV1>>({});
   const [transitions, setTransitions] = useState<readonly VisualTransition[]>([]);
   const previousSnapshot = useRef<CanonicalWorldSnapshot | null>(null);
@@ -44,6 +45,15 @@ export function useWorldProjection(): WorldProjectionState {
     }
   }, []);
 
+  const refreshActivity = useCallback(async () => {
+    try {
+      const raw = await window.cth.hiveLog(40);
+      if (Array.isArray(raw)) setRawActivity(raw);
+    } catch {
+      // Retain the last successful activity feed.
+    }
+  }, []);
+
   useEffect(() => {
     let active = true;
     void window.cth.worldProfiles()
@@ -58,17 +68,22 @@ export function useWorldProjection(): WorldProjectionState {
 
   useEffect(() => {
     void refreshTasks();
+    void refreshActivity();
     const tasksInterval = window.setInterval(refreshTasks, 5_000);
-    return () => window.clearInterval(tasksInterval);
-  }, [refreshTasks]);
+    const activityInterval = window.setInterval(refreshActivity, 5_000);
+    return () => {
+      window.clearInterval(tasksInterval);
+      window.clearInterval(activityInterval);
+    };
+  }, [refreshTasks, refreshActivity]);
 
   const agentsForProjection = useMemo(
     () => [...agents, ...archivedAgents],
     [agents, archivedAgents]
   );
   const snapshot = useMemo(
-    () => normalizeWorldSnapshot(agentsForProjection, rawTasks),
-    [agentsForProjection, rawTasks]
+    () => normalizeWorldSnapshot(agentsForProjection, rawTasks, rawActivity),
+    [agentsForProjection, rawTasks, rawActivity]
   );
   const identityFor = useMemo(() => createIdentityResolver(profiles), [profiles]);
 

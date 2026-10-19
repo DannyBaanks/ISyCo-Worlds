@@ -85,10 +85,13 @@ function ProjectedMonsterTrainerSurface({ projection, composition, compositionSa
         name: agent.name,
         state: agent.state,
         archived: agent.archived,
-        ...(monsterCharacter ? { monsterCharacter } : {})
+        ...(monsterCharacter ? { monsterCharacter } : {}),
+        ...(agent.station ? { station: agent.station } : {}),
+        ...(agent.tool ? { tool: agent.tool } : {})
       };
     }),
-    tasks: projection.tasks
+    tasks: projection.tasks,
+    activity: projection.activity ?? []
   };
   const transitions = previous.current ? deriveVisualTransitions(previous.current, snapshot) : [];
   previous.current = snapshot;

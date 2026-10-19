@@ -120,9 +120,13 @@ export function findTilePath(grid: VillageNavigationGrid, start: GridPoint, goal
 }
 
 /** Runtime facts only choose a visual destination; they never write tasks or agent state. */
-export function destinationForWorker(agent: Pick<WorldAgent, 'id' | 'state'>, tasks: readonly WorldTask[]): WorkerDestination {
+export function destinationForWorker(agent: Pick<WorldAgent, 'id' | 'state' | 'station' | 'tool'>, tasks: readonly WorldTask[]): WorkerDestination {
   if (tasks.some((task) => task.assignee === agent.id && task.awaitsHuman)) return 'professor';
   if (agent.state === 'blocked') return 'professor';
+  // Hook/PTY station facts are the only reason to choose a specialized building.
+  // Missing or unknown facts intentionally fall back to the neutral training field.
+  if (agent.state === 'working' && ['shelf', 'web', 'mcp'].includes(agent.station ?? '')) return 'professor';
+  if (agent.state === 'working' && ['terminal', 'board'].includes(agent.station ?? '')) return 'stable';
   if (agent.state === 'working') return 'training-grass';
   if (agent.state === 'waiting') return 'village-idle';
   return 'village-idle';

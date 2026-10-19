@@ -84,7 +84,12 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     assert.ok(recorded.pids.length >= 2, `expected root+descendant, saw: ${recorded.pids.join(',')}`);
 
     await sleep(500); // let the OS finish reaping what taskkill force-killed
-    const survivors = recorded.pids.filter(isAlive);
+    let survivors = recorded.pids.filter(isAlive);
+    const reapDeadline = Date.now() + 3_000;
+    while (survivors.length && Date.now() < reapDeadline) {
+      await sleep(250);
+      survivors = recorded.pids.filter(isAlive);
+    }
     if (survivors.length) {
       // Clean up the leak before failing, so a red run doesn't strand processes.
       for (const pid of survivors) {
