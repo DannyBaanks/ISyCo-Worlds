@@ -71,3 +71,20 @@ test('equal snapshots have no effects; only evidenced state changes produce tran
     { kind: 'task-awaits-human-changed', taskId: 'task-1', from: true, to: false }
   ]);
 });
+
+test('projects hook station/tool facts and redacted durable Hive activity', () => {
+  const snapshot = Projection.normalizeWorldSnapshot(
+    [{ id: 'atlas', name: 'Atlas', status: 'working', currentStation: 'terminal', carrying: 'Bash' }],
+    [],
+    [
+      { ts: 1700000000000, kind: 'message', from: 'human', to: 'god', subject: 'New task', body: 'secret body must not cross' },
+      { ts: 1700000001000, kind: 'tasks', count: 2 }
+    ]
+  );
+  assert.deepEqual(snapshot.agents[0], {
+    id: 'atlas', name: 'Atlas', state: 'working', archived: false, station: 'terminal', tool: 'Bash'
+  });
+  assert.equal(snapshot.activity.length, 2);
+  assert.match(snapshot.activity[0].detail, /Hive task ledger updated/);
+  assert.doesNotMatch(JSON.stringify(snapshot.activity), /secret body/);
+});

@@ -132,6 +132,7 @@ function IsolatedWorldViewport({ profileId, suspended }: { profileId: 'monster-t
   const projection = useMemo<WorldPresentationProjection>(() => ({
     agents: snapshot.agents.map((agent) => ({ ...agent })),
     tasks: snapshot.tasks.map((task) => ({ ...task })),
+    activity: snapshot.activity.map((item) => ({ ...item })),
     visualIdentities
   }), [snapshot, visualIdentities]);
   const projectionRef = useRef(projection);

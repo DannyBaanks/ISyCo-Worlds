@@ -3,6 +3,8 @@
  * may use. It deliberately contains no operational meaning beyond the source
  * fields: no inferred success, collaboration, artifacts, or progression.
  */
+import type { WorldPresentationActivity } from '@shared/worldPresentationProtocol';
+
 export type WorldAgentState = 'idle' | 'working' | 'waiting' | 'blocked' | 'other';
 
 export interface WorldAgent {
@@ -12,6 +14,10 @@ export interface WorldAgent {
   archived: boolean;
   /** Selected Monster Village roster sprite; absent for legacy/default records. */
   monsterCharacter?: MonsterRosterCharacter;
+  /** Live station inferred by the existing hook/PTY read layer, when present. */
+  station?: string;
+  /** Last tool kind reported by the existing hook/PTY read layer, when present. */
+  tool?: string;
 }
 
 export interface WorldTask {
@@ -23,8 +29,9 @@ export interface WorldTask {
 }
 
 export interface CanonicalWorldSnapshot {
-  agents: readonly WorldAgent[];
-  tasks: readonly WorldTask[];
+  readonly agents: readonly WorldAgent[];
+  readonly tasks: readonly WorldTask[];
+  readonly activity: readonly WorldPresentationActivity[];
 }
 
 export type VisualTransition =
@@ -45,11 +52,16 @@ function stringField(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value : null;
 }
 
+function boundedString(value: unknown, fallback: string): string {
+  const text = stringField(value) ?? fallback;
+  return text.slice(0, 160);
+}
+
 function normalizeAgentState(status: unknown): WorldAgentState {
   if (status === 'idle') return 'idle';
-  if (status === 'working' || status === 'running' || status === 'busy') return 'working';
+  if (status === 'working' || status === 'running' || status === 'busy' || status === 'thinking' || status === 'compacting' || status === 'typing') return 'working';
   if (status === 'waiting' || status === 'queued') return 'waiting';
-  if (status === 'blocked') return 'blocked';
+  if (status === 'blocked' || status === 'looping') return 'blocked';
   return 'other';
 }
 
@@ -63,18 +75,22 @@ function awaitsHuman(task: Record<string, unknown>, status: string): boolean {
   });
 }
 
-export function normalizeWorldSnapshot(agents: unknown, rawTasks: unknown): CanonicalWorldSnapshot {
+export function normalizeWorldSnapshot(agents: unknown, rawTasks: unknown, rawActivity: unknown = []): CanonicalWorldSnapshot {
   const normalizedAgents = (Array.isArray(agents) ? agents : []).flatMap((value): WorldAgent[] => {
     const agent = record(value);
     const id = agent && stringField(agent.id);
     if (!agent || !id) return [];
     const monsterCharacter = canonicalMonsterCharacter(agent.monsterCharacter);
+    const station = stringField(agent.currentStation);
+    const tool = stringField(agent.carrying);
     return [{
       id,
       name: stringField(agent.name) ?? id,
       state: normalizeAgentState(agent.status),
       archived: agent.archived === true,
-      ...(monsterCharacter ? { monsterCharacter } : {})
+      ...(monsterCharacter ? { monsterCharacter } : {}),
+      ...(station ? { station } : {}),
+      ...(tool ? { tool } : {})
     }];
   }).sort((a, b) => a.id.localeCompare(b.id));
 
@@ -92,7 +108,47 @@ export function normalizeWorldSnapshot(agents: unknown, rawTasks: unknown): Cano
     }];
   }).sort((a, b) => a.id.localeCompare(b.id));
 
-  return { agents: normalizedAgents, tasks: normalizedTasks };
+  return { agents: normalizedAgents, tasks: normalizedTasks, activity: normalizeWorldActivity(rawActivity) };
+}
+
+/**
+ * Convert the existing durable Hive log into a small, redacted activity feed.
+ * This deliberately ignores message bodies, prompts, tool inputs and paths.
+ */
+export function normalizeWorldActivity(rawLog: unknown): WorldPresentationActivity[] {
+  return (Array.isArray(rawLog) ? rawLog : []).flatMap((value, index): WorldPresentationActivity[] => {
+    const entry = record(value);
+    const ts = entry && typeof entry.ts === 'number' && Number.isFinite(entry.ts) ? entry.ts : 0;
+    const kind = entry && stringField(entry.kind);
+    if (!entry || !ts || !kind) return [];
+    const agentId = stringField(entry.agentId);
+    const taskId = stringField(entry.taskId);
+    const from = stringField(entry.from);
+    const to = stringField(entry.to);
+    const subject = stringField(entry.subject);
+    let detail = `Hive event: ${kind}`;
+    if (kind === 'message') detail = `${from ?? 'unknown'} → ${to ?? 'unknown'}${subject ? ` · ${subject}` : ''}`;
+    else if (kind === 'tasks') detail = 'Hive task ledger updated';
+    else if (kind === 'spawn') detail = `Agent ${stringField(entry.name) ?? agentId ?? 'unknown'} spawned`;
+    else if (kind === 'session') detail = `Agent ${agentId ?? 'unknown'} session changed`;
+    else if (kind === 'agent-exit') detail = `Agent ${agentId ?? 'unknown'} exited`;
+    else if (kind === 'archive') detail = `Agent ${agentId ?? 'unknown'} archive state changed`;
+    else if (kind === 'agent-hold') detail = `Agent ${agentId ?? stringField(entry.id) ?? 'unknown'} hold state changed`;
+    else if (kind === 'drain') detail = `Agent ${agentId ?? 'unknown'} received ${String(entry.count ?? 0)} message(s)`;
+    else if (kind === 'drop') detail = `Hive routing dropped a message (${String(entry.reason ?? 'unknown reason')})`;
+    else if (kind === 'voice_action') detail = `Hive action: ${boundedString(entry.verb, 'unknown')}`;
+    else if (agentId) detail = `Agent ${agentId}: ${kind}`;
+    const safeKind = kind.replace(/[^a-zA-Z0-9._:-]/g, '_');
+    return [{
+      id: `activity:${ts}:${index}:${safeKind}`,
+      ts,
+      source: 'Hive log (log.jsonl)',
+      kind,
+      detail: boundedString(detail, `Hive event: ${kind}`),
+      ...(agentId ? { agentId } : {}),
+      ...(taskId ? { taskId } : {})
+    }];
+  }).sort((a, b) => b.ts - a.ts).slice(0, 16);
 }
 
 function byId<T extends { id: string }>(values: readonly T[]): Map<string, T> {

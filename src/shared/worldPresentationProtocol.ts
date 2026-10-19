@@ -5,10 +5,30 @@ import { isWorldCompositionV1, type WorldCompositionV1 } from './worldCompositio
 export type WorldPresentationPhase = 'IDLE' | 'VALIDATING' | 'BOOTSTRAPPING' | 'MOUNTING' | 'READY' | 'RECOVERY';
 export type WorldPresentationAgentState = 'idle' | 'working' | 'waiting' | 'blocked' | 'other';
 
+/** Redacted, durable activity metadata safe for a visual world read layer. */
+export interface WorldPresentationActivity {
+  id: string;
+  ts: number;
+  source: string;
+  kind: string;
+  detail: string;
+  agentId?: string;
+  taskId?: string;
+}
+
 /** Read-only, deliberately small projection. The host must never receive Hive or session stores. */
 export interface WorldPresentationProjection {
-  agents: Array<{ id: string; name: string; state: WorldPresentationAgentState; archived: boolean; monsterCharacter?: 'agua' | 'fuego' | 'electricidad' | 'oscuridad' | 'luz' | 'aire' | 'leaf' | 'fire' | 'water' }>;
+  agents: Array<{
+    id: string;
+    name: string;
+    state: WorldPresentationAgentState;
+    archived: boolean;
+    monsterCharacter?: 'agua' | 'fuego' | 'electricidad' | 'oscuridad' | 'luz' | 'aire' | 'leaf' | 'fire' | 'water';
+    station?: string;
+    tool?: string;
+  }>;
   tasks: Array<{ id: string; title: string; assignee: string | null; status: string; awaitsHuman: boolean }>;
+  activity?: WorldPresentationActivity[];
   visualIdentities?: Record<string, VisualIdentityProfileV1>;
 }
 
@@ -58,6 +78,7 @@ export interface WorldPresentationStatus {
 
 const validId = (value: unknown): value is string => typeof value === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$/.test(value);
 const validGeneration = (value: unknown): value is number => Number.isSafeInteger(value) && (value as number) > 0;
+const validLabel = (value: unknown): value is string => typeof value === 'string' && value.length <= 160;
 const validProjection = (value: unknown): value is WorldPresentationProjection => {
   if (!value || typeof value !== 'object') return false;
   const p = value as WorldPresentationProjection;
@@ -65,8 +86,13 @@ const validProjection = (value: unknown): value is WorldPresentationProjection =
   const monsterCharacters = ['agua', 'fuego', 'electricidad', 'oscuridad', 'luz', 'aire', 'leaf', 'fire', 'water'];
   return Array.isArray(p.agents) && Array.isArray(p.tasks)
     && p.agents.every((a) => !!a && validId(a.id) && typeof a.name === 'string' && states.includes(a.state) && typeof a.archived === 'boolean'
-      && (a.monsterCharacter === undefined || monsterCharacters.includes(a.monsterCharacter)))
+      && (a.monsterCharacter === undefined || monsterCharacters.includes(a.monsterCharacter))
+      && (a.station === undefined || validLabel(a.station))
+      && (a.tool === undefined || validLabel(a.tool)))
     && p.tasks.every((t) => !!t && validId(t.id) && typeof t.title === 'string' && (t.assignee === null || validId(t.assignee)) && typeof t.status === 'string' && typeof t.awaitsHuman === 'boolean')
+    && (p.activity === undefined || (Array.isArray(p.activity) && p.activity.every((item) => !!item
+      && validId(item.id) && Number.isFinite(item.ts) && validLabel(item.source) && validLabel(item.kind) && validLabel(item.detail)
+      && (item.agentId === undefined || validId(item.agentId)) && (item.taskId === undefined || validId(item.taskId)))))
     && (p.visualIdentities === undefined || (!!p.visualIdentities && typeof p.visualIdentities === 'object' && !Array.isArray(p.visualIdentities)
       && Object.entries(p.visualIdentities).every(([agentId, profile]) => validId(agentId) && isVisualIdentityProfileV1(profile) && profile.agentId === agentId)));
 };
