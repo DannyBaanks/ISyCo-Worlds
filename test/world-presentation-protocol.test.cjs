@@ -38,3 +38,13 @@ test('validates host events and prevents stale or foreign renderer messages from
   assert.equal(P.isCurrentWorldPresentationEvent({ ...event, generation: 3 }, 'monster-trainer', 4), false);
   assert.equal(P.isCurrentWorldPresentationEvent({ ...event, profileId: 'office' }, 'monster-trainer', 4), false);
 });
+
+test('validates Monster Village demo intents and rejects forged or malformed interactions', () => {
+  const base = { type: 'intent', profileId: 'monster-trainer', generation: 4 };
+  assert.equal(P.isWorldPresentationEvent({ ...base, intent: { type: 'monster-demo', action: 'seed' } }), true);
+  assert.equal(P.isWorldPresentationEvent({ ...base, intent: { type: 'monster-demo', action: 'accept', taskId: 'monster-village-demo-field-note', position: { x: 9, y: 11 } } }), true);
+  assert.equal(P.isWorldPresentationEvent({ ...base, intent: { type: 'monster-demo', action: 'interact', taskId: 'monster-village-demo-field-note', objectiveId: 'collect-meadow-leaf', position: { x: 8, y: 14 } } }), true);
+  assert.equal(P.isWorldPresentationEvent({ ...base, intent: { type: 'monster-demo', action: 'interact', taskId: 'monster-village-demo-field-note', objectiveId: 'collect-meadow-leaf', position: { x: '8', y: 14 } } }), false);
+  assert.equal(P.isWorldPresentationEvent({ ...base, intent: { type: 'monster-demo', action: 'accept', taskId: 'monster-village-demo-field-note', position: { x: 9, y: 11 }, extra: true } }), false);
+  assert.equal(P.isWorldPresentationEvent({ ...base, intent: { type: 'monster-demo', action: 'seed', taskId: 'monster-village-demo-field-note' } }), false);
+});

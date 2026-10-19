@@ -1771,6 +1771,16 @@
     "resume": "继续",
     "worldStateNote": "时钟、速度和奖励是本地世界机制；不会暂停或加速 Hive 工作。",
     "recentActivity": "最近活动",
+    "demoTitle": "演示远征",
+    "demoFixture": "演示夹具",
+    "demoIntro": "一个确定性的任务，用来学习在 Starter Village 中移动和互动。",
+    "demoStart": "创建演示任务",
+    "demoControls": "方向键/WASD 移动 · E 互动",
+    "demoPosition": "位置 {{x}}, {{y}}",
+    "demoAccept": "接受任务",
+    "demoInteract": "互动",
+    "demoDeliver": "交付任务",
+    "demoComplete": "任务完成。奖励已记录到 Hive。",
     "noActivity": "暂无持久化 Hive 活动"
   },
   "worldCharacters": {

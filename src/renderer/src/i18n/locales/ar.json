@@ -1771,6 +1771,16 @@
     "resume": "متابعة",
     "worldStateNote": "الساعة والسرعة والمكافآت آليات محلية؛ لا توقف عمل Hive ولا تسرّعه.",
     "recentActivity": "النشاط الأخير",
+    "demoTitle": "بعثة تجريبية",
+    "demoFixture": "بيانات تجريبية",
+    "demoIntro": "مهمة حتمية لتعلم الحركة والتفاعل في القرية الابتدائية.",
+    "demoStart": "إنشاء مهمة تجريبية",
+    "demoControls": "الأسهم/WASD للحركة · E للتفاعل",
+    "demoPosition": "الموضع {{x}}، {{y}}",
+    "demoAccept": "قبول المهمة",
+    "demoInteract": "تفاعل",
+    "demoDeliver": "تسليم المهمة",
+    "demoComplete": "اكتملت المهمة. سُجلت المكافأة في Hive.",
     "noActivity": "لا يوجد نشاط Hive دائم بعد"
   },
   "worldCharacters": {

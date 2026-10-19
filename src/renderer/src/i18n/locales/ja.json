@@ -1771,6 +1771,16 @@
     "resume": "再開",
     "worldStateNote": "時計、速度、報酬はローカルなワールド機能で、Hive の作業を停止・加速しません。",
     "recentActivity": "最近のアクティビティ",
+    "demoTitle": "デモ遠征",
+    "demoFixture": "デモフィクスチャ",
+    "demoIntro": "Starter Village での移動と交流を学ぶ決定的なミッションです。",
+    "demoStart": "デモミッションを作成",
+    "demoControls": "矢印/WASDで移動 · Eで交流",
+    "demoPosition": "位置 {{x}}, {{y}}",
+    "demoAccept": "ミッションを受ける",
+    "demoInteract": "交流する",
+    "demoDeliver": "ミッションを届ける",
+    "demoComplete": "ミッション完了。報酬はHiveに記録されました。",
     "noActivity": "永続的な Hive アクティビティはまだありません"
   },
   "worldCharacters": {

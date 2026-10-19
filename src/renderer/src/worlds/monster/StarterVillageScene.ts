@@ -46,10 +46,12 @@ export interface StarterVillageSceneOptions {
   workerMotions?: readonly WorkerMotionSnapshot[];
   growthStageForAgent?: (agentId: string) => EvolutionStage;
   locationReactions?: readonly LocationReactionBurst[];
+  playerPosition?: { x: number; y: number };
 }
 export interface AnimatedStarterVillageScene extends Container {
   updateWorkers(motions: readonly WorkerMotionSnapshot[]): void;
   updateLocationReactions(reactions: readonly LocationReactionBurst[]): void;
+  updatePlayer(position: { x: number; y: number }): void;
 }
 function markerFor(state: ReturnType<typeof visualStateFor>, x: number, y: number): Graphics { const marker = stateMarker(state); const graphics = new Graphics().setFillStyle({ color: marker.color }); if (marker.shape === 'circle') graphics.circle(x + 4, y + 4, 4).fill(); else if (marker.shape === 'bar') graphics.rect(x, y + 2, 8, 4).fill(); else if (marker.shape === 'triangle') graphics.poly([x + 4, y, x + 8, y + 8, x, y + 8]).fill(); else graphics.poly([x + 4, y, x + 8, y + 4, x + 4, y + 8, x, y + 4]).fill(); return graphics; }
 function requireRoster(character: IsycoRosterCharacter): Texture {
@@ -169,6 +171,16 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
   reactionOverlay.label = 'location-reactions';
   reactionOverlay.zIndex = Number.MAX_SAFE_INTEGER;
   root.addChild(reactionOverlay);
+  const playerMarker = new Graphics();
+  playerMarker.label = 'monster-village-player';
+  playerMarker.zIndex = Number.MAX_SAFE_INTEGER - 1;
+  playerMarker.setFillStyle({ color: 0xfff2bb, alpha: 0.95 }).circle(0, 0, 5).fill();
+  playerMarker.setStrokeStyle({ color: 0x6e4b2e, width: 1 }).circle(0, 0, 5).stroke();
+  root.addChild(playerMarker);
+  root.updatePlayer = (position) => {
+    playerMarker.x = position.x * STARTER_VILLAGE_TILE_SIZE + STARTER_VILLAGE_TILE_SIZE / 2;
+    playerMarker.y = (position.y + 1) * STARTER_VILLAGE_TILE_SIZE - 4;
+  };
   const groundFrame = STARTER_VILLAGE_ATLAS_FRAMES.grass;
   const groundTexture = new Texture({ source: atlas.source, frame: FRAMES.grass });
   const terrainLayer = new Container();
@@ -283,5 +295,6 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
   });
   root.updateWorkers(options.workerMotions ?? []);
   root.updateLocationReactions(options.locationReactions ?? []);
+  root.updatePlayer(options.playerPosition ?? { x: 34, y: 13 });
   return root;
 }

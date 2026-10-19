@@ -9,8 +9,43 @@ import { useStore } from '@/store/store';
 import { validateComposition, type WorldCompositionV1 } from '@shared/worldComposition';
 import { STARTER_VILLAGE_COMPOSITION_DEFINITION, STARTER_VILLAGE_PRESET } from './monster/StarterVillageScenario';
 import { resolveWorldPresentationBounds } from './worldPresentationVisibility';
+import {
+  addDemoObjective,
+  createMonsterVillageDemoTask,
+  demoObjectivesComplete,
+  isMonsterVillageDemoState,
+  isNearDemoObjective,
+  MONSTER_VILLAGE_DEMO_TASK_ID
+} from '@shared/monsterVillageDemo';
 
 const IDLE: WorldEngineState = { phase: 'IDLE', pendingDisposals: [] };
+
+async function handleMonsterDemoIntent(intent: Extract<WorldPresentationIntent, { type: 'monster-demo' }>, tasks: WorldPresentationProjection['tasks']): Promise<void> {
+  if (intent.action === 'seed') {
+    if (!tasks.some((task) => task.id === MONSTER_VILLAGE_DEMO_TASK_ID)) await window.cth.hiveAddTask(createMonsterVillageDemoTask());
+    return;
+  }
+  if (!intent.taskId) return;
+  const task = tasks.find((candidate) => candidate.id === intent.taskId);
+  if (!task?.worldDemo || !isMonsterVillageDemoState(task.worldDemo)) return;
+  if (intent.action === 'accept') {
+    if (task.status !== 'todo' || !intent.position || !isNearDemoObjective('meet-professor', intent.position)) return;
+    const next = addDemoObjective(task.worldDemo, 'meet-professor');
+    await window.cth.hivePatchTask(task.id, { status: 'doing', worldDemo: { ...next, acceptedAt: new Date().toISOString() } });
+    return;
+  }
+  if (intent.action === 'interact') {
+    if (task.status !== 'doing' || !intent.objectiveId || !intent.position || !isNearDemoObjective(intent.objectiveId, intent.position)) return;
+    const next = addDemoObjective(task.worldDemo, intent.objectiveId as Parameters<typeof addDemoObjective>[1]);
+    if (next === task.worldDemo) return;
+    await window.cth.hivePatchTask(task.id, { worldDemo: next });
+    return;
+  }
+  if (task.status !== 'doing' || !intent.position || !isNearDemoObjective('return-professor', intent.position)) return;
+  const next = addDemoObjective(task.worldDemo, 'return-professor');
+  if (!demoObjectivesComplete(next)) return;
+  await window.cth.hivePatchTask(task.id, { status: 'done', result: 'Monster Village demo expedition completed through the authored field route.', worldDemo: next });
+}
 
 /** React adapter for the serialized engine. Exactly one Pixi surface may render. */
 export function WorldHost({ config, profileId = 'office', suspended = false }: { config: HarnessConfig; profileId?: 'office' | 'monster-trainer'; suspended?: boolean }) {
@@ -131,7 +166,7 @@ function IsolatedWorldViewport({ profileId, suspended }: { profileId: 'monster-t
   const { snapshot, visualIdentities } = useWorldProjection();
   const projection = useMemo<WorldPresentationProjection>(() => ({
     agents: snapshot.agents.map((agent) => ({ ...agent })),
-    tasks: snapshot.tasks.map((task) => ({ ...task })),
+    tasks: snapshot.tasks.map((task) => ({ ...task, ...(task.worldDemo ? { worldDemo: task.worldDemo } : {}) })),
     activity: snapshot.activity.map((item) => ({ ...item })),
     visualIdentities
   }), [snapshot, visualIdentities]);
@@ -152,6 +187,7 @@ function IsolatedWorldViewport({ profileId, suspended }: { profileId: 'monster-t
       const { intent } = message;
       if (intent.type === 'select-agent') useStore.getState().select(intent.agentId);
       else if (intent.type === 'open-task') useStore.getState().openTaskDetail(intent.taskId);
+      else if (intent.type === 'monster-demo' && message.profileId === profileId) void handleMonsterDemoIntent(intent, projectionRef.current.tasks);
       else if (intent.type === 'save-composition' && message.profileId === profileId) {
         const validation = validateComposition(intent.layout, STARTER_VILLAGE_COMPOSITION_DEFINITION);
         void (async () => {
