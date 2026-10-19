@@ -88,3 +88,17 @@ test('projects hook station/tool facts and redacted durable Hive activity', () =
   assert.match(snapshot.activity[0].detail, /Hive task ledger updated/);
   assert.doesNotMatch(JSON.stringify(snapshot.activity), /secret body/);
 });
+
+test('projects the persisted Monster Village demo state without accepting malformed world metadata', () => {
+  const demo = {
+    kind: 'starter-village-field-note-v1',
+    objectiveIds: ['meet-professor', 'collect-meadow-leaf', 'collect-stable-leaf', 'return-professor'],
+    completedObjectiveIds: ['meet-professor']
+  };
+  const snapshot = Projection.normalizeWorldSnapshot([], [
+    { id: 'demo', title: '[Monster Village demo] The First Field Note', status: 'doing', worldDemo: demo },
+    { id: 'bad', title: 'Bad metadata', status: 'doing', worldDemo: { kind: 'not-a-fixture', completedObjectiveIds: ['collect-meadow-leaf'] } }
+  ]);
+  assert.deepEqual(snapshot.tasks.find((task) => task.id === 'demo').worldDemo, demo);
+  assert.equal(snapshot.tasks.find((task) => task.id === 'bad').worldDemo, undefined);
+});

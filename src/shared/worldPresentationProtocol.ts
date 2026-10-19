@@ -1,4 +1,5 @@
 import { isWorldId, type WorldId } from './worlds';
+import { isMonsterVillageDemoState, type MonsterVillageDemoState } from './monsterVillageDemo';
 import { isVisualIdentityProfileV1, type VisualIdentityProfileV1 } from './worldProfiles';
 import { isWorldCompositionV1, type WorldCompositionV1 } from './worldComposition';
 
@@ -27,7 +28,7 @@ export interface WorldPresentationProjection {
     station?: string;
     tool?: string;
   }>;
-  tasks: Array<{ id: string; title: string; assignee: string | null; status: string; awaitsHuman: boolean }>;
+  tasks: Array<{ id: string; title: string; assignee: string | null; status: string; awaitsHuman: boolean; worldDemo?: MonsterVillageDemoState }>;
   activity?: WorldPresentationActivity[];
   visualIdentities?: Record<string, VisualIdentityProfileV1>;
 }
@@ -55,6 +56,7 @@ export type WorldPresentationIntent =
   | { type: 'select-agent'; agentId: string }
   | { type: 'open-task'; taskId: string }
   | { type: 'save-composition'; requestId: string; layout: WorldCompositionV1 }
+  | { type: 'monster-demo'; action: 'seed' | 'accept' | 'interact' | 'deliver'; taskId?: string; objectiveId?: string; position?: { x: number; y: number } }
   | { type: 'request-recovery' };
 
 export interface WorldPresentationIntentMessage {
@@ -90,6 +92,7 @@ const validProjection = (value: unknown): value is WorldPresentationProjection =
       && (a.station === undefined || validLabel(a.station))
       && (a.tool === undefined || validLabel(a.tool)))
     && p.tasks.every((t) => !!t && validId(t.id) && typeof t.title === 'string' && (t.assignee === null || validId(t.assignee)) && typeof t.status === 'string' && typeof t.awaitsHuman === 'boolean')
+    && p.tasks.every((t) => t.worldDemo === undefined || isMonsterVillageDemoState(t.worldDemo))
     && (p.activity === undefined || (Array.isArray(p.activity) && p.activity.every((item) => !!item
       && validId(item.id) && Number.isFinite(item.ts) && validLabel(item.source) && validLabel(item.kind) && validLabel(item.detail)
       && (item.agentId === undefined || validId(item.agentId)) && (item.taskId === undefined || validId(item.taskId)))))
@@ -140,6 +143,21 @@ export function isWorldPresentationEvent(value: unknown): value is WorldPresenta
   if (intent.type === 'save-composition') {
     return v.profileId === 'monster-trainer' && Object.keys(intent).every((key) => ['type', 'requestId', 'layout'].includes(key))
       && validId(intent.requestId) && isWorldCompositionV1(intent.layout) && intent.layout.scenarioId === 'starter-village';
+  }
+  if (intent.type === 'monster-demo') {
+    if (v.profileId !== 'monster-trainer' || !['seed', 'accept', 'interact', 'deliver'].includes(String(intent.action))) return false;
+    const keys = Object.keys(intent);
+    if (!keys.every((key) => ['type', 'action', 'taskId', 'objectiveId', 'position'].includes(key))) return false;
+    if (intent.action === 'seed') return intent.taskId === undefined && intent.objectiveId === undefined && intent.position === undefined;
+    if (!validId(intent.taskId)) return false;
+    if (intent.action === 'interact') {
+      if (!validId(intent.objectiveId) || !intent.position || typeof intent.position !== 'object') return false;
+      const position = intent.position as { x?: unknown; y?: unknown };
+      return Number.isFinite(position.x) && Number.isFinite(position.y);
+    }
+    if (intent.objectiveId !== undefined || !intent.position || typeof intent.position !== 'object') return false;
+    const position = intent.position as { x?: unknown; y?: unknown };
+    return Number.isFinite(position.x) && Number.isFinite(position.y);
   }
   return intent.type === 'request-recovery';
 }

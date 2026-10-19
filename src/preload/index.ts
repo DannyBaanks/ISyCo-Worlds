@@ -15,6 +15,7 @@ export type { UpdateStatus } from '../shared/updateState';
 import type { ToolStatus } from '../shared/toolCatalog';
 export type { ToolStatus } from '../shared/toolCatalog';
 import type { HeroPayload } from '../shared/heroPayload';
+import type { MonsterVillageDemoState } from '../shared/monsterVillageDemo';
 export type { HeroPayload } from '../shared/heroPayload';
 import type { ModelCatalog } from '../shared/modelCatalogPayload';
 export type { ModelCatalog, CatalogModel } from '../shared/modelCatalogPayload';
@@ -176,6 +177,7 @@ export interface HiveTask {
   /** SHA-256 of the capability token for a generic-webhook-sourced task (drives
    *  the GET status lookup; the raw token is never persisted). */
   webhook?: { tokenHash: string };
+  worldDemo?: MonsterVillageDemoState;
 }
 
 /** A message the router just delivered, with its resolved recipient ids. Drives

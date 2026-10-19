@@ -22,9 +22,10 @@ import {
   type MonsterVillageGameState,
   type SimulationSpeed
 } from './worldSimulation';
+import { MONSTER_VILLAGE_DEMO_KIND, MONSTER_VILLAGE_DEMO_OBJECTIVES } from '@shared/monsterVillageDemo';
 
 export interface MonsterTrainerWorldProps { snapshot: CanonicalWorldSnapshot; transitions: readonly VisualTransition[]; identityFor: IdentityForAgent; growthStageForAgent?: (agentId: string) => EvolutionStage; onAgentSelect: (agentId: string) => void; onTaskOpen: (taskId: string) => void; reducedMotion: boolean; composition?: WorldPresentationComposition; compositionSaveResult?: Extract<WorldPresentationCommand, { type: 'update-composition' }>; onIntent?: (intent: WorldPresentationIntent) => void; onReady?: () => void; onRenderFailure?: (cause: unknown) => void; onDisposed?: () => void; }
-interface Ctx { agents: readonly WorldAgent[]; tasks: readonly WorldTask[]; transitions: readonly VisualTransition[]; identityFor: IdentityForAgent; growthStageForAgent?: (agentId: string) => EvolutionStage; onAgentSelect: (agentId: string) => void; onTaskOpen: (taskId: string) => void; layout: CompositionEditorState['present']; selectedPlacementId: string | null; buildMode: boolean; onPlacementSelect: (placementId: string) => void; }
+interface Ctx { agents: readonly WorldAgent[]; tasks: readonly WorldTask[]; transitions: readonly VisualTransition[]; identityFor: IdentityForAgent; growthStageForAgent?: (agentId: string) => EvolutionStage; onAgentSelect: (agentId: string) => void; onTaskOpen: (taskId: string) => void; layout: CompositionEditorState['present']; selectedPlacementId: string | null; buildMode: boolean; onPlacementSelect: (placementId: string) => void; playerPosition: { x: number; y: number }; }
 interface CityPan { x: number; y: number; }
 type CityDrag =
   | { kind: 'pan'; pointerId: number; originX: number; originY: number; panX: number; panY: number; immediate: boolean }
@@ -65,6 +66,7 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
   const [pendingSave, setPendingSave] = useState<string | null>(null);
   const [game, setGame] = useState<MonsterVillageGameState>(() => readMonsterVillageGameState());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [playerPosition, setPlayerPosition] = useState({ x: 34, y: 13 });
   const gameRef = useRef(game);
   gameRef.current = game;
   const savedLayoutRef = useRef<CompositionEditorState['present']>(initialLayout);
@@ -75,6 +77,10 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
     removable: STARTER_VILLAGE_COMPOSITION_DEFINITION.objects[item.id]?.removable ?? false
   })), []);
   const activeAgents = props.snapshot.agents.filter((agent) => !agent.archived);
+  const demoTask = props.snapshot.tasks.find((task) => task.worldDemo?.kind === MONSTER_VILLAGE_DEMO_KIND);
+  const demoObjective = demoTask?.worldDemo
+    ? MONSTER_VILLAGE_DEMO_OBJECTIVES.find((objective) => !demoTask.worldDemo?.completedObjectiveIds.includes(objective.id))
+    : undefined;
   const growthStageForAgent = (agentId: string): EvolutionStage =>
     props.growthStageForAgent?.(agentId) ?? evolutionStageForAgent(game, agentId);
   const span = compositionSpan(editor.present, STARTER_VILLAGE_COLUMNS, STARTER_VILLAGE_ROWS);
@@ -96,6 +102,31 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
       ? current
       : (props.snapshot.tasks[0]?.id ?? null));
   }, [props.snapshot.tasks]);
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (mode !== 'explore') return;
+      const direction: Record<string, { x: number; y: number }> = {
+        ArrowUp: { x: 0, y: -1 }, w: { x: 0, y: -1 },
+        ArrowDown: { x: 0, y: 1 }, s: { x: 0, y: 1 },
+        ArrowLeft: { x: -1, y: 0 }, a: { x: -1, y: 0 },
+        ArrowRight: { x: 1, y: 0 }, d: { x: 1, y: 0 }
+      };
+      const step = direction[event.key];
+      if (step) {
+        event.preventDefault();
+        setPlayerPosition((current) => ({
+          x: Math.max(1, Math.min(STARTER_VILLAGE_COLUMNS - 2, current.x + step.x)),
+          y: Math.max(1, Math.min(STARTER_VILLAGE_ROWS - 2, current.y + step.y))
+        }));
+        return;
+      }
+      if (event.key.toLowerCase() !== 'e' || !demoTask || !demoObjective || !props.onIntent) return;
+      const action = demoTask.status === 'todo' ? 'accept' : demoObjective.id === 'return-professor' ? 'deliver' : 'interact';
+      props.onIntent({ type: 'monster-demo', action, taskId: demoTask.id, objectiveId: action === 'interact' ? demoObjective.id : undefined, position: playerPosition });
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [demoObjective, demoTask, mode, playerPosition, props.onIntent]);
   useEffect(() => {
     const timer = window.setInterval(() => setGame((current) => advanceSimulation(current, 250)), 250);
     return () => window.clearInterval(timer);
@@ -157,17 +188,17 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
       render(initialCtx); app.renderer.render(app.stage); props.onReady?.();
       let signature = JSON.stringify([
         initialCtx.agents.map((agent) => [agent.id, agent.state, agent.monsterCharacter]),
-        initialCtx.tasks.map((task) => [task.id, task.assignee, task.status, task.awaitsHuman]),
+        initialCtx.tasks.map((task) => [task.id, task.assignee, task.status, task.awaitsHuman, task.worldDemo]),
         initialCtx.transitions, initialCtx.layout, initialCtx.selectedPlacementId, initialCtx.buildMode,
-        initialCtx.agents.map((agent) => initialCtx.growthStageForAgent?.(agent.id) ?? 'baby')
+        initialCtx.agents.map((agent) => initialCtx.growthStageForAgent?.(agent.id) ?? 'baby'), initialCtx.playerPosition
       ]);
       ticker = (tick) => { try {
         const ctx = ctxRef.current; if (!ctx || failed) return;
         const next = JSON.stringify([
           ctx.agents.map((agent) => [agent.id, agent.state, agent.monsterCharacter]),
-          ctx.tasks.map((task) => [task.id, task.assignee, task.status, task.awaitsHuman]),
+          ctx.tasks.map((task) => [task.id, task.assignee, task.status, task.awaitsHuman, task.worldDemo]),
           ctx.transitions, ctx.layout, ctx.selectedPlacementId, ctx.buildMode,
-          ctx.agents.map((agent) => ctx.growthStageForAgent?.(agent.id) ?? 'baby')
+          ctx.agents.map((agent) => ctx.growthStageForAgent?.(agent.id) ?? 'baby'), ctx.playerPosition
         ]);
         if (next !== signature) {
           signature = next;
@@ -181,6 +212,7 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
           return advanced ? [advanced] : [];
         });
         scene?.updateLocationReactions(locationReactions);
+        scene?.updatePlayer(ctx.playerPosition);
         const simulationDelta = gameRef.current.paused ? 0 : tick.deltaMS * gameRef.current.speed;
         scene?.updateWorkers(motion.tick(simulationDelta));
       } catch (cause) { reportFailure(cause); } };
@@ -189,7 +221,7 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
     finally { initSettled = true; if (!alive) finalizeDisposal(); } })();
     return () => { alive = false; if (initSettled) finalizeDisposal(); };
   }, [mapWidth, mapHeight]);
-  useEffect(() => { ctxRef.current = { agents: activeAgents, tasks: props.snapshot.tasks, transitions: props.transitions, identityFor: props.identityFor, growthStageForAgent, onAgentSelect: props.onAgentSelect, onTaskOpen: props.onTaskOpen, layout: editor.present, selectedPlacementId, buildMode: mode === 'build', onPlacementSelect: setSelectedPlacementId }; });
+  useEffect(() => { ctxRef.current = { agents: activeAgents, tasks: props.snapshot.tasks, transitions: props.transitions, identityFor: props.identityFor, growthStageForAgent, onAgentSelect: props.onAgentSelect, onTaskOpen: props.onTaskOpen, layout: editor.present, selectedPlacementId, buildMode: mode === 'build', onPlacementSelect: setSelectedPlacementId, playerPosition }; });
   useEffect(() => {
     const result = props.compositionSaveResult;
     if (!result || result.requestId !== pendingSave) return;
@@ -331,6 +363,15 @@ export function MonsterTrainerWorld(props: MonsterTrainerWorldProps) {
       onAgentSelect={props.onAgentSelect}
       onPauseToggle={() => setGame((current) => ({ ...current, paused: !current.paused }))}
       onSpeedChange={(speed: SimulationSpeed) => setGame((current) => ({ ...current, speed }))}
+      demoTask={demoTask}
+      playerPosition={playerPosition}
+      activeDemoObjectiveId={demoObjective?.id}
+      onDemoSeed={() => props.onIntent?.({ type: 'monster-demo', action: 'seed' })}
+      onDemoAction={() => {
+        if (!demoTask || !demoObjective || !props.onIntent) return;
+        const action = demoTask.status === 'todo' ? 'accept' : demoObjective.id === 'return-professor' ? 'deliver' : 'interact';
+        props.onIntent({ type: 'monster-demo', action, taskId: demoTask.id, objectiveId: action === 'interact' ? demoObjective.id : undefined, position: playerPosition });
+      }}
     />
     <FreeBuildToolbar
       catalog={catalog}

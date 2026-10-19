@@ -4,6 +4,7 @@ import type { WorldPresentationActivity } from '@shared/worldPresentationProtoco
 import type { CanonicalWorldSnapshot, VisualTransition, WorldAgent, WorldTask } from '../worldProjection';
 import type { EvolutionStage } from './monsterArt';
 import { formatSimulationClock, type MonsterVillageGameState, type SimulationSpeed } from './worldSimulation';
+import { objectiveById } from '@shared/monsterVillageDemo';
 
 type Props = {
   snapshot: CanonicalWorldSnapshot;
@@ -16,6 +17,11 @@ type Props = {
   onAgentSelect: (agentId: string) => void;
   onPauseToggle: () => void;
   onSpeedChange: (speed: SimulationSpeed) => void;
+  demoTask?: WorldTask;
+  playerPosition: { x: number; y: number };
+  activeDemoObjectiveId?: string;
+  onDemoSeed: () => void;
+  onDemoAction: () => void;
 };
 
 const buttonStyle: React.CSSProperties = {
@@ -107,7 +113,12 @@ export function MonsterVillageHud({
   onTaskOpen,
   onAgentSelect,
   onPauseToggle,
-  onSpeedChange
+  onSpeedChange,
+  demoTask,
+  playerPosition,
+  activeDemoObjectiveId,
+  onDemoSeed,
+  onDemoAction
 }: Props) {
   const { t } = useTranslation();
   const activeAgents = snapshot.agents.filter((agent) => !agent.archived);
@@ -189,6 +200,35 @@ export function MonsterVillageHud({
             </>
           )}
         </div>
+      </section>
+
+      <section className="monster-village-panel monster-village-panel--demo" data-monster-demo-mission="true">
+        <div className="monster-village-panel-heading">
+          <strong>{t('worldsVisual.demoTitle')}</strong>
+          <span className="monster-village-source-badge monster-village-source-badge--world">{t('worldsVisual.demoFixture')}</span>
+        </div>
+        {!demoTask ? (
+          <>
+            <p className="monster-village-demo-copy">{t('worldsVisual.demoIntro')}</p>
+            <button type="button" style={buttonStyle} onClick={onDemoSeed}>{t('worldsVisual.demoStart')}</button>
+          </>
+        ) : (
+          <>
+            <b>{demoTask.title}</b>
+            <small className="monster-village-demo-controls">{t('worldsVisual.demoControls')} · {t('worldsVisual.demoPosition', { x: playerPosition.x, y: playerPosition.y })}</small>
+            <ul className="monster-village-demo-objectives">
+              {demoTask.worldDemo?.objectiveIds.map((objectiveId) => (
+                <li key={objectiveId} data-complete={demoTask.worldDemo?.completedObjectiveIds.includes(objectiveId) ? 'true' : 'false'}>
+                  {demoTask.worldDemo?.completedObjectiveIds.includes(objectiveId) ? '✓' : '○'} {objectiveById(objectiveId)?.label ?? objectiveId}
+                </li>
+              ))}
+            </ul>
+            {demoTask.status !== 'done' && <button type="button" style={buttonStyle} disabled={!activeDemoObjectiveId} onClick={onDemoAction}>
+              {demoTask.status === 'todo' ? t('worldsVisual.demoAccept') : activeDemoObjectiveId === 'return-professor' ? t('worldsVisual.demoDeliver') : t('worldsVisual.demoInteract')}
+            </button>}
+            {demoTask.status === 'done' && <small>{t('worldsVisual.demoComplete')}</small>}
+          </>
+        )}
       </section>
 
       <section className="monster-village-panel monster-village-panel--simulation">

@@ -1771,6 +1771,16 @@
     "resume": "resume",
     "worldStateNote": "Clock, speed and rewards are local world mechanics; they never pause or accelerate Hive work.",
     "recentActivity": "Recent activity",
+    "demoTitle": "Demo expedition",
+    "demoFixture": "demo fixture",
+    "demoIntro": "A deterministic mission to learn movement and interaction in Starter Village.",
+    "demoStart": "create demo mission",
+    "demoControls": "Arrows/WASD to move · E to interact",
+    "demoPosition": "position {{x}}, {{y}}",
+    "demoAccept": "accept mission",
+    "demoInteract": "interact",
+    "demoDeliver": "deliver mission",
+    "demoComplete": "Mission complete. The reward is recorded in Hive.",
     "noActivity": "No durable Hive activity yet"
   },
   "worldCharacters": {

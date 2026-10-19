@@ -1771,6 +1771,16 @@
     "resume": "continuar",
     "worldStateNote": "El reloj, la velocidad y las recompensas son mecánicas locales; nunca pausan ni aceleran el trabajo de Hive.",
     "recentActivity": "Actividad reciente",
+    "demoTitle": "Expedición de demostración",
+    "demoFixture": "fixture demo",
+    "demoIntro": "Misión determinista para aprender a moverte e interactuar en Starter Village.",
+    "demoStart": "crear misión demo",
+    "demoControls": "Flechas/WASD para moverte · E para interactuar",
+    "demoPosition": "posición {{x}}, {{y}}",
+    "demoAccept": "aceptar misión",
+    "demoInteract": "interactuar",
+    "demoDeliver": "entregar misión",
+    "demoComplete": "Misión completada. La recompensa quedó registrada en Hive.",
     "noActivity": "Todavía no hay actividad durable de Hive"
   },
   "worldCharacters": {

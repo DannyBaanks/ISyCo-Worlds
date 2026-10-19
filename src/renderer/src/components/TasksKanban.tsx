@@ -7,6 +7,7 @@ import { Icon } from './Icon';
 import { useStore } from '@/store/store';
 import { MarkdownPreview } from '@/markdown/MarkdownPreview';
 import { useRtl } from '@/i18n/useDirection';
+import type { MonsterVillageDemoState } from '@shared/monsterVillageDemo';
 
 /** A card on the task kanban. Mirrors HiveTask in the main/preload process —
  *  re-declared locally so the renderer doesn't reach into the preload package
@@ -34,6 +35,7 @@ export interface HiveTask {
   /** First-class human feedback: the god appends {q} when a card needs the
    *  human; the ASK ME view fills in {a}. Full history stays on the card. */
   humanQA?: HumanQA[];
+  worldDemo?: MonsterVillageDemoState;
 }
 
 /** The card's currently open question for the human, if any. An entry the human
@@ -107,7 +109,8 @@ export function parseTasks(raw: unknown): HiveTask[] {
             // resurface on the next poll (openQuestion would see it as open).
             dismissedAt: typeof e.dismissedAt === 'string' ? e.dismissedAt : undefined
           }))
-        : undefined
+        : undefined,
+      worldDemo: t.worldDemo && typeof t.worldDemo === 'object' ? t.worldDemo as MonsterVillageDemoState : undefined
     }));
 }
 

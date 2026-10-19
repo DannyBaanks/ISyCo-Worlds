@@ -41,6 +41,7 @@ import { MCP_CATALOG } from '../shared/mcpCatalog';
 import { selectBroadcastTargets } from '../shared/broadcast';
 import { preferredAgentRole } from '../shared/agentRole';
 import { mergeTaskLedger } from '../shared/taskLedger';
+import type { MonsterVillageDemoState } from '../shared/monsterVillageDemo';
 import { expandTilde } from './fs';
 import { resolveGodName } from '../shared/godIdentity';
 
@@ -128,6 +129,8 @@ export interface HiveTask {
    *  once and never persisted), so a GET status lookup can match by hashing the
    *  presented token. Read-only capability: it never widens routing or exposure. */
   webhook?: { tokenHash: string };
+  /** Identifiable Monster Village fixture state; persisted on the real task card. */
+  worldDemo?: MonsterVillageDemoState;
 }
 
 export interface HiveTaskStatusEvent {
@@ -3652,4 +3655,3 @@ process.stdin.on('end', () => {
   } catch (_) { process.exit(0); }
 });
 `;
-

@@ -4,6 +4,7 @@
  * fields: no inferred success, collaboration, artifacts, or progression.
  */
 import type { WorldPresentationActivity } from '@shared/worldPresentationProtocol';
+import { isMonsterVillageDemoState, type MonsterVillageDemoState } from '@shared/monsterVillageDemo';
 
 export type WorldAgentState = 'idle' | 'working' | 'waiting' | 'blocked' | 'other';
 
@@ -26,6 +27,7 @@ export interface WorldTask {
   assignee: string | null;
   status: string;
   awaitsHuman: boolean;
+  worldDemo?: MonsterVillageDemoState;
 }
 
 export interface CanonicalWorldSnapshot {
@@ -104,7 +106,8 @@ export function normalizeWorldSnapshot(agents: unknown, rawTasks: unknown, rawAc
       title: stringField(task.title) ?? 'Untitled task',
       assignee: stringField(task.assignee),
       status,
-      awaitsHuman: awaitsHuman(task, status)
+      awaitsHuman: awaitsHuman(task, status),
+      ...(isMonsterVillageDemoState(task.worldDemo) ? { worldDemo: task.worldDemo } : {})
     }];
   }).sort((a, b) => a.id.localeCompare(b.id));
 
