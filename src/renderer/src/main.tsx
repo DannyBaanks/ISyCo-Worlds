@@ -6,6 +6,7 @@ import './design/global.css';
 import './design/worlds.css';
 import './design/skin-office.css';
 import './design/skin-monster.css';
+import './design/skin-motion.css';
 import './i18n';
 
 const favicon = document.createElement('link');

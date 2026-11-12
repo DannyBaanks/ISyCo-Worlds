@@ -4,7 +4,8 @@
     "name": "michael-victus",
     "fingerprint": "fa80 1f7a b669 3f03",
     "host": "victus",
-    "version": "demo"
+    "version": "demo",
+    "world": "office"
   },
   "capacity": {
     "ram_total_gb": 15.7,

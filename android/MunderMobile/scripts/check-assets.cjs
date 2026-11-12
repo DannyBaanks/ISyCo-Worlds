@@ -34,6 +34,10 @@ const pairs = [];
 for (const f of fs.readdirSync(path.join(REPO, 'ios/MunderMobile/Media/Cast'))) {
   pairs.push([`ios/MunderMobile/Media/Cast/${f}`, `android/MunderMobile/app/src/main/assets/Media/Cast/${f}`]);
 }
+// Retratos de Monster Village: arte del proyecto, recortado de las hojas del mundo.
+for (const f of fs.readdirSync(path.join(REPO, 'ios/MunderMobile/Media/Monsters'))) {
+  pairs.push([`ios/MunderMobile/Media/Monsters/${f}`, `android/MunderMobile/app/src/main/assets/Media/Monsters/${f}`]);
+}
 for (const f of ['overview.json', 'demo-peers.json', 'demo-panel.json']) {
   pairs.push([`ios/MunderMobile/Media/Demo/${f}`, `android/MunderMobile/app/src/main/assets/Media/Demo/${f}`]);
 }

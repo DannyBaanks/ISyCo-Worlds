@@ -93,7 +93,7 @@ struct MainView: View {
 
     var body: some View {
         TabView(selection: $tab) {
-            OfficeTab().tabItem { Label { Text("Oficina") } icon: { Image(uiImage: PixelIcon.image(PixelIcon.office)) } }.tag(0)
+            OfficeTab().tabItem { Label { Text(Skin.place) } icon: { Image(uiImage: PixelIcon.image(PixelIcon.office)) } }.tag(0)
             QuestionsTab().tabItem { Label { Text("Preguntas") } icon: { Image(uiImage: PixelIcon.image(PixelIcon.ask)) } }
                 .badge(store.overview?.questions.count ?? 0).tag(1)
             BoardTab().tabItem { Label { Text("Tablero") } icon: { Image(uiImage: PixelIcon.image(PixelIcon.board)) } }.tag(2)
@@ -101,7 +101,7 @@ struct MainView: View {
             // The Panel stratum, tab 4: same `-MunderTab N` numbering as the rest.
             PanelTab().tabItem { Label { Text("Panel") } icon: { Image(uiImage: PixelIcon.image(PixelIcon.panel)) } }.tag(4)
         }
-        .tint(Px.ink900)
+        .tint(Skin.monster ? Px.coral : Px.ink900)
         .task {
             await store.refreshAddresses()
             await store.refreshPeers()
@@ -147,7 +147,7 @@ struct Screen<Content: View>: View {
                                 Image(systemName: "chevron.down").font(.system(size: 12, weight: .bold)).foregroundColor(Px.ink900)
                             }
                             .padding(.vertical, 6).padding(.horizontal, 8)
-                            .overlay(Rectangle().strokeBorder(Px.ink100, lineWidth: 1))
+                            .overlay(SkinShape(radius: 16).strokeBorder(Skin.monster ? Px.outline : Px.ink100, lineWidth: Skin.monster ? 2 : 1))
                         }
                         .accessibilityLabel("Cambiar de oficina")
                     } else {
@@ -159,12 +159,12 @@ struct Screen<Content: View>: View {
                 if lock.unprotected {
                     Text("Tu iPhone no tiene código: cualquiera que lo tome puede usar tu oficina. Ponle uno en Ajustes → Face ID y código.")
                         .font(.footnote).padding(10).frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Px.lemonLight).overlay(Rectangle().strokeBorder(Px.lemon, lineWidth: 1))
+                        .framed(Px.lemonLight, Px.lemon, width: 1)
                 }
                 if !store.online {
                     Text(store.offlineReason ?? "Sin conexión")
                         .font(.footnote).padding(10).frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Px.coralLight).overlay(Rectangle().strokeBorder(Px.coral, lineWidth: 1))
+                        .framed(Px.coralLight, Px.coral, width: 1)
                 }
                 content()
             }
@@ -203,14 +203,14 @@ struct OfficeTab: View {
         let remote = o?.remote == true
         let agents = o?.agents ?? []
         let target = agents.first { $0.id == store.recipient && $0.god != true }
-        let to = remote ? "su Michael" : (target?.name ?? "Michael")
-        Screen(title: o?.office.name ?? store.office?.name ?? "Oficina",
+        let to = remote ? "su \(Skin.boss)" : (target?.name ?? "\(Skin.boss)")
+        Screen(title: o?.office.name ?? store.office?.name ?? Skin.place,
                subtitle: o.map { "\($0.office.host ?? "") · \($0.office.fingerprint ?? "")" }, switcher: true) {
             if o == nil {
                 Text(store.online ? "Cargando…" : "Sin datos todavía").foregroundColor(Px.ink500).frame(maxWidth: .infinity).padding(.vertical, 24)
             } else {
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
-                    Tile(label: "Michael", value: stateName[c?.michaelState ?? ""] ?? c?.michaelState ?? "—")
+                    Tile(label: "\(Skin.boss)", value: stateName[c?.michaelState ?? ""] ?? c?.michaelState ?? "—")
                     Tile(label: "Workers libres", value: c?.workersIdle.map(String.init) ?? "—", extra: c?.workersTotal.map { "de \($0)" })
                     Tile(label: "Preguntas", value: "\(q)", extra: q > 0 ? "para ti" : nil, alert: q > 0)
                     Tile(label: "Tareas abiertas", value: c?.tasksOpen.map(String.init) ?? "—")
@@ -228,16 +228,16 @@ struct OfficeTab: View {
                 PixelCard {
                     VStack(alignment: .leading, spacing: 10) {
                         if remote {
-                            Text("En \(o?.office.name ?? "esa oficina") todo entra por su Michael: él reparte el trabajo a su equipo.")
+                            Text("En \(o?.office.name ?? "esa oficina") todo entra por su \(Skin.boss): él reparte el trabajo a su equipo.")
                                 .font(.footnote).foregroundColor(Px.ink500)
                         } else {
                             Picker("Para", selection: $store.recipient) {
-                                Text("Michael (jefe)").tag("god")
+                                Text("\(Skin.boss) (jefe)").tag("god")
                                 ForEach(agents.filter { $0.god != true }) { Text($0.name).tag($0.id) }
                             }
                             .pickerStyle(.menu).pixelField()
                         }
-                        PixelEditor(placeholder: remote ? "Qué debe hacer su Michael…" : "Escribe lo que necesitas…", text: $draft)
+                        PixelEditor(placeholder: remote ? "Qué debe hacer su \(Skin.boss)…" : "Escribe lo que necesitas…", text: $draft)
                         Button("Enviar a \(to)") {
                             let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
                             Task { if await store.ask(text) { draft = "" } }
@@ -282,8 +282,7 @@ struct Tile: View {
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(alert ? Px.coralLight : Px.paper100)
-        .overlay(Rectangle().strokeBorder(alert ? Px.coral : Px.ink100, lineWidth: 1))
+        .framed(alert ? Px.coralLight : Px.paper100, alert ? Px.coral : Skin.monster ? Px.outline : Px.ink100, width: 1)
     }
 }
 
@@ -305,8 +304,7 @@ struct AgentCard: View {
         }
         .padding(8)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(boss ? Px.lemonLight : Px.paper100)
-        .overlay(Rectangle().strokeBorder(chosen ? Px.ink900 : boss ? Px.lemon : Px.ink100, lineWidth: chosen || boss ? 2 : 1))
+        .framed(boss ? Px.lemonLight : Px.paper100, chosen ? (Skin.monster ? Px.sky : Px.ink900) : boss ? Px.lemon : Skin.monster ? Px.outline : Px.ink100, width: chosen || boss ? 2 : 1)
     }
 }
 
@@ -318,7 +316,7 @@ struct QuestionsTab: View {
         let questions = store.overview?.questions ?? []
         Screen(title: "Preguntas", subtitle: store.viewing != nil ? store.overview.map { "de \($0.office.name)" } : nil) {
             if questions.isEmpty {
-                Text("Nada pendiente. Michael no te está esperando 🎉").foregroundColor(Px.ink500).frame(maxWidth: .infinity).padding(.vertical, 24)
+                Text("Nada pendiente. \(Skin.boss) no te está esperando 🎉").foregroundColor(Px.ink500).frame(maxWidth: .infinity).padding(.vertical, 24)
             }
             ForEach(questions) { QuestionCard(task: $0) }
         }
@@ -345,7 +343,7 @@ struct QuestionCard: View {
                     Bubble { Text(markdown(task.question?.q ?? "")) }
                 }
                 if store.overview?.remote == true {
-                    Text("Contéstala desde el celular emparejado con esa oficina, o pásale la respuesta a su Michael desde Oficina.")
+                    Text("Contéstala desde el celular emparejado con esa oficina, o pásale la respuesta a su \(Skin.boss) desde Oficina.")
                         .font(.footnote).foregroundColor(Px.ink500)
                 } else {
                     PixelEditor(placeholder: "Tu respuesta…", text: $draft)
@@ -380,12 +378,11 @@ struct BoardTab: View {
                     let on = filter == key
                     Button { filter = key } label: {
                         VStack(spacing: 6) {
-                            Text("\(n)").font(.system(size: 18, weight: .semibold)).foregroundColor(on ? Px.cream50 : key == "blocked" ? Px.coral : Px.ink900)
-                            PixelLabel(label, size: 6, color: on ? Px.cream50 : Px.ink700).lineLimit(1).minimumScaleFactor(0.5)
+                            Text("\(n)").font(.system(size: 18, weight: .semibold)).foregroundColor(on ? (Skin.monster ? Px.onAccent : Px.cream50) : key == "blocked" ? Px.coral : Px.ink900)
+                            PixelLabel(label, size: 6, color: on ? (Skin.monster ? Px.onAccent : Px.cream50) : Px.ink700).lineLimit(1).minimumScaleFactor(0.5)
                         }
                         .frame(maxWidth: .infinity, minHeight: 54)
-                        .background(on ? Px.ink900 : Px.paper100)
-                        .overlay(Rectangle().strokeBorder(on ? Px.ink900 : Px.ink300, lineWidth: 1))
+                        .framed(on ? (Skin.monster ? Px.lemon : Px.ink900) : Px.paper100, Skin.monster ? Px.outline : on ? Px.ink900 : Px.ink300, width: 1)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("\(label): \(n)")
@@ -438,9 +435,10 @@ struct TaskCard: View {
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Px.paper100)
-            .overlay(alignment: .leading) { Rectangle().fill(stripe).frame(width: 4) }
-            .overlay(Rectangle().strokeBorder(Px.ink300, lineWidth: 1))
-            .background(Rectangle().fill(Px.shadow).offset(x: 3, y: 3))
+            .overlay(alignment: .leading) { Rectangle().fill(stripe).frame(width: Skin.monster ? 6 : 4) }
+            .clipShape(SkinShape())
+            .overlay(SkinShape().strokeBorder(Skin.monster ? Px.outline : Px.ink300, lineWidth: Skin.monster ? 3 : 1))
+            .background(SkinShape().fill(Px.shadow).offset(x: Skin.monster ? 0 : 3, y: Skin.monster ? 4 : 3))
         }
         .buttonStyle(.plain)
     }
@@ -473,7 +471,7 @@ struct LinkTab: View {
                                     PixelLabel(p.name, size: 8, color: Px.ink900)
                                 }
                                 Text(p.online
-                                     ? "Michael \(stateName[p.capacity?.michaelState ?? ""] ?? "—") · \(p.capacity?.workersIdle ?? 0)/\(p.capacity?.workersTotal ?? 0) libres"
+                                     ? "\(Skin.boss) \(stateName[p.capacity?.michaelState ?? ""] ?? "—") · \(p.capacity?.workersIdle ?? 0)/\(p.capacity?.workersTotal ?? 0) libres"
                                      : "sin conexión")
                                     .font(.caption).foregroundColor(Px.ink500)
                             }
@@ -491,7 +489,7 @@ struct LinkTab: View {
                             ForEach(online) { Text($0.name).tag($0.officeId) }
                         }
                         .pickerStyle(.menu).pixelField()
-                        PixelEditor(placeholder: "Qué debe hacer su Michael…", text: $draft)
+                        PixelEditor(placeholder: "Qué debe hacer su \(Skin.boss)…", text: $draft)
                         Button("Delegar") {
                             let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
                             let to = target.isEmpty ? (online.first?.officeId ?? "") : target
@@ -570,13 +568,12 @@ struct PanelTab: View {
                         }
                         Text(denied)
                             .font(.footnote).foregroundColor(Px.ink500)
-                        Text("En la computadora, con Michael a la vista:\n\nmunder link panel <este celular>\n\nPara quitarlo: munder link panel <este celular> --quitar")
+                        Text("En la computadora, con \(Skin.boss) a la vista:\n\nmunder link panel <este celular>\n\nPara quitarlo: munder link panel <este celular> --quitar")
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundColor(Px.ink900)
                             .padding(8)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Px.cream100)
-                            .overlay(Rectangle().strokeBorder(Px.ink100, lineWidth: 1))
+                            .framed(Px.cream100, Px.ink100, width: 1)
                         Text("Con esto, este celular puede apagar tu Munder. Piénsalo antes de concederlo.")
                             .font(.caption).foregroundColor(Px.ink500)
                         Button("Comprobar otra vez") { Task { await store.refreshPanel() } }

@@ -204,6 +204,10 @@ jobs:
             # a change that only exists on screen.
             shoot "panel-$scheme" -MunderDemo -MunderTab 4
             shoot "locked-$scheme" -MunderDemo -MunderDemoLocked
+            # Monster Village: the same demo office in that world's look and cast.
+            shoot "monster-office-$scheme" -MunderDemo -MunderTab 0 -MunderWorld monster-trainer
+            shoot "monster-questions-$scheme" -MunderDemo -MunderTab 1 -MunderWorld monster-trainer
+            shoot "monster-board-$scheme" -MunderDemo -MunderTab 2 -MunderWorld monster-trainer
           done
           ls -la shots
       - name: Upload screenshots

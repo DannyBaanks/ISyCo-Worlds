@@ -389,3 +389,21 @@ test('overview of a paired office through this one; an older office still shows 
   assert.ok(lim.result.capacity);
   assert.deepEqual(lim.result.agents, []);
 });
+
+test('overview tells the phone which world the office is, from where its hive lives', async (t) => {
+  assert.equal(R.worldOfHive('/home/u/proj/.munder/worlds/monster-trainer/hive'), 'monster-trainer');
+  assert.equal(R.worldOfHive('C:\\Users\\u\\proj\\.munder\\worlds\\office\\hive'), 'office');
+  assert.equal(R.worldOfHive('/home/u/proj/hive'), 'office', 'a classic hive is the office');
+  assert.equal(R.worldOfHive('/home/u/proj/.munder/worlds/__proto__/hive'), 'office', 'only known worlds are reported');
+  assert.equal(R.worldOfHive('/home/u/worlds/monster-trainer/hive'), 'office', 'the folder must sit under .munder');
+  assert.equal(R.worldOfHive(null), 'office');
+
+  const o = await serve(office('world'));
+  t.after(() => o.server.close());
+  const phone = await pairedPhone(o, 'iPhone');
+  const { result: data } = await phone.call('overview');
+  assert.equal(data.office.world, 'office');
+  for (const n of ['agua', 'fuego', 'electricidad', 'oscuridad', 'luz', 'aire', 'profesor']) {
+    assert.equal(R.STATIC[`monster-${n}.png`], 'image/png', `${n} portrait is served`);
+  }
+});

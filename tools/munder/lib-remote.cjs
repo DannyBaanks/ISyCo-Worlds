@@ -49,6 +49,8 @@ const STATIC = {
   'icon-512.png': 'image/png',
   // Press Start 2P, the app's display face (SIL OFL 1.1, see src/renderer/src/assets/fonts/LICENSE.txt).
   'press-start-2p.woff2': 'font/woff2',
+  // Monster Village portraits (project art, cropped from the world's roster sheets).
+  ...Object.fromEntries(['agua', 'fuego', 'electricidad', 'oscuridad', 'luz', 'aire', 'profesor'].map((n) => [`monster-${n}.png`, 'image/png'])),
 };
 
 /**
@@ -142,10 +144,23 @@ function taskView(t) {
   };
 }
 
+/**
+ * Which world this hive belongs to, so the phone can wear that world's look.
+ * Each world keeps its hive under `<workspace>/.munder/worlds/<id>/hive`; a
+ * hive anywhere else is the classic office.
+ */
+const WORLD_IDS = ['office', 'monster-trainer'];
+function worldOfHive(hiveRoot) {
+  const parts = String(hiveRoot || '').split(/[\\/]+/);
+  const at = parts.lastIndexOf('worlds');
+  const id = at > 0 && parts[at - 1] === '.munder' ? parts[at + 1] : null;
+  return WORLD_IDS.includes(id) ? id : 'office';
+}
+
 function overview(office, identity, version) {
   const cap = office ? L.capacity(office) : { ...L.hostCapacity(), michael_state: 'offline' };
   const out = {
-    office: { office_id: identity.office_id, name: identity.name, fingerprint: L.prettyFingerprint(identity.office_id), host: require('node:os').hostname(), version },
+    office: { office_id: identity.office_id, name: identity.name, fingerprint: L.prettyFingerprint(identity.office_id), host: require('node:os').hostname(), version, world: worldOfHive(office && office.root) },
     capacity: cap, agents: [], tasks: [], questions: [], hive: !!office,
   };
   if (!office) return out;
@@ -460,6 +475,6 @@ function createRemoteRoutes({ dir = L.stateDir(), hiveRoot = L.localHiveRoot(), 
 
 module.exports = {
   REMOTE, APP_DIR, STATIC, GENERATED, createRemoteRoutes,
-  deviceIdOf, remoteSas, remoteKey, sealFor, openFrom, openQuestion, overview,
+  deviceIdOf, remoteSas, remoteKey, sealFor, openFrom, openQuestion, overview, worldOfHive,
   OP_AUTHORITY, ARG_MAX, PANEL_OFF, opCatalog,
 };

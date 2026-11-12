@@ -44,6 +44,14 @@ struct RootView: View {
     /// app switcher cannot read it either.
     private var showLock: Bool { lock.locked && store.phase == .paired }
 
+    /// The world of THIS office dresses the app. An office you are only peeking
+    /// at through the link does not, and an older one that omits it does not either.
+    private var ownWorld: String? {
+        guard let overview = store.overview, overview.remote != true else { return nil }
+        return overview.office.world
+    }
+    @State private var world = Skin.world
+
     var body: some View {
         ZStack(alignment: .bottom) {
             Px.cream50.ignoresSafeArea()
@@ -65,8 +73,8 @@ struct RootView: View {
                     .font(.subheadline)
                     .foregroundColor(Px.cream50)
                     .padding(.horizontal, 14).padding(.vertical, 10)
-                    .background(Px.ink900)
-                    .background(Rectangle().fill(Px.shadow).offset(x: 3, y: 3))
+                    .background(SkinShape(radius: 22).fill(Px.ink900))
+                    .background(SkinShape(radius: 22).fill(Px.shadow).offset(x: Skin.monster ? 0 : 3, y: Skin.monster ? 4 : 3))
                     .padding(.bottom, 90)
                     .padding(.horizontal, 16)
                     .transition(.opacity)
@@ -75,6 +83,13 @@ struct RootView: View {
                         if store.toast == toast { store.toast = nil }
                     }
             }
+        }
+        // Colours and shapes are resolved when drawn: a new world rebuilds the tree once.
+        .id(world)
+        .onChange(of: ownWorld) { next in
+            guard let next, next != Skin.world else { return }
+            Skin.set(next)
+            world = Skin.world
         }
         .animation(.easeOut(duration: 0.15), value: store.toast)
         .onChange(of: scenePhase) { phase in

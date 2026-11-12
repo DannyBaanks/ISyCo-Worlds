@@ -1,0 +1,149 @@
+/* Motion for the two world skins. Each world moves in character:
+   Munder Difflin snaps in hard steps, like a stamp or a typewriter;
+   Monster Trainer springs and breathes, like a handheld game.
+   Everything here is decoration: nothing waits on an animation, entrance
+   animations fill backwards only (so no transform lingers to re-anchor a
+   fixed overlay), and the whole file is off under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  :root {
+    --md-step: steps(4, end);
+    --mt-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --mt-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* ---------- Entering a world ---------- */
+  @keyframes md-bar-in { from { transform: translateY(-100%); } to { transform: none; } }
+  @keyframes md-sheet-in { from { opacity: 0; transform: translate(-6px, -6px); } to { opacity: 1; transform: none; } }
+  @keyframes mt-bar-in { from { transform: translateY(-100%); } to { transform: none; } }
+  @keyframes mt-rise-in { from { opacity: 0; transform: translateY(18px) scale(0.985); } to { opacity: 1; transform: none; } }
+  @keyframes mt-pop-in { 0% { opacity: 0; transform: scale(0.6); } 100% { opacity: 1; transform: none; } }
+
+  :root[data-world-skin='office'] .worlds-titlebar { animation: md-bar-in 200ms var(--md-step) backwards; }
+  :root[data-world-skin='office'] .worlds-wood-frame { animation: md-sheet-in 200ms var(--md-step) 80ms backwards; }
+  :root[data-world-skin='office'] .worlds-sidebar { animation: md-sheet-in 200ms var(--md-step) 160ms backwards; }
+  :root[data-world-skin='monster-trainer'] .worlds-titlebar { animation: mt-bar-in 380ms var(--mt-ease) backwards; }
+  :root[data-world-skin='monster-trainer'] .worlds-wood-frame { animation: mt-rise-in 460ms var(--mt-ease) 90ms backwards; }
+  :root[data-world-skin='monster-trainer'] .worlds-sidebar { animation: mt-rise-in 460ms var(--mt-ease) 170ms backwards; }
+  :root[data-world-skin='monster-trainer'] .worlds-titlebar .worlds-brand { animation: mt-pop-in 420ms var(--mt-spring) 260ms backwards; }
+
+  /* ---------- Global tabs ---------- */
+  @keyframes md-rule-in { from { box-shadow: inset 0 0 0 var(--cth-lemon); } to { box-shadow: inset 0 -3px 0 var(--cth-lemon); } }
+  :root[data-world-skin='office'] .cth-globalnav-tab { transition: background-color 80ms steps(2, end), color 80ms steps(2, end), transform 60ms steps(2, end); }
+  :root[data-world-skin='office'] .cth-globalnav-tab:active { transform: translate(1px, 1px); }
+  :root[data-world-skin='office'] .cth-globalnav-tab[aria-current='page'] { animation: md-rule-in 160ms steps(3, end) backwards; }
+
+  @keyframes mt-tab-pop { 0% { transform: scale(0.9); } 60% { transform: scale(1.07); } 100% { transform: none; } }
+  @keyframes mt-shine { 0%, 70% { transform: translateX(-130%) skewX(-18deg); } 100% { transform: translateX(130%) skewX(-18deg); } }
+  :root[data-world-skin='monster-trainer'] .cth-globalnav-tab {
+    position: relative; overflow: hidden;
+    transition: transform 180ms var(--mt-spring), background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+  }
+  :root[data-world-skin='monster-trainer'] .cth-globalnav-tab:hover { transform: translateY(-2px); }
+  :root[data-world-skin='monster-trainer'] .cth-globalnav-tab:active { transform: translateY(2px) scale(0.97); box-shadow: none; }
+  :root[data-world-skin='monster-trainer'] .cth-globalnav-tab[aria-current='page'] { animation: mt-tab-pop 360ms var(--mt-spring) backwards; }
+  :root[data-world-skin='monster-trainer'] .cth-globalnav-tab[aria-current='page']::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(90deg, transparent 30%, #ffffffc4 50%, transparent 70%);
+    animation: mt-shine 4.2s ease-in-out infinite;
+  }
+
+  /* ---------- Wordmarks and title-bar keys ---------- */
+  @keyframes mt-breathe { 0%, 100% { scale: 1; } 50% { scale: 1.14; } }
+  @keyframes md-stamp { 0% { transform: translate(-2px, -2px); } 50% { transform: translate(1px, 1px); } 100% { transform: none; } }
+  :root[data-world-skin='monster-trainer'] .worlds-brand-mark { animation: mt-breathe 3.2s ease-in-out infinite; }
+  :root[data-world-skin='monster-trainer'] .worlds-titlebar .worlds-brand { transition: transform 200ms var(--mt-spring); }
+  :root[data-world-skin='monster-trainer'] .worlds-titlebar .worlds-brand:hover { transform: rotate(-2deg) scale(1.04); }
+  :root[data-world-skin='office'] .worlds-titlebar .worlds-brand:hover .worlds-brand-mark { animation: md-stamp 180ms steps(3, end); }
+  :root[data-world-skin='monster-trainer'] .worlds-titlebar > button { transition: transform 220ms var(--mt-spring); }
+  :root[data-world-skin='monster-trainer'] .worlds-titlebar > button:hover { transform: rotate(18deg) scale(1.1); }
+  :root[data-world-skin='monster-trainer'] .worlds-titlebar > button:active { transform: scale(0.9); }
+  :root[data-world-skin='office'] .worlds-titlebar > button { transition: transform 60ms steps(2, end); }
+  :root[data-world-skin='office'] .worlds-titlebar > button:active { transform: translate(1px, 1px); }
+
+  /* ---------- Settings menu ---------- */
+  @keyframes md-unroll { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0); } }
+  @keyframes mt-menu-in { from { opacity: 0; transform: translateY(-10px) scale(0.9); } to { opacity: 1; transform: none; } }
+  @keyframes mt-item-in { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+  :root[data-world-skin='office'] #cth-settings-menu { animation: md-unroll 160ms steps(5, end) backwards; }
+  :root[data-world-skin='office'] .cth-globalnav-item { transition: background-color 60ms steps(2, end), padding-inline-start 80ms steps(2, end); }
+  :root[data-world-skin='office'] .cth-globalnav-item:hover { padding-inline-start: 18px !important; }
+  :root[data-world-skin='monster-trainer'] #cth-settings-menu { transform-origin: 20% 0; animation: mt-menu-in 260ms var(--mt-spring) backwards; }
+  :root[data-world-skin='monster-trainer'] .cth-globalnav-item { animation: mt-item-in 240ms var(--mt-ease) backwards; transition: background-color 120ms ease, padding-inline-start 160ms var(--mt-spring); }
+  :root[data-world-skin='monster-trainer'] .cth-globalnav-item:hover { padding-inline-start: 20px !important; }
+  :root[data-world-skin='monster-trainer'] .cth-globalnav-item:nth-child(2) { animation-delay: 30ms; }
+  :root[data-world-skin='monster-trainer'] .cth-globalnav-item:nth-child(3) { animation-delay: 60ms; }
+  :root[data-world-skin='monster-trainer'] .cth-globalnav-item:nth-child(4) { animation-delay: 90ms; }
+  :root[data-world-skin='monster-trainer'] .cth-globalnav-item:nth-child(5) { animation-delay: 120ms; }
+  :root[data-world-skin='monster-trainer'] .cth-globalnav-item:nth-child(6) { animation-delay: 150ms; }
+  :root[data-world-skin='monster-trainer'] .cth-globalnav-item:nth-child(7) { animation-delay: 180ms; }
+  :root[data-world-skin='monster-trainer'] .cth-globalnav-item:nth-child(n + 8) { animation-delay: 210ms; }
+
+  /* ---------- Dialogs and Marketplace ---------- */
+  @keyframes md-file-in { from { opacity: 0; transform: translateY(-18px); } to { opacity: 1; transform: none; } }
+  @keyframes mt-dialog-in { 0% { opacity: 0; transform: translateY(22px) scale(0.92); } 100% { opacity: 1; transform: none; } }
+  @keyframes mt-awning-in { from { opacity: 0; transform: translateY(-26px) scaleY(0.6); } to { opacity: 1; transform: none; } }
+  :root[data-world-skin='office'] .worlds-panel--dialog { animation: md-file-in 180ms steps(5, end) backwards; }
+  :root[data-world-skin='monster-trainer'] .worlds-panel--dialog { animation: mt-dialog-in 340ms var(--mt-spring) backwards; }
+  :root[data-world-skin='office'] .worlds-market-awning { animation: md-unroll 200ms steps(5, end) backwards; }
+  :root[data-world-skin='office'] .worlds-market-counter { animation: md-file-in 200ms steps(5, end) 80ms backwards; }
+  :root[data-world-skin='monster-trainer'] .worlds-market-awning { transform-origin: 50% 0; animation: mt-awning-in 420ms var(--mt-spring) backwards; }
+  :root[data-world-skin='monster-trainer'] .worlds-market-counter { animation: mt-rise-in 420ms var(--mt-ease) 100ms backwards; }
+  :root[data-world-skin='monster-trainer'] .worlds-market-shelves li { transition: transform 180ms var(--mt-spring); }
+  :root[data-world-skin='monster-trainer'] .worlds-market-shelves li:hover { transform: translateY(-4px); }
+
+  /* ---------- Buttons ---------- */
+  :root[data-world-skin='office'] .worlds-button { transition: transform 60ms steps(2, end), filter 60ms steps(2, end); }
+  :root[data-world-skin='office'] .worlds-button:hover:not(:disabled) { transform: translate(-1px, -1px); }
+  :root[data-world-skin='office'] .worlds-button:active:not(:disabled) { transform: translate(2px, 2px); }
+  :root[data-world-skin='monster-trainer'] .worlds-button { transition: transform 160ms var(--mt-spring), filter 120ms ease; }
+  :root[data-world-skin='monster-trainer'] .worlds-button:hover:not(:disabled) { transform: translateY(-2px); }
+  :root[data-world-skin='monster-trainer'] .worlds-button:active:not(:disabled) { transform: translateY(2px) scale(0.97); }
+  :root[data-world-skin='monster-trainer'] .worlds-command .worlds-book-spread > .cth-tabbar button,
+  :root[data-world-skin='monster-trainer'] .worlds-command-nav-toggle { transition: transform 160ms var(--mt-spring), background-color 120ms ease; }
+  :root[data-world-skin='monster-trainer'] .worlds-command .worlds-book-spread > .cth-tabbar button:hover { transform: translateX(3px); }
+  :root[data-world-skin='monster-trainer'] .worlds-command .worlds-book-spread > .cth-tabbar button:active,
+  :root[data-world-skin='monster-trainer'] .worlds-command-nav-toggle:active { transform: scale(0.9); }
+  :root[data-world-skin='office'] .worlds-command .worlds-book-spread > .cth-tabbar button { transition: background-color 60ms steps(2, end); }
+
+  /* ---------- Signs and vines (Monster Trainer only: the office holds still) ---------- */
+  @keyframes mt-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -2px; } }
+  @keyframes mt-sway { 0%, 100% { rotate: -1.4deg; } 50% { rotate: 1.4deg; } }
+  :root[data-world-skin='monster-trainer'] .worlds-hanging-sign { animation: mt-float 4.4s ease-in-out infinite; }
+  :root[data-world-skin='monster-trainer'] .worlds-crew-sign { animation-delay: -1.5s; }
+  :root[data-world-skin='monster-trainer'] .worlds-status-ledger .worlds-hanging-sign { animation-delay: -2.8s; }
+  :root[data-world-skin='monster-trainer'] .worlds-vine { transform-origin: 0 0; animation: mt-sway 6s ease-in-out infinite; }
+  :root[data-world-skin='monster-trainer'] .worlds-vine--flipped { transform-origin: 100% 0; animation-delay: -3s; }
+
+  /* ---------- Crew cards ---------- */
+  @keyframes md-card-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes mt-card-in { 0% { opacity: 0; transform: translateY(16px) scale(0.9); } 100% { opacity: 1; transform: none; } }
+  :root[data-world-skin='office'] .worlds-worker-sheet { animation: md-card-in 160ms steps(4, end) backwards; }
+  :root[data-world-skin='monster-trainer'] .worlds-worker-sheet { animation: mt-card-in 380ms var(--mt-spring) backwards; }
+  :root[data-world-skin] .worlds-worker:nth-child(2) .worlds-worker-sheet { animation-delay: 60ms; }
+  :root[data-world-skin] .worlds-worker:nth-child(3) .worlds-worker-sheet { animation-delay: 120ms; }
+  :root[data-world-skin] .worlds-worker:nth-child(4) .worlds-worker-sheet { animation-delay: 180ms; }
+  :root[data-world-skin] .worlds-worker:nth-child(5) .worlds-worker-sheet { animation-delay: 240ms; }
+  :root[data-world-skin] .worlds-worker:nth-child(n + 6) .worlds-worker-sheet { animation-delay: 300ms; }
+
+  /* A card answers its agent's state. The mark lives on the card's own ::after,
+     so the sheet's outline and the selection ring are left alone. */
+  @keyframes mt-ring { 0% { opacity: 0.85; transform: scale(1); } 100% { opacity: 0; transform: scale(1.07); } }
+  @keyframes mt-shake { 0%, 100% { transform: none; } 15% { transform: translateX(-6px) rotate(-1.5deg); } 30% { transform: translateX(5px) rotate(1.2deg); } 45% { transform: translateX(-4px); } 60% { transform: translateX(3px); } 80% { transform: translateX(-1px); } }
+  @keyframes md-shake { 0%, 100% { transform: none; } 25% { transform: translateX(-3px); } 50% { transform: translateX(3px); } 75% { transform: translateX(-2px); } }
+  :root[data-world-skin='monster-trainer'] .worlds-worker[data-status]::after {
+    content: ''; position: absolute; inset: -2px; border-radius: 17px; pointer-events: none; opacity: 0;
+    border: 3px solid transparent;
+  }
+  :root[data-world-skin='monster-trainer'] .worlds-worker:is([data-status='working'], [data-status='thinking'], [data-status='typing'])::after { border-color: var(--mt-grass-light); animation: mt-ring 1.9s ease-out infinite; }
+  :root[data-world-skin='monster-trainer'] .worlds-worker[data-status='waiting']::after { border-color: var(--mt-sun); animation: mt-ring 2.8s ease-out infinite; }
+  :root[data-world-skin='monster-trainer'] .worlds-worker:is([data-status='blocked'], [data-status='looping'])::after { border-color: var(--mt-berry); animation: mt-ring 1.1s ease-out infinite; }
+  :root[data-world-skin='monster-trainer'] .worlds-worker:is([data-status='blocked'], [data-status='looping']) .worlds-worker-sheet { animation: mt-shake 520ms ease-in-out; }
+
+  :root[data-world-skin='office'] .worlds-worker[data-status]::after {
+    content: ''; position: absolute; top: 6px; inset-inline-end: 6px; width: 6px; height: 6px; pointer-events: none; opacity: 0;
+  }
+  :root[data-world-skin='office'] .worlds-worker:is([data-status='working'], [data-status='thinking'], [data-status='typing'])::after { opacity: 1; background: var(--cth-status-working); animation: cth-blink 900ms steps(1, end) infinite; }
+  :root[data-world-skin='office'] .worlds-worker[data-status='waiting']::after { opacity: 1; background: var(--cth-status-waiting); animation: cth-blink 1600ms steps(1, end) infinite; }
+  :root[data-world-skin='office'] .worlds-worker:is([data-status='blocked'], [data-status='looping'])::after { opacity: 1; background: var(--cth-status-blocked); animation: cth-blink 500ms steps(1, end) infinite; }
+  :root[data-world-skin='office'] .worlds-worker:is([data-status='blocked'], [data-status='looping']) .worlds-worker-sheet { animation: md-shake 240ms steps(4, end); }
+}

@@ -32,6 +32,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -116,7 +118,7 @@ fun Screen(
             StatusDot(if (online) Px.mint() else Px.coral())
             if (switcher && !peers.isNullOrEmpty()) {
                 Box {
-                    Row(modifier = Modifier.border(1.dp, Px.ink100()).padding(8.dp).clickable { menu = true }, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(modifier = Modifier.frame(if (Skin.monster) Px.lemon() else Px.cream50(), if (Skin.monster) Px.outline() else Px.ink100(), 1.dp, radius = 50).padding(8.dp).clickable { menu = true }, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         PixelLabel(title, sizeSp = 12, color = Px.ink900())
                         Text("▾", color = Px.ink900())
                     }
@@ -133,7 +135,7 @@ fun Screen(
         }
         if (subtitle != null) Text(subtitle, fontSize = 12.sp, color = Px.ink500())
         if (!online) {
-            Text(offlineReason ?: "Sin conexión", fontSize = 12.sp, modifier = Modifier.fillMaxWidth().background(Px.coralLight()).border(1.dp, Px.coral()).padding(10.dp))
+            Text(offlineReason ?: "Sin conexión", fontSize = 12.sp, modifier = Modifier.fillMaxWidth().frame(Px.coralLight(), Px.coral(), 1.dp, radius = 12).padding(10.dp))
         }
         content()
         Spacer(modifier = Modifier.height(24.dp))
@@ -162,15 +164,15 @@ fun OfficeTab(store: OfficeStore) {
     val remote = o?.remote == true
     val agents = o?.agents ?: emptyList()
     val target = agents.firstOrNull { it.id == recipient && it.god != true }
-    val to = if (remote) "su Michael" else (target?.name ?: "Michael")
-    Screen(store, o?.office?.name ?: office?.name ?: "Oficina", subtitle = o?.let { "${it.office.host ?: ""} · ${it.office.fingerprint ?: ""}" }, switcher = true) {
+    val to = if (remote) "su ${Skin.boss}" else (target?.name ?: "${Skin.boss}")
+    Screen(store, o?.office?.name ?: office?.name ?: Skin.place, subtitle = o?.let { "${it.office.host ?: ""} · ${it.office.fingerprint ?: ""}" }, switcher = true) {
         if (o == null) {
             Text(if (online) "Cargando…" else "Sin datos todavía", color = Px.ink500())
         } else {
             // 6 baldosas, igual que el LazyVGrid de 2 columnas en iOS.
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Box(Modifier.weight(1f)) { Tile("Michael", stateName[c?.michaelState] ?: c?.michaelState ?: "—") }
+                    Box(Modifier.weight(1f)) { Tile(Skin.boss, stateName[c?.michaelState] ?: c?.michaelState ?: "—") }
                     Box(Modifier.weight(1f)) { Tile("Workers libres", c?.workersIdle?.toString() ?: "—", c?.workersTotal?.let { "de $it" }) }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -187,8 +189,8 @@ fun OfficeTab(store: OfficeStore) {
             SectionTitle("Pídele algo a $to")
             PixelCard {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    if (remote) Text("En ${o.office.name} todo entra por su Michael: él reparte el trabajo a su equipo.", fontSize = 12.sp, color = Px.ink500())
-                    PixelEditor(draft, { draft = it }, if (remote) "Qué debe hacer su Michael…" else "Escribe lo que necesitas…")
+                    if (remote) Text("En ${o.office.name} todo entra por su ${Skin.boss}: él reparte el trabajo a su equipo.", fontSize = 12.sp, color = Px.ink500())
+                    PixelEditor(draft, { draft = it }, if (remote) "Qué debe hacer su ${Skin.boss}…" else "Escribe lo que necesitas…")
                     PixelButton("Enviar a $to", enabled = !busy && draft.isNotBlank(), onClick = {
                         val t = draft.trim()
                         store.ask(t)
@@ -218,7 +220,7 @@ fun OfficeTab(store: OfficeStore) {
 
 @Composable
 fun Tile(label: String, value: String, extra: String? = null, alert: Boolean = false) {
-    Column(modifier = Modifier.fillMaxWidth().background(if (alert) Px.coralLight() else Px.paper100()).border(1.dp, if (alert) Px.coral() else Px.ink100()).padding(10.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().frame(if (alert) Px.coralLight() else Px.paper100(), if (alert) Px.coral() else if (Skin.monster) Px.outline() else Px.ink100(), 1.dp).padding(10.dp)) {
         PixelLabel(label, sizeSp = 7)
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(value, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = if (alert) Px.coral() else Px.ink900())
@@ -233,11 +235,10 @@ fun AgentCardRow(store: OfficeStore, agent: Agent, remote: Boolean, recipient: S
     val boss = agent.god == true
     val chosen = recipient == (if (boss) "god" else agent.id)
     val border = if (chosen || boss) 2.dp else 1.dp
-    val borderColor = if (chosen) Px.ink900() else if (boss) Px.lemon() else Px.ink100()
+    val borderColor = if (chosen) (if (Skin.monster) Px.sky() else Px.ink900()) else if (boss) Px.lemon() else if (Skin.monster) Px.outline() else Px.ink100()
     Row(
         modifier = Modifier.fillMaxWidth()
-            .background(if (boss) Px.lemonLight() else Px.paper100())
-            .border(border, borderColor)
+            .frame(if (boss) Px.lemonLight() else Px.paper100(), borderColor, border)
             .clickable(enabled = !remote) { store.setRecipient(if (boss) "god" else agent.id) }
             .padding(8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -259,7 +260,7 @@ fun QuestionsTab(store: OfficeStore) {
     val viewing by store.viewing.collectAsState()
     val questions = overview?.questions ?: emptyList()
     Screen(store, "Preguntas", subtitle = if (viewing != null) overview?.let { "de ${it.office.name}" } else null) {
-        if (questions.isEmpty()) Text("Nada pendiente. Michael no te está esperando 🎉", color = Px.ink500())
+        if (questions.isEmpty()) Text("Nada pendiente. ${Skin.boss} no te está esperando 🎉", color = Px.ink500())
         for (t in questions) QuestionCard(store, t)
     }
 }
@@ -284,7 +285,7 @@ fun QuestionCard(store: OfficeStore, task: TaskItem) {
                 Bubble { Text(task.question?.q ?: "") }
             }
             if (overview?.remote == true) {
-                Text("Contéstala desde el celular emparejado con esa oficina, o pásale la respuesta a su Michael desde Oficina.", fontSize = 12.sp, color = Px.ink500())
+                Text("Contéstala desde el celular emparejado con esa oficina, o pásale la respuesta a su ${Skin.boss} desde Oficina.", fontSize = 12.sp, color = Px.ink500())
             } else {
                 PixelEditor(draft, { draft = it }, "Tu respuesta…")
                 PixelButton("Responder", enabled = !busy && draft.isNotBlank(), onClick = {
@@ -311,11 +312,11 @@ fun BoardTab(store: OfficeStore) {
                 val n = tasks.count { (it.status ?: "todo") == key }
                 val on = filter == key
                 Column(
-                    modifier = Modifier.weight(1f).background(if (on) Px.ink900() else Px.paper100()).border(1.dp, if (on) Px.ink900() else Px.ink300()).clickable { filter = key }.padding(vertical = 8.dp),
+                    modifier = Modifier.weight(1f).frame(if (on) (if (Skin.monster) Px.lemon() else Px.ink900()) else Px.paper100(), if (Skin.monster) Px.outline() else if (on) Px.ink900() else Px.ink300(), 1.dp).clickable { filter = key }.padding(vertical = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text("$n", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = if (on) Px.cream50() else if (key == "blocked") Px.coral() else Px.ink900())
-                    PixelLabel(label, sizeSp = 6, color = if (on) Px.cream50() else Px.ink700())
+                    Text("$n", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = if (on) (if (Skin.monster) Px.onAccent else Px.cream50()) else if (key == "blocked") Px.coral() else Px.ink900())
+                    PixelLabel(label, sizeSp = 6, color = if (on) (if (Skin.monster) Px.onAccent else Px.cream50()) else Px.ink700())
                 }
             }
         }
@@ -336,10 +337,10 @@ fun TaskCard(store: OfficeStore, task: TaskItem) {
         "todo" -> Px.sky()
         else -> Px.mint()
     }
-    Row(modifier = Modifier.fillMaxWidth().background(Px.shadow()).padding(end = 3.dp, bottom = 3.dp)) {
+    Row(modifier = Modifier.fillMaxWidth().clip(Skin.shape(14)).background(Px.shadow()).padding(end = 3.dp, bottom = 3.dp)) {
         Box(modifier = Modifier.width(4.dp).background(stripe))
         Column(
-            modifier = Modifier.fillMaxWidth().background(Px.paper100()).border(1.dp, Px.ink300()).clickable { open = !open }.padding(14.dp),
+            modifier = Modifier.fillMaxWidth().frame(Px.paper100(), Px.ink300(), 1.dp, radius = 12).clickable { open = !open }.padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -395,7 +396,7 @@ fun LinkTab(store: OfficeStore) {
                                 StatusDot(if (p.online) Px.mint() else Px.coral())
                                 PixelLabel(p.name, sizeSp = 8, color = Px.ink900())
                             }
-                            Text(if (p.online) "Michael ${stateName[p.capacity?.michaelState] ?: "—"} · ${p.capacity?.workersIdle ?: 0}/${p.capacity?.workersTotal ?: 0} libres" else "sin conexión", fontSize = 12.sp, color = Px.ink500())
+                            Text(if (p.online) "${Skin.boss} ${stateName[p.capacity?.michaelState] ?: "—"} · ${p.capacity?.workersIdle ?: 0}/${p.capacity?.workersTotal ?: 0} libres" else "sin conexión", fontSize = 12.sp, color = Px.ink500())
                         }
                         Spacer(Modifier.weight(1f))
                         if (p.latencyMs != null && p.online) Chip("${p.latencyMs} ms")
@@ -407,7 +408,7 @@ fun LinkTab(store: OfficeStore) {
             SectionTitle("Delegar a otra oficina")
             PixelCard {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    PixelEditor(draft, { draft = it }, "Qué debe hacer su Michael…")
+                    PixelEditor(draft, { draft = it }, "Qué debe hacer su ${Skin.boss}…")
                     PixelButton("Delegar", enabled = !busy && draft.isNotBlank(), onClick = {
                         val to = if (target.isEmpty()) online.first().officeId else target
                         store.delegate(to, draft.trim())
@@ -468,7 +469,7 @@ fun PanelTab(store: OfficeStore) {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     PixelLabel("Esta compu todavía no", sizeSp = 10, color = Px.ink900())
                     Text(denied!!, fontSize = 12.sp, color = Px.ink500())
-                    Text("En la computadora, con Michael a la vista:\n\nmunder link panel <este celular>\n\nPara quitarlo: munder link panel <este celular> --quitar", fontSize = 11.sp, color = Px.ink900(), modifier = Modifier.fillMaxWidth().background(Px.cream100()).border(1.dp, Px.ink100()).padding(8.dp))
+                    Text("En la computadora, con ${Skin.boss} a la vista:\n\nmunder link panel <este celular>\n\nPara quitarlo: munder link panel <este celular> --quitar", fontSize = 11.sp, color = Px.ink900(), modifier = Modifier.fillMaxWidth().background(Px.cream100()).border(1.dp, Px.ink100()).padding(8.dp))
                     Text("Con esto, este celular puede apagar tu Munder. Piénsalo antes de concederlo.", fontSize = 12.sp, color = Px.ink500())
                     PixelButton("Comprobar otra vez", onClick = { store.refreshPanel() })
                 }
@@ -574,8 +575,8 @@ fun MainTabs(store: OfficeStore, initialTab: Int = 0) {
                 else -> PanelTab(store)
             }
         }
-        Row(modifier = Modifier.fillMaxWidth().background(Px.paper100()).border(1.dp, Px.ink100())) {
-            TabBtn("Oficina", 0, tab, { tab = 0 }, null, Modifier.weight(1f))
+        Row(modifier = Modifier.fillMaxWidth().background(Px.night()).border(1.dp, if (Skin.monster) Px.outline() else Px.ink100())) {
+            TabBtn(Skin.place, 0, tab, { tab = 0 }, null, Modifier.weight(1f))
             TabBtn("Preguntas", 1, tab, { tab = 1 }, if (qCount > 0) "$qCount" else null, Modifier.weight(1f))
             TabBtn("Tablero", 2, tab, { tab = 2 }, null, Modifier.weight(1f))
             TabBtn("Enlace", 3, tab, { tab = 3 }, null, Modifier.weight(1f))
@@ -587,18 +588,23 @@ fun MainTabs(store: OfficeStore, initialTab: Int = 0) {
 @Composable
 fun TabBtn(label: String, idx: Int, current: Int, onClick: () -> Unit, badge: String?, modifier: Modifier = Modifier) {
     val on = idx == current
+    val monster = Skin.monster
+    // Oficina: pestaña entintada. Monster Village: tecla amarilla sobre el bisel nocturno.
+    val fill = if (monster) (if (on) Px.lemon() else Color.Transparent) else (if (on) Px.ink900() else Px.paper100())
+    val fg = if (monster) (if (on) Px.onAccent else Color(0xFFCFE6EE)) else (if (on) Px.cream50() else Px.ink900())
+    val labelColor = if (monster) fg else (if (on) Px.cream50() else Px.ink700())
     Column(
-        modifier = modifier.background(if (on) Px.ink900() else Px.paper100()).clickable { onClick() }.padding(vertical = 10.dp),
+        modifier = modifier.padding(if (monster) 4.dp else 0.dp).background(fill, Skin.shape(14)).clickable { onClick() }.padding(vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         when (idx) {
-            0 -> PixelIcon.Draw(PixelIcon.office, tint = if (on) Px.cream50() else Px.ink900())
-            1 -> PixelIcon.Draw(PixelIcon.ask, tint = if (on) Px.cream50() else Px.ink900())
-            2 -> PixelIcon.Draw(PixelIcon.board, tint = if (on) Px.cream50() else Px.ink900())
-            3 -> PixelIcon.Draw(PixelIcon.link, tint = if (on) Px.cream50() else Px.ink900())
-            else -> PixelIcon.Draw(PixelIcon.panel, tint = if (on) Px.cream50() else Px.ink900())
+            0 -> PixelIcon.Draw(PixelIcon.office, tint = fg)
+            1 -> PixelIcon.Draw(PixelIcon.ask, tint = fg)
+            2 -> PixelIcon.Draw(PixelIcon.board, tint = fg)
+            3 -> PixelIcon.Draw(PixelIcon.link, tint = fg)
+            else -> PixelIcon.Draw(PixelIcon.panel, tint = fg)
         }
-        PixelLabel(label, sizeSp = 6, color = if (on) Px.cream50() else Px.ink700())
+        PixelLabel(label, sizeSp = 6, color = labelColor)
         if (badge != null) Text(badge, fontSize = 10.sp, color = Px.coral())
     }
 }

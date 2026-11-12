@@ -263,3 +263,134 @@ select.switcher { flex: 1; min-width: 0; font: 12px/20px var(--display); text-tr
 /* A tapped agent card is who the composer writes to. */
 button.agent { text-align: left; width: 100%; cursor: pointer; }
 .agent.chosen { box-shadow: inset 0 0 0 2px var(--cth-ink-900); }
+
+/*
+ * Monster Village. When the office reports world = monster-trainer the phone
+ * wears the trainer's field device: night-teal chrome, grass and sun accents,
+ * rounded cards with a thick outline and a drop edge. Same layout, same data.
+ * Palette in step with the Monster Trainer block of tokens.css.
+ */
+:root[data-world='monster-trainer'] {
+  --cth-cream-50: #eef7e2;
+  --cth-cream-100: #e4f1d6;
+  --cth-cream-200: #dcecc8;
+  --cth-cream-300: #c3dba8;
+  --cth-paper-100: #fcfff8;
+  --cth-paper-200: #edf6e4;
+  --cth-ink-900: #1c2b3a;
+  --cth-ink-700: #33475c;
+  --cth-ink-500: #536779;
+  --cth-ink-300: #7d92a4;
+  --cth-ink-100: #cbd8e0;
+  --cth-coral: #d9472f;  --cth-coral-light: #fbd9d0;
+  --cth-mint: #3f9a4b;   --cth-mint-light: #d6efd2;
+  --cth-sky: #2f8fc4;    --cth-sky-light: #d3e9f6;
+  --cth-lemon: #ffcf3f;  --cth-lemon-light: #fff1c2;
+  --cth-lilac: #8370d6;  --cth-lilac-light: #e4defa;
+  --cth-status-idle: #7d92a4;
+  --cth-status-working: #f0b400;
+  --cth-status-blocked: #d9472f;
+  --cth-status-success: #3f9a4b;
+  --cth-on-accent: #1c2b3a;
+  --mt-outline: #0b1a28;
+  --mt-night: #17324a;
+  --mt-night-light: #24506c;
+  --mt-berry-dark: #7a2318;
+  --cth-shadow-hard: 0 4px 0 var(--mt-outline);
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-world='monster-trainer'] {
+    --cth-cream-50: #0e1a26;
+    --cth-cream-100: #132331;
+    --cth-cream-200: #1b3042;
+    --cth-cream-300: #26425a;
+    --cth-paper-100: #11202d;
+    --cth-paper-200: #182c3d;
+    --cth-ink-900: #e8f3e6;
+    --cth-ink-700: #c2d3c8;
+    --cth-ink-500: #9db0ab;
+    --cth-ink-300: #6f8792;
+    --cth-ink-100: #2b4257;
+    --cth-coral: #f0806c;  --cth-coral-light: #47241f;
+    --cth-mint: #7fd08a;   --cth-mint-light: #1c3a26;
+    --cth-sky: #74c0ea;    --cth-sky-light: #1a3548;
+    --cth-lemon: #ffd866;  --cth-lemon-light: #40371a;
+    --cth-lilac: #b0a2ef;  --cth-lilac-light: #2c2748;
+    --cth-status-idle: #6f8792;
+    --cth-status-working: #ffd866;
+    --cth-status-blocked: #f0806c;
+    --cth-status-success: #7fd08a;
+    --cth-on-accent: #0f2436;
+    --mt-outline: #050d15;
+    --mt-night: #0f2436;
+    --mt-night-light: #1b3a50;
+  }
+}
+[data-world='monster-trainer'] body {
+  background: linear-gradient(180deg, var(--mt-night-light) 0, var(--mt-night) 120px, var(--cth-cream-50) 120px) no-repeat, var(--cth-cream-50);
+}
+/* Header sits on the night bezel. */
+[data-world='monster-trainer'] .top h1 { color: #ffffff; text-shadow: 0 2px 0 var(--mt-outline); }
+[data-world='monster-trainer'] .sub { color: #cfe6ee; }
+[data-world='monster-trainer'] .screen > .sub { margin-bottom: 26px; }
+[data-world='monster-trainer'] .dot { border-radius: 50%; box-shadow: 0 0 0 2px var(--mt-outline); }
+[data-world='monster-trainer'] select.switcher { border-radius: 999px; background: var(--cth-lemon); color: #1c2b3a; box-shadow: inset 0 0 0 2px var(--mt-outline), 0 3px 0 var(--mt-outline); padding-inline: 14px; }
+
+[data-world='monster-trainer'] .card { border-radius: 16px; box-shadow: inset 0 0 0 3px var(--mt-outline), var(--cth-shadow-hard); padding: 16px; }
+[data-world='monster-trainer'] .tile,
+[data-world='monster-trainer'] .agent { border-radius: 14px; box-shadow: inset 0 0 0 2px var(--mt-outline), 0 3px 0 var(--mt-outline); }
+[data-world='monster-trainer'] .tile.alert { box-shadow: inset 0 0 0 2px var(--cth-coral), 0 3px 0 var(--mt-berry-dark); }
+[data-world='monster-trainer'] .agent.boss { background: var(--cth-lemon-light); box-shadow: inset 0 0 0 3px var(--cth-lemon), 0 3px 0 var(--mt-outline); }
+[data-world='monster-trainer'] .agent.chosen { box-shadow: inset 0 0 0 3px var(--cth-sky), 0 3px 0 var(--mt-outline); }
+[data-world='monster-trainer'] .chip { border-radius: 999px; padding-inline: 8px; }
+[data-world='monster-trainer'] .portrait { border-radius: 12px; background: var(--cth-mint-light); box-shadow: inset 0 0 0 2px var(--mt-outline); }
+[data-world='monster-trainer'] .section-title { color: var(--cth-mint); }
+[data-world='monster-trainer'] .screen > .section-title:first-of-type { color: var(--cth-mint); }
+
+[data-world='monster-trainer'] .bubble { border-radius: 14px; box-shadow: inset 0 0 0 3px var(--mt-outline); background: var(--cth-paper-100); }
+[data-world='monster-trainer'] .bubble::before {
+  left: -7px; top: 18px; width: 12px; height: 12px; background: var(--cth-paper-100);
+  box-shadow: -3px 3px 0 0 var(--mt-outline); transform: rotate(45deg); border-radius: 0 0 0 3px;
+}
+[data-world='monster-trainer'] .hero .bubble,
+[data-world='monster-trainer'] .screen.bare .top h1 { color: var(--cth-ink-900); text-shadow: none; }
+[data-world='monster-trainer'] .screen.bare .top h1 { color: #ffffff; text-shadow: 0 2px 0 var(--mt-outline); }
+
+[data-world='monster-trainer'] textarea,
+[data-world='monster-trainer'] input[type="text"],
+[data-world='monster-trainer'] select { border-radius: 12px; box-shadow: inset 0 0 0 2px var(--cth-ink-300); }
+[data-world='monster-trainer'] textarea:focus,
+[data-world='monster-trainer'] input:focus,
+[data-world='monster-trainer'] select:focus { box-shadow: inset 0 0 0 3px var(--cth-sky); }
+[data-world='monster-trainer'] .btn {
+  border-radius: 999px; min-height: 48px;
+  background: var(--cth-coral); color: #ffffff;
+  box-shadow: inset 0 0 0 2px var(--mt-berry-dark), 0 4px 0 var(--mt-berry-dark);
+  transition: transform 140ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+[data-world='monster-trainer'] .btn:active { transform: translateY(3px); box-shadow: inset 0 0 0 2px var(--mt-berry-dark); }
+[data-world='monster-trainer'] .btn:disabled { background: var(--cth-cream-300); color: var(--cth-ink-500); box-shadow: inset 0 0 0 2px var(--cth-ink-300); }
+[data-world='monster-trainer'] .btn.ghost { background: var(--cth-paper-100); color: var(--cth-ink-900); box-shadow: inset 0 0 0 2px var(--mt-outline), 0 4px 0 var(--mt-outline); }
+[data-world='monster-trainer'] .btn.danger { background: var(--cth-paper-100); color: var(--cth-coral); box-shadow: inset 0 0 0 2px var(--cth-coral), 0 4px 0 var(--mt-berry-dark); }
+
+[data-world='monster-trainer'] .segments button { border-radius: 14px; box-shadow: inset 0 0 0 2px var(--mt-outline), 0 3px 0 var(--mt-outline); }
+[data-world='monster-trainer'] .segments button[aria-pressed="true"] { background: var(--cth-lemon); color: #1c2b3a; box-shadow: inset 0 0 0 2px var(--mt-outline), 0 3px 0 var(--mt-outline); }
+[data-world='monster-trainer'] .task.s-blocked { box-shadow: inset 6px 0 0 var(--cth-coral), inset 0 0 0 3px var(--mt-outline), var(--cth-shadow-hard); }
+[data-world='monster-trainer'] .task.s-doing { box-shadow: inset 6px 0 0 var(--cth-lemon), inset 0 0 0 3px var(--mt-outline), var(--cth-shadow-hard); }
+[data-world='monster-trainer'] .task.s-todo { box-shadow: inset 6px 0 0 var(--cth-sky), inset 0 0 0 3px var(--mt-outline), var(--cth-shadow-hard); }
+[data-world='monster-trainer'] .task.s-done { box-shadow: inset 6px 0 0 var(--cth-mint), inset 0 0 0 3px var(--mt-outline), var(--cth-shadow-hard); }
+[data-world='monster-trainer'] .md code,
+[data-world='monster-trainer'] .hint code,
+[data-world='monster-trainer'] .steps code { border-radius: 6px; }
+[data-world='monster-trainer'] .offline-banner { border-radius: 12px; box-shadow: inset 0 0 0 2px var(--cth-coral); }
+
+[data-world='monster-trainer'] nav.tabs {
+  background: linear-gradient(180deg, var(--mt-night-light), var(--mt-night));
+  box-shadow: inset 0 3px 0 var(--mt-outline), inset 0 5px 0 var(--cth-lemon);
+  padding-top: 12px;
+}
+[data-world='monster-trainer'] nav.tabs button { color: #cfe6ee; border-radius: 14px; margin-inline: 3px; }
+[data-world='monster-trainer'] nav.tabs button[aria-current="page"] { color: #1c2b3a; background: var(--cth-lemon); box-shadow: inset 0 0 0 2px var(--mt-outline), 0 3px 0 var(--mt-outline); }
+[data-world='monster-trainer'] nav.tabs .badge { border-radius: 999px; color: #ffffff; box-shadow: inset 0 0 0 2px var(--mt-outline); }
+[data-world='monster-trainer'] #toast { border-radius: 999px; background: var(--mt-night); color: #ffffff; box-shadow: inset 0 0 0 2px var(--mt-outline), 0 4px 0 var(--mt-outline); }
+@media (prefers-reduced-motion: reduce) { [data-world='monster-trainer'] .btn { transition: none; } }
