@@ -47,6 +47,13 @@ sampling to their authored logical pixel sizes, and packed into explicit atlas f
 specified original architecture and excluded third-party game art; these assets are not traced,
 recolored, or derived from Pokémon, Nintendo, Game Freak, LimeZu, or another existing work.
 
+The Monster Village objects listed in `docs/monster-village/ESPECIFICACIONES_ARTE.md` (library,
+workshop, observatory, portal, well, campfire, notice board, mailbox, market stall, bench, barrel,
+hay bale, anvil, log pile, training dummy) have no image file: they are original project artwork
+painted in code by `worlds/monster/villageProps.ts`. The library and workshop are recolours of the
+project's own `village-home` frame. A PNG placed in `worlds/starter-village/objects/` replaces the
+painter for that id and must be recorded here when it is added.
+
 ## Tiled map
 
 `maps/office.tmj` and `maps/brooklyn99.tmj` are Tiled JSON maps built on the LimeZu tilesets

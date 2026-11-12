@@ -36,9 +36,10 @@ test('worker destinations are projections of semantic state, not Hive mutations'
   assert.equal(motion.destinationForWorker({ id: 'a', state: 'working' }, [
     { id: 'question', assignee: 'a', awaitsHuman: true }
   ]), 'professor');
-  assert.equal(motion.destinationForWorker({ id: 'a', state: 'waiting' }, []), 'village-idle');
+  assert.equal(motion.destinationForWorker({ id: 'a', state: 'waiting' }, []), 'well');
+  assert.equal(motion.destinationForWorker({ id: 'a', state: 'idle' }, []), 'village-idle');
   assert.equal(motion.destinationForWorker({ id: 'a', state: 'working', station: 'terminal', tool: 'Bash' }, []), 'stable');
-  assert.equal(motion.destinationForWorker({ id: 'a', state: 'working', station: 'shelf', tool: 'Read' }, []), 'professor');
+  assert.equal(motion.destinationForWorker({ id: 'a', state: 'working', station: 'shelf', tool: 'Read' }, []), 'library');
   assert.equal(motion.destinationForWorker({ id: 'a', state: 'working' }, []), 'training-grass');
 });
 

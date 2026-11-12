@@ -1,34 +1,34 @@
 import starterVillageAtlasUrl from '../../assets/worlds/starter-village/starter-village-atlas.png?url';
 import starterVillageBuildingsUrl from '../../assets/worlds/starter-village/starter-village-buildings.png?url';
 import { MONSTER_ROSTER_URLS } from './monsterRosterSprites';
+import { VILLAGE_PLACE_IDS, type VillagePlaceId } from './villagePlaces';
 import { resolveRelativePoint, type CompositionScenarioDefinition, type GridPoint, type WorldCompositionV1 } from '@shared/worldComposition';
 
 export const STARTER_VILLAGE_TILE_SIZE = 16;
 export const STARTER_VILLAGE_COLUMNS = 64;
 export const STARTER_VILLAGE_ROWS = 48;
 
-export const STARTER_VILLAGE_ANCHOR_IDS = [
-  'professor',
-  'stable',
-  'training-grass',
-  'village-idle',
-  'route-exit'
-] as const;
+/** Every semantic place a worker can be sent to; see villagePlaces.ts for what each one means. */
+export const STARTER_VILLAGE_ANCHOR_IDS = VILLAGE_PLACE_IDS;
 
-export type ScenarioAnchorId = typeof STARTER_VILLAGE_ANCHOR_IDS[number];
+export type ScenarioAnchorId = VillagePlaceId;
 export type StarterVillageTileId =
   | 'grass' | 'training-grass' | 'dirt' | 'road' | 'water' | 'tree' | 'shrub' | 'flowers'
   | 'guide-house' | 'stable' | 'fence-horizontal' | 'fence-vertical' | 'fence-post'
   | 'rock' | 'lantern' | 'crate' | 'sign';
 
 export type StarterVillageBuildingId = 'laboratory' | 'stable-building' | 'village-home';
+/** Objects painted in code (villageProps.ts) instead of cut from an atlas. */
+export type StarterVillageProceduralId =
+  | 'library' | 'workshop' | 'observatory' | 'portal' | 'notice-board' | 'mailbox' | 'well' | 'campfire'
+  | 'bench' | 'barrel' | 'hay-bale' | 'anvil' | 'log-pile' | 'training-dummy' | 'market-stall';
 
 export interface StarterVillageAssetCatalogEntry {
   id: string;
   label: string;
   kind: 'structure' | 'prop';
   assetId: string;
-  frameId: StarterVillageTileId | StarterVillageBuildingId;
+  frameId: StarterVillageTileId | StarterVillageBuildingId | StarterVillageProceduralId;
 }
 
 /** Monster Trainer-specific art labels and frame bindings; the composition runtime stays world-agnostic. */
@@ -45,7 +45,22 @@ export const STARTER_VILLAGE_ASSET_CATALOG: Readonly<Record<string, StarterVilla
   sign: { id: 'sign', label: 'Sign', kind: 'prop', assetId: 'sign', frameId: 'sign' },
   'fence-horizontal': { id: 'fence-horizontal', label: 'Horizontal fence', kind: 'prop', assetId: 'fence-horizontal', frameId: 'fence-horizontal' },
   'fence-vertical': { id: 'fence-vertical', label: 'Vertical fence', kind: 'prop', assetId: 'fence-vertical', frameId: 'fence-vertical' },
-  'fence-post': { id: 'fence-post', label: 'Fence post', kind: 'prop', assetId: 'fence-post', frameId: 'fence-post' }
+  'fence-post': { id: 'fence-post', label: 'Fence post', kind: 'prop', assetId: 'fence-post', frameId: 'fence-post' },
+  library: { id: 'library', label: 'Library', kind: 'structure', assetId: 'library', frameId: 'library' },
+  workshop: { id: 'workshop', label: 'Workshop', kind: 'structure', assetId: 'workshop', frameId: 'workshop' },
+  observatory: { id: 'observatory', label: 'Observatory', kind: 'structure', assetId: 'observatory', frameId: 'observatory' },
+  portal: { id: 'portal', label: 'Portal', kind: 'structure', assetId: 'portal', frameId: 'portal' },
+  'notice-board': { id: 'notice-board', label: 'Notice board', kind: 'prop', assetId: 'notice-board', frameId: 'notice-board' },
+  mailbox: { id: 'mailbox', label: 'Mailbox', kind: 'prop', assetId: 'mailbox', frameId: 'mailbox' },
+  well: { id: 'well', label: 'Well', kind: 'prop', assetId: 'well', frameId: 'well' },
+  campfire: { id: 'campfire', label: 'Campfire', kind: 'prop', assetId: 'campfire', frameId: 'campfire' },
+  bench: { id: 'bench', label: 'Bench', kind: 'prop', assetId: 'bench', frameId: 'bench' },
+  barrel: { id: 'barrel', label: 'Barrel', kind: 'prop', assetId: 'barrel', frameId: 'barrel' },
+  'hay-bale': { id: 'hay-bale', label: 'Hay bale', kind: 'prop', assetId: 'hay-bale', frameId: 'hay-bale' },
+  anvil: { id: 'anvil', label: 'Anvil', kind: 'prop', assetId: 'anvil', frameId: 'anvil' },
+  'log-pile': { id: 'log-pile', label: 'Log pile', kind: 'prop', assetId: 'log-pile', frameId: 'log-pile' },
+  'training-dummy': { id: 'training-dummy', label: 'Training dummy', kind: 'prop', assetId: 'training-dummy', frameId: 'training-dummy' },
+  'market-stall': { id: 'market-stall', label: 'Market stall', kind: 'prop', assetId: 'market-stall', frameId: 'market-stall' }
 };
 
 /** V1 stations and authored interaction coordinates are descriptive only; no worker behavior consumes them. */
@@ -79,7 +94,51 @@ export const STARTER_VILLAGE_COMPOSITION_DEFINITION: CompositionScenarioDefiniti
     sign: { id: 'sign', kind: 'prop', assetId: 'sign', footprint: { width: 1, height: 1 }, movable: true, removable: true },
     'fence-horizontal': { id: 'fence-horizontal', kind: 'prop', assetId: 'fence-horizontal', footprint: { width: 1, height: 1 }, movable: true, removable: true },
     'fence-vertical': { id: 'fence-vertical', kind: 'prop', assetId: 'fence-vertical', footprint: { width: 1, height: 1 }, movable: true, removable: true },
-    'fence-post': { id: 'fence-post', kind: 'prop', assetId: 'fence-post', footprint: { width: 1, height: 1 }, movable: true, removable: true }
+    'fence-post': { id: 'fence-post', kind: 'prop', assetId: 'fence-post', footprint: { width: 1, height: 1 }, movable: true, removable: true },
+    // Stations: each one is where a reported Hive station takes a worker (see villagePlaces.ts).
+    library: {
+      id: 'library', kind: 'structure', assetId: 'library', footprint: { width: 4, height: 4 }, movable: true, removable: true,
+      semanticAnchors: { library: { x: 2, y: 4 } }, stationKind: 'reading', affinities: ['shelf'],
+      interactionPoints: { entrance: { x: 2, y: 4 } }
+    },
+    workshop: {
+      id: 'workshop', kind: 'structure', assetId: 'workshop', footprint: { width: 4, height: 4 }, movable: true, removable: true,
+      semanticAnchors: { workshop: { x: 2, y: 4 } }, stationKind: 'crafting', affinities: ['desk'],
+      interactionPoints: { entrance: { x: 2, y: 4 } }
+    },
+    observatory: {
+      id: 'observatory', kind: 'structure', assetId: 'observatory', footprint: { width: 3, height: 4 }, movable: true, removable: true,
+      semanticAnchors: { observatory: { x: 1, y: 4 } }, stationKind: 'scouting', affinities: ['web'],
+      interactionPoints: { entrance: { x: 1, y: 4 } }
+    },
+    portal: {
+      id: 'portal', kind: 'structure', assetId: 'portal', footprint: { width: 2, height: 2 }, movable: true, removable: true,
+      semanticAnchors: { portal: { x: 0, y: 2 } }, stationKind: 'summoning', affinities: ['mcp'],
+      interactionPoints: { entrance: { x: 0, y: 2 } }
+    },
+    'notice-board': {
+      id: 'notice-board', kind: 'prop', assetId: 'notice-board', footprint: { width: 2, height: 1 }, movable: true, removable: true,
+      semanticAnchors: { 'notice-board': { x: 2, y: 0 } }, stationKind: 'planning', affinities: ['board']
+    },
+    mailbox: {
+      id: 'mailbox', kind: 'prop', assetId: 'mailbox', footprint: { width: 1, height: 1 }, movable: true, removable: true,
+      semanticAnchors: { 'post-office': { x: 1, y: 0 } }, stationKind: 'messaging', affinities: ['mailbox']
+    },
+    well: {
+      id: 'well', kind: 'prop', assetId: 'well', footprint: { width: 2, height: 2 }, movable: true, removable: true,
+      semanticAnchors: { well: { x: 2, y: 1 } }
+    },
+    campfire: {
+      id: 'campfire', kind: 'prop', assetId: 'campfire', footprint: { width: 1, height: 1 }, movable: true, removable: true,
+      semanticAnchors: { 'village-idle': { x: 1, y: 0 } }
+    },
+    bench: { id: 'bench', kind: 'prop', assetId: 'bench', footprint: { width: 2, height: 1 }, movable: true, removable: true },
+    barrel: { id: 'barrel', kind: 'prop', assetId: 'barrel', footprint: { width: 1, height: 1 }, movable: true, removable: true },
+    'hay-bale': { id: 'hay-bale', kind: 'prop', assetId: 'hay-bale', footprint: { width: 1, height: 1 }, movable: true, removable: true },
+    anvil: { id: 'anvil', kind: 'prop', assetId: 'anvil', footprint: { width: 1, height: 1 }, movable: true, removable: true },
+    'log-pile': { id: 'log-pile', kind: 'prop', assetId: 'log-pile', footprint: { width: 1, height: 1 }, movable: true, removable: true },
+    'training-dummy': { id: 'training-dummy', kind: 'prop', assetId: 'training-dummy', footprint: { width: 1, height: 1 }, movable: true, removable: true },
+    'market-stall': { id: 'market-stall', kind: 'prop', assetId: 'market-stall', footprint: { width: 3, height: 2 }, movable: true, removable: true }
   }
 };
 
@@ -222,7 +281,57 @@ export const STARTER_VILLAGE_PRESET: WorldCompositionV1 = deepFreeze({
     ...propRow('fence-horizontal', 'corral-north', 24, [47, 48, 50, 51]),
     ...propRow('fence-horizontal', 'corral-south', 29, [47, 48, 49, 50, 51]),
     ...propColumn('fence-vertical', 'corral-west', 46, [25, 26, 27, 28]),
-    ...propColumn('fence-vertical', 'corral-east', 52, [25, 26, 27, 28])
+    ...propColumn('fence-vertical', 'corral-east', 52, [25, 26, 27, 28]),
+    // Stations around the central plaza.
+    { id: 'library-main', definitionId: 'library', x: 24, y: 13 },
+    { id: 'workshop-main', definitionId: 'workshop', x: 40, y: 13 },
+    { id: 'observatory-main', definitionId: 'observatory', x: 52, y: 5 },
+    { id: 'portal-main', definitionId: 'portal', x: 10, y: 26 },
+    { id: 'notice-board-main', definitionId: 'notice-board', x: 30, y: 14 },
+    { id: 'mailbox-main', definitionId: 'mailbox', x: 36, y: 14 },
+    { id: 'well-main', definitionId: 'well', x: 32, y: 17 },
+    { id: 'campfire-main', definitionId: 'campfire', x: 29, y: 20 },
+    { id: 'plaza-bench-west', definitionId: 'bench', x: 28, y: 16 },
+    { id: 'plaza-bench-east', definitionId: 'bench', x: 36, y: 16 },
+    { id: 'plaza-market', definitionId: 'market-stall', x: 36, y: 19 },
+    ...propRow('barrel', 'plaza-barrel', 21, [35]),
+    ...propRow('lantern', 'plaza-lantern', 15, [28, 38]),
+    ...propRow('lantern', 'plaza-lantern-south', 21, [28]),
+    ...propRow('flowers', 'plaza-flowers', 22, [30, 33, 37]),
+    ...propRow('anvil', 'workshop-anvil', 17, [40]),
+    ...propRow('log-pile', 'workshop-logs', 17, [43]),
+    ...propRow('barrel', 'workshop-barrel', 16, [39]),
+    ...propRow('crate', 'library-crate', 17, [24]),
+    ...propRow('flowers', 'library-flowers', 17, [27]),
+    ...propRow('sign', 'library-sign', 19, [25]),
+    ...propRow('lantern', 'road-lantern', 12, [15, 27, 39, 48, 56]),
+    ...propRow('shrub', 'observatory-shrub', 9, [51, 55]),
+    ...propRow('rock', 'observatory-rock', 8, [56]),
+    ...propRow('training-dummy', 'training-dummy', 15, [6, 11]),
+    ...propRow('rock', 'portal-stone', 25, [8, 13]),
+    ...propRow('rock', 'portal-stone-south', 29, [9]),
+    ...propRow('flowers', 'portal-flowers', 29, [12]),
+    ...propRow('lantern', 'portal-lantern', 27, [13]),
+    // A small farm in the south-west.
+    { id: 'home-west', definitionId: 'village-home', x: 8, y: 31 },
+    ...propRow('hay-bale', 'farm-hay', 37, [13, 14]),
+    ...propRow('hay-bale', 'farm-hay-top', 38, [13]),
+    ...propRow('barrel', 'farm-barrel', 35, [12]),
+    ...propRow('sign', 'farm-sign', 37, [9]),
+    ...propRow('fence-horizontal', 'farm-fence', 39, [6, 7, 8, 9, 10, 11]),
+    ...propRow('shrub', 'farm-shrub', 35, [7]),
+    // Orchard and a lakeside rest east of the water.
+    ...propRow('tree', 'orchard-a', 36, [52, 55, 58]),
+    ...propRow('tree', 'orchard-b', 39, [53, 56, 59]),
+    ...propRow('tree', 'orchard-c', 42, [52, 55, 58]),
+    { id: 'lake-bench', definitionId: 'bench', x: 48, y: 37 },
+    ...propRow('lantern', 'lake-lantern', 36, [50]),
+    ...propRow('log-pile', 'lake-logs', 33, [50]),
+    ...propRow('rock', 'south-rock', 43, [30, 47]),
+    ...propRow('shrub', 'south-shrub', 41, [26, 49]),
+    ...propRow('tree', 'west-grove', 20, [6, 9, 13]),
+    ...propRow('tree', 'west-grove-b', 22, [7, 11, 15]),
+    ...propRow('tree', 'mid-grove', 24, [26, 29, 32])
   ],
   terrain: [
     ...terrainRows('training-grass', [
@@ -251,6 +360,19 @@ export const STARTER_VILLAGE_PRESET: WorldCompositionV1 = deepFreeze({
       [24, 61, 61], [25, 61, 61], [26, 61, 61], [27, 61, 61], [28, 61, 61], [29, 61, 61],
       [30, 58, 61]
     ]),
+    ...terrainRows('dirt', [
+      // Plaza approaches.
+      [12, 33, 33], [13, 33, 33], [14, 33, 33],
+      [18, 22, 27], [18, 39, 43],
+      // Observatory, portal and farm spurs.
+      [9, 53, 53], [10, 53, 53],
+      [28, 10, 20],
+      [36, 10, 20]
+    ]),
+    // The paved plaza.
+    ...terrainRows('road', [
+      [15, 28, 38], [16, 28, 38], [17, 28, 38], [18, 28, 38], [19, 28, 38], [20, 28, 38], [21, 28, 38]
+    ]),
     ...terrainRows('road', [[11, 59, 62]])
   ]
 });
@@ -273,7 +395,14 @@ export const STARTER_VILLAGE_SCENARIO: StarterVillageScenario = {
     stable: { x: 49, y: 21, zIndex: 60 },
     'training-grass': { x: 8, y: 14, zIndex: 60 },
     'village-idle': { x: 34, y: 13, zIndex: 60 },
-    'route-exit': { x: 61, y: 11, zIndex: 60 }
+    'route-exit': { x: 61, y: 11, zIndex: 60 },
+    library: { x: 26, y: 17, zIndex: 60 },
+    workshop: { x: 42, y: 17, zIndex: 60 },
+    observatory: { x: 53, y: 9, zIndex: 60 },
+    'notice-board': { x: 32, y: 14, zIndex: 60 },
+    'post-office': { x: 37, y: 14, zIndex: 60 },
+    portal: { x: 10, y: 28, zIndex: 60 },
+    well: { x: 34, y: 18, zIndex: 60 }
   },
   ambient: {
     title: 'Starter Village',
@@ -282,13 +411,30 @@ export const STARTER_VILLAGE_SCENARIO: StarterVillageScenario = {
   }
 };
 
+/**
+ * Anchors that follow an object. The preset placement wins; if a saved layout
+ * has no such id, any object of the same kind the user has built is used.
+ */
 export const STARTER_VILLAGE_ANCHOR_BINDINGS: Readonly<Partial<Record<ScenarioAnchorId, {
   placementId: string;
+  definitionId: string;
   localPoint: GridPoint;
-}>>> = {
-  professor: { placementId: 'lab-nw', localPoint: STARTER_VILLAGE_COMPOSITION_DEFINITION.objects.laboratory.semanticAnchors!.professor },
-  stable: { placementId: 'stable-east', localPoint: STARTER_VILLAGE_COMPOSITION_DEFINITION.objects.stable.semanticAnchors!.stable }
-};
+}>>> = Object.fromEntries(([
+  ['professor', 'lab-nw', 'laboratory'],
+  ['stable', 'stable-east', 'stable'],
+  ['library', 'library-main', 'library'],
+  ['workshop', 'workshop-main', 'workshop'],
+  ['observatory', 'observatory-main', 'observatory'],
+  ['portal', 'portal-main', 'portal'],
+  ['notice-board', 'notice-board-main', 'notice-board'],
+  ['post-office', 'mailbox-main', 'mailbox'],
+  ['well', 'well-main', 'well'],
+  ['village-idle', 'campfire-main', 'campfire']
+] as const).map(([anchorId, placementId, definitionId]) => [anchorId, {
+  placementId,
+  definitionId,
+  localPoint: STARTER_VILLAGE_COMPOSITION_DEFINITION.objects[definitionId].semanticAnchors![anchorId]
+}]));
 
 /** A layout that never leaves the old 24×24 village is the previous map, not an edit of this one. */
 export function upgradeStarterVillageLayout(layout: WorldCompositionV1): WorldCompositionV1 {
@@ -303,7 +449,8 @@ export function upgradeStarterVillageLayout(layout: WorldCompositionV1): WorldCo
 export function resolveStarterVillageAnchor(layout: WorldCompositionV1, anchorId: ScenarioAnchorId): GridPoint {
   const binding = STARTER_VILLAGE_ANCHOR_BINDINGS[anchorId];
   if (binding) {
-    const placement = layout.placements.find((item) => item.id === binding.placementId);
+    const placement = layout.placements.find((item) => item.id === binding.placementId && item.definitionId === binding.definitionId)
+      ?? layout.placements.find((item) => item.definitionId === binding.definitionId);
     if (placement) return resolveRelativePoint(placement, binding.localPoint);
   }
   const fallback = STARTER_VILLAGE_SCENARIO.anchorPlacements[anchorId];

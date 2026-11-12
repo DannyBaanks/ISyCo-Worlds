@@ -15,7 +15,8 @@ const RosterSprites = loadTs('src/renderer/src/worlds/monster/monsterRosterSprit
 test('Starter Village keeps semantic anchor identities independent from in-bounds placements', () => {
   assert.equal(Scenario.STARTER_VILLAGE_SCENARIO.id, 'starter-village');
   assert.deepEqual(Scenario.STARTER_VILLAGE_ANCHOR_IDS, [
-    'professor', 'stable', 'training-grass', 'village-idle', 'route-exit'
+    'professor', 'stable', 'training-grass', 'village-idle', 'route-exit',
+    'library', 'workshop', 'observatory', 'notice-board', 'post-office', 'portal', 'well'
   ]);
   assert.deepEqual(Scenario.STARTER_VILLAGE_SCENARIO.semanticAnchors, Scenario.STARTER_VILLAGE_ANCHOR_IDS);
   assert.equal(Scenario.STARTER_VILLAGE_SCENARIO.map.columns, 64);
