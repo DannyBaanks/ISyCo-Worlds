@@ -1,3 +1,4 @@
+import { VILLAGE_OBJECT_SPRITE_RESOURCES } from './monster/villageObjectSprites';
 import { createElement, type ComponentType, type ReactNode } from 'react';
 import type { WorldId } from '@shared/worlds';
 import { OfficeFloor } from '@/scene/office/OfficeFloor';
@@ -36,7 +37,7 @@ export const WORLD_REGISTRY: readonly WorldDefinition[] = [
     id: 'monster-trainer',
     labelKey: 'settings.general.worlds.monsterTrainer',
     experimental: true,
-    resources: STARTER_VILLAGE_SCENARIO.resources,
+    resources: STARTER_VILLAGE_SCENARIO.resources.concat(VILLAGE_OBJECT_SPRITE_RESOURCES),
     render: (lifecycle) => createElement(MonsterSurface, lifecycle)
   },
   {

@@ -406,6 +406,8 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
     } else if (painted) {
       // Code-painted object: stands on the bottom edge of its footprint, centred.
       sprite = new Sprite(painted.texture);
+      sprite.width = painted.width;
+      sprite.height = painted.height;
       sprite.x = bounds.x + Math.round((bounds.width - painted.width) / 2);
       sprite.y = bounds.y + bounds.height - painted.height;
       const chimney = CHIMNEYS[object.assetId];

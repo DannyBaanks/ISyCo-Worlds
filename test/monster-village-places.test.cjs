@@ -90,3 +90,17 @@ test('the coordinator walks to the notice board and works there', () => {
   assert.equal(snapshot.arrived, true);
   assert.equal(snapshot.action, 'work');
 });
+
+test('the art spec lists every code-painted object and the drop-in folder exists', () => {
+  const root = process.cwd();
+  const spec = fs.readFileSync(path.join(root, 'docs/monster-village/ESPECIFICACIONES_ARTE.md'), 'utf8');
+  const props = fs.readFileSync(path.join(root, 'src/renderer/src/worlds/monster/villageProps.ts'), 'utf8');
+  const painted = ['library', 'workshop', 'observatory', 'portal', 'notice-board', 'mailbox', 'well', 'campfire',
+    'bench', 'barrel', 'hay-bale', 'anvil', 'log-pile', 'training-dummy', 'market-stall'];
+  for (const id of painted) {
+    assert.ok(Scenario.STARTER_VILLAGE_ASSET_CATALOG[id], `${id} is in the build catalog`);
+    assert.match(spec, new RegExp('\\| `' + id + '` \\| \\d+×\\d+ \\|'), `${id} has a size row in the art spec`);
+  }
+  assert.match(props, /VILLAGE_OBJECT_SPRITE_URLS\[assetId\]/, 'an authored PNG overrides the painter');
+  assert.equal(fs.existsSync(path.join(root, 'src/renderer/src/assets/worlds/starter-village/objects/README.md')), true);
+});

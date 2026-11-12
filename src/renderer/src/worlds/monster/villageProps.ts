@@ -1,4 +1,5 @@
-import { Texture } from 'pixi.js';
+import { Assets, Texture } from 'pixi.js';
+import { VILLAGE_OBJECT_SPRITE_URLS } from './villageObjectSprites';
 
 /**
  * Village objects painted in code. Each painter draws whole pixels on a small
@@ -279,6 +280,12 @@ function paintHouseVariant(id: string, atlasImage: CanvasImageSource): HTMLCanva
   return canvas;
 }
 
+/** Logical on-screen size of each object in map pixels (one tile is 16). Authored PNGs are drawn at this size. */
+export const VILLAGE_OBJECT_SIZES: Readonly<Record<string, { width: number; height: number }>> = {
+  ...Object.fromEntries(Object.entries(PAINTERS).map(([id, painter]) => [id, { width: painter.width, height: painter.height }])),
+  ...Object.fromEntries(Object.keys(HOUSE_VARIANTS).map((id) => [id, { width: HOME_FRAME.width, height: HOME_FRAME.height }]))
+};
+
 export interface ProceduralObjectTexture { texture: Texture; width: number; height: number; }
 
 const CACHE = new Map<string, ProceduralObjectTexture>();
@@ -290,6 +297,13 @@ export function isProceduralObject(assetId: string): boolean {
 /** Returns the painted texture for a code-drawn object, or null when the asset comes from an atlas. */
 export function proceduralObjectTexture(assetId: string, buildingsAtlas: Texture): ProceduralObjectTexture | null {
   if (!isProceduralObject(assetId)) return null;
+  // An authored PNG in assets/worlds/starter-village/objects/ wins over the painter.
+  const authoredUrl = VILLAGE_OBJECT_SPRITE_URLS[assetId];
+  const authored = authoredUrl ? Assets.get<Texture>(authoredUrl) : undefined;
+  if (authored) {
+    authored.source.scaleMode = 'nearest';
+    return { texture: authored, ...VILLAGE_OBJECT_SIZES[assetId] };
+  }
   const cached = CACHE.get(assetId);
   if (cached && !cached.texture.destroyed) return cached;
   let canvas: HTMLCanvasElement;
