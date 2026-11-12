@@ -161,12 +161,39 @@
     return svg;
   }
 
+  // ── which world the office is: it decides the look, the cast and the boss's name ──
+  const MONSTERS = ['agua', 'fuego', 'electricidad', 'oscuridad', 'luz', 'aire'];
+  let world = 'office';
+  try { world = localStorage.getItem('munder-world') || 'office'; } catch { /* private mode */ }
+  const monsterWorld = () => world === 'monster-trainer';
+  function setWorld(next) {
+    world = next === 'monster-trainer' ? 'monster-trainer' : 'office';
+    document.documentElement.dataset.world = world;
+    try { localStorage.setItem('munder-world', world); } catch { /* private mode */ }
+  }
+  setWorld(world);
+  /** The coordinator's name in this world. */
+  const boss = () => (monsterWorld() ? 'Profesor' : 'Michael');
+  /** Monster Village cast: the Professor coordinates; workers keep a stable monster. */
+  function monsterOf(who) {
+    if (who === 'michael' || who === 'profesor') return 'profesor';
+    if (MONSTERS.includes(who)) return who;
+    let hsh = 0;
+    for (const ch of String(who || '')) hsh = (hsh * 31 + ch.charCodeAt(0)) >>> 0;
+    return MONSTERS[hsh % MONSTERS.length];
+  }
+
   // ── the cast's pixel portraits (same engine as the app: avatar-engine.js) ──
   const A = window.MunderAvatar || null;
   const CAST = A ? Object.keys(A.AVATAR_RECIPES) : [];
   const portraitCache = new Map();
   /** Which cast member an agent looks like: its name, its id, Michael for the boss, else a stable pick. */
   function castOf(agent) {
+    if (monsterWorld()) {
+      if (!agent || agent.god) return 'profesor';
+      const named = String(agent.name || '').toLowerCase();
+      return MONSTERS.includes(named) ? named : monsterOf(agent.id || agent.name);
+    }
     if (!A) return null;
     if (!agent) return 'michael';
     if (agent.god) return 'michael';
@@ -180,6 +207,11 @@
     return pool[hsh % pool.length];
   }
   function portrait(who, scale = 2) {
+    if (monsterWorld()) {
+      const img = h('img', { class: 'px portrait monster', src: `monster-${monsterOf(who)}.png`, alt: '', 'aria-hidden': 'true' });
+      img.style.width = img.style.height = `${24 * scale}px`;
+      return img;
+    }
     const c = h('canvas', { class: 'px portrait', width: A ? A.PORTRAIT_W : 18, height: A ? A.PORTRAIT_H : 28, 'aria-hidden': 'true' });
     c.style.width = `${18 * scale}px`;
     c.style.height = `${28 * scale}px`;
@@ -367,7 +399,7 @@
     const god = d.agents.find((a) => a.god);
     return [
       h('div', { class: 'tiles' },
-        tile('Michael', MICHAEL[c.michael_state] || c.michael_state || '—'),
+        tile(`${boss()}`, MICHAEL[c.michael_state] || c.michael_state || '—'),
         tile('Workers libres', `${c.workers_idle ?? '—'}`, c.workers_total !== undefined ? `de ${c.workers_total}` : ''),
         tile('Preguntas', String(q), q ? 'para ti' : '', q > 0),
         tile('Tareas abiertas', String(c.tasks_open ?? '—')),
@@ -388,9 +420,9 @@
     const live = [god, ...agents].filter(Boolean);
     if (!live.some((a) => a.id === ui.to)) ui.to = 'god';
     const target = live.find((a) => a.id === ui.to);
-    const name = ui.to === 'god' || !target ? 'Michael' : target.name;
+    const name = ui.to === 'god' || !target ? `${boss()}` : target.name;
     const pick = h('select', { id: 'to', 'aria-label': 'Para quién' },
-      h('option', { value: 'god' }, 'Michael (jefe)'),
+      h('option', { value: 'god' }, `${boss()} (jefe)`),
       agents.map((a) => h('option', { value: a.id }, a.name)));
     pick.value = ui.to;
     pick.addEventListener('change', () => { ui.to = pick.value; render(); });
@@ -412,11 +444,11 @@
   /** Another office: everything goes through ITS Michael, as a delegated task. */
   function remoteComposer(d) {
     return [
-      h('div', { class: 'section-title' }, 'Pídele algo a su Michael'),
+      h('div', { class: 'section-title' }, `Pídele algo a su ${boss()}`),
       h('div', { class: 'card' },
-        h('p', { class: 'hint' }, `En ${d.office.name} todo entra por su Michael: él reparte el trabajo a su equipo.`),
+        h('p', { class: 'hint' }, `En ${d.office.name} todo entra por su ${boss()}: él reparte el trabajo a su equipo.`),
         ...composer({
-          id: `delegate:${ui.office}`, placeholder: 'Qué debe hacer su Michael…', button: 'Enviar a su Michael',
+          id: `delegate:${ui.office}`, placeholder: `Qué debe hacer su ${boss()}…`, button: `Enviar a su ${boss()}`,
           onsend: async (text) => {
             const r = await call('delegate', { office: ui.office, text });
             toast(`Delegada a ${r.office}`);
@@ -442,18 +474,18 @@
   }
 
   function questionsTab(d) {
-    if (!d.questions.length) return [h('div', { class: 'empty' }, 'Nada pendiente. Michael no te está esperando 🎉')];
+    if (!d.questions.length) return [h('div', { class: 'empty' }, `Nada pendiente. ${boss()} no te está esperando 🎉`)];
     return d.questions.map((t) => h('article', { class: 'card question' },
       h('h2', null, t.title),
       h('div', { class: 'meta' }, t.assignee ? h('span', null, t.assignee) : null, t.from_office ? h('span', { class: 'chip' }, `de ${t.from_office}`) : null, t.question.asked_at ? h('span', null, ago(t.question.asked_at)) : null),
       h('div', { class: 'asker' },
         portrait(t.assignee ? castOf(agentById(d, t.assignee) || { id: t.assignee }) : 'michael', 2),
         h('div', { class: 'bubble' }, markdown(t.question.q))),
-      ...(d.remote ? [h('p', { class: 'hint' }, 'Contéstala desde el celular emparejado con esa oficina, o pásale la respuesta a su Michael desde Oficina.')] : composer({
+      ...(d.remote ? [h('p', { class: 'hint' }, `Contéstala desde el celular emparejado con esa oficina, o pásale la respuesta a su ${boss()} desde Oficina.`)] : composer({
         id: `qa:${t.id}`, placeholder: 'Tu respuesta…', button: 'Responder',
         onsend: async (text) => {
           await call('answer', { task_id: t.id, q: t.question.q, text });
-          toast('Respuesta enviada a Michael');
+          toast(`Respuesta enviada a ${boss()}`);
           await refresh();
         },
       }))));
@@ -510,7 +542,7 @@
                 h('div', { class: 'grow' },
                   h('div', { class: 'name' }, h('span', { class: `dot ${p.online ? 'on' : 'off'}` }), ' ', p.name),
                   h('div', { class: 'role' }, p.online
-                    ? `Michael ${MICHAEL[c.michael_state] || c.michael_state || '—'} · ${c.workers_idle ?? '?'}/${c.workers_total ?? '?'} libres · ${c.ram_free_gb ?? '?'} GB`
+                    ? `${boss()} ${MICHAEL[c.michael_state] || c.michael_state || '—'} · ${c.workers_idle ?? '?'}/${c.workers_total ?? '?'} libres · ${c.ram_free_gb ?? '?'} GB`
                     : 'sin conexión')),
                 p.online ? h('span', { class: 'chip' }, `${p.latency_ms} ms`) : null);
             })),
@@ -519,7 +551,7 @@
         h('label', { class: 'field', for: 'peer' }, 'Oficina'), select,
         h('label', { class: 'field', for: 'delegate' }, 'Tarea'),
         ...composer({
-          id: 'delegate', placeholder: 'Qué debe hacer su Michael…', button: 'Delegar',
+          id: 'delegate', placeholder: `Qué debe hacer su ${boss()}…`, button: 'Delegar',
           onsend: async (text) => {
             const r = await call('delegate', { office: select.value, text });
             toast(`Delegada a ${r.office}`);
@@ -549,7 +581,7 @@
 
   function tabs(d) {
     const q = d ? d.questions.length : 0;
-    const items = [['office', 'Oficina'], ['ask', 'Preguntas'], ['board', 'Tablero'], ['link', 'Enlace']];
+    const items = [['office', monsterWorld() ? 'Pueblo' : 'Oficina'], ['ask', 'Preguntas'], ['board', 'Tablero'], ['link', 'Enlace']];
     return h('nav', { class: 'tabs', 'aria-label': 'Secciones' }, items.map(([id, label]) => h('button', {
       'aria-current': ui.tab === id ? 'page' : false,
       onclick: () => { ui.tab = id; render(); if (id === 'link') refreshPeers(); window.scrollTo(0, 0); },
@@ -629,6 +661,8 @@
         const want = ui.office;
         const data = await call('overview', want ? { office: want } : {});
         if (want !== ui.office) { timer = setTimeout(refresh, 0); return; } // switched mid-flight
+        // Only this office decides the look; a peer you are peeking at does not re-skin the app.
+        if (!want && data && data.office) setWorld(data.office.world);
         ui.data = data;
         ui.online = true;
         ui.offlineWhy = null;
