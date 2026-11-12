@@ -1,0 +1,198 @@
+/* Munder Difflin skin. The paper company's office: cream stock, ink rules,
+   label-maker caps and hard offset shadows (DESIGN.md). It replaces the timber
+   and parchment of the neutral ISyCo chrome; layout rules stay in worlds.css. */
+:root[data-world-skin='office'] {
+  --md-maroon: #6b1524;
+  --cth-cream-50: #FFFDF5;
+  --cth-cream-100: #FFF8E7;
+  --cth-cream-200: #F4E9C7;
+  --cth-cream-300: #E8D9A0;
+  --cth-paper-100: #FCFAF0;
+  --cth-paper-200: #F0EAD2;
+  --cth-ink-900: #1A1320;
+  --cth-ink-700: #3D2E4A;
+  --cth-ink-500: #6B5878;
+  --cth-ink-300: #A899B5;
+  --cth-ink-100: #D9CFE0;
+  --worlds-wood: none;
+  --worlds-chrome: var(--cth-cream-100);
+  --worlds-paper: linear-gradient(var(--cth-paper-100), var(--cth-paper-100));
+  --worlds-page: var(--cth-paper-100);
+  --worlds-page-edge: var(--cth-ink-300);
+  --worlds-page-ink: var(--cth-ink-900);
+  --worlds-page-muted: var(--cth-ink-500);
+  --worlds-rim: var(--cth-ink-900);
+  --worlds-brass: var(--cth-ink-300);
+  --worlds-on-wood: var(--cth-ink-900);
+  --worlds-timber: var(--cth-ink-900);
+  --worlds-title: var(--cth-font-display);
+  --md-shadow: 3px 3px 0 var(--cth-ink-900);
+}
+:root[data-cth-theme='dark'][data-world-skin='office'] {
+  --md-maroon: #c9697a;
+  --cth-cream-50: #17171B;
+  --cth-cream-100: #1D1D22;
+  --cth-cream-200: #26262C;
+  --cth-cream-300: #313139;
+  --cth-paper-100: #1A1A1F;
+  --cth-paper-200: #222229;
+  --cth-ink-900: #DEDBD6;
+  --cth-ink-700: #B3B0AC;
+  --cth-ink-500: #96919F;
+  --cth-ink-300: #787684;
+  --cth-ink-100: #3E3D46;
+  --md-shadow: 3px 3px 0 #000000a0;
+}
+
+/* Title bar: a flat letterhead strip. */
+:root[data-world-skin='office'] .worlds-shell { background: var(--cth-cream-200); }
+:root[data-world-skin='office'] .worlds-titlebar {
+  min-height: 48px !important;
+  padding-block: 4px;
+  background: linear-gradient(180deg, var(--cth-cream-100), var(--cth-cream-200)) !important;
+  border-bottom: 2px solid var(--cth-ink-900) !important;
+  box-shadow: none;
+}
+:root[data-world-skin='office'] .worlds-system-stamp { flex-direction: row; gap: 10px; }
+:root[data-world-skin='office'] .worlds-titlebar .worlds-brand {
+  gap: 8px; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; text-shadow: none;
+  color: var(--cth-ink-900);
+  font-family: var(--cth-font-display); font-size: 9px; line-height: 14px; text-transform: uppercase; letter-spacing: 0.02em;
+}
+:root[data-world-skin='office'] .worlds-brand-mark {
+  display: inline-grid; place-items: center; width: 26px; height: 26px;
+  background: var(--md-maroon); color: #fff3e0;
+  font-family: var(--cth-font-display); font-size: 8px; line-height: 8px;
+  box-shadow: inset 0 0 0 2px #00000033, 2px 2px 0 var(--cth-ink-900);
+}
+:root[data-world-skin='office'] .worlds-titlebar > span,
+:root[data-world-skin='office'] .worlds-system-stamp > span > button,
+:root[data-world-skin='office'] .worlds-system-stamp > span > button span,
+:root[data-world-skin='office'] .worlds-titlebar > span > button,
+:root[data-world-skin='office'] .worlds-titlebar > span > button span,
+:root[data-world-skin='office'] .worlds-selector > span { color: var(--cth-ink-500) !important; }
+
+/* Global tabs: label-maker caps; the current one is inked with a lemon rule. */
+:root[data-world-skin='office'] .cth-globalnav-tab {
+  height: 30px !important;
+  font-family: var(--cth-font-display) !important; font-weight: 400; font-size: 8px !important; line-height: 12px !important;
+  padding: 4px 12px !important;
+  border: 0 !important; border-radius: 0 !important;
+  background: transparent !important; color: var(--cth-ink-900) !important;
+  box-shadow: none; text-shadow: none;
+}
+:root[data-world-skin='office'] .cth-globalnav-tab:hover { background: var(--cth-cream-300) !important; color: var(--cth-ink-900) !important; }
+:root[data-world-skin='office'] .cth-globalnav-tab[aria-current='page'],
+:root[data-world-skin='office'] .cth-globalnav-tab[aria-expanded='true'] {
+  background: var(--cth-ink-900) !important; color: var(--cth-cream-50) !important;
+  box-shadow: inset 0 -3px 0 var(--cth-lemon); text-shadow: none;
+}
+:root[data-world-skin='office'] #cth-settings-menu { border: 2px solid var(--cth-ink-900); border-radius: 0; box-shadow: var(--md-shadow); }
+
+/* The floor and its crew: a pinned sheet, not a carved frame. */
+:root[data-world-skin='office'] .worlds-wood-frame {
+  padding: 8px; border: 2px solid var(--cth-ink-900); border-radius: 0;
+  background: var(--cth-cream-100);
+  box-shadow: var(--md-shadow);
+}
+:root[data-world-skin='office'] .worlds-vine { display: none; }
+:root[data-world-skin='office'] .worlds-stage,
+:root[data-world-skin='office'] .worlds-world-column .worlds-stage { border: 2px solid var(--cth-ink-900); border-radius: 0; box-shadow: none; background: var(--cth-cream-200); }
+:root[data-world-skin='office'] .worlds-hanging-sign {
+  padding: 5px 12px 4px;
+  border: 2px solid var(--cth-ink-900); border-radius: 0;
+  color: var(--cth-ink-900); background: var(--cth-lemon);
+  box-shadow: 2px 2px 0 var(--cth-ink-900);
+  font-family: var(--cth-font-display); font-weight: 400; font-size: 8px; line-height: 12px; text-transform: uppercase;
+}
+:root[data-world-skin='office'] .worlds-hanging-sign::before,
+:root[data-world-skin='office'] .worlds-hanging-sign::after { display: none; }
+:root[data-world-skin='office'] .worlds-crew-sign,
+:root[data-world-skin='office'] .worlds-status-ledger .worlds-hanging-sign { font-size: 7px; padding-block: 4px 3px; background: var(--cth-cream-50); }
+:root[data-world-skin='office'] .worlds-roster { background: transparent !important; box-shadow: none; border-top: 0 !important; }
+:root[data-world-skin='office'] .worlds-worker,
+:root[data-world-skin='office'] .worlds-worker-sheet { border-radius: 0; }
+:root[data-world-skin='office'] .worlds-worker-sheet {
+  background-image: none !important; background-color: var(--cth-paper-100) !important;
+  box-shadow: inset 0 0 0 2px var(--cth-ink-900), 3px 3px 0 var(--cth-ink-900) !important;
+}
+:root[data-world-skin='office'] .worlds-worker-sheet::before,
+:root[data-world-skin='office'] .worlds-worker-sheet::after { display: none; }
+:root[data-world-skin='office'] .worlds-worker[aria-pressed='true'] { outline: 3px solid var(--cth-lemon); outline-offset: 2px; }
+:root[data-world-skin='office'] .worlds-worker[data-coordinator] .worlds-worker-sheet { border-inline-start: 6px solid var(--md-maroon); }
+:root[data-world-skin='office'] .worlds-worker-name > span:first-child > span { font-family: var(--cth-font-display) !important; font-size: 8px !important; font-weight: 400; }
+
+/* Command side: a filing cabinet of paper cards. */
+:root[data-world-skin='office'] .worlds-sidebar {
+  border: 2px solid var(--cth-ink-900); border-radius: 0;
+  background: var(--cth-cream-100);
+  box-shadow: var(--md-shadow);
+}
+:root[data-world-skin='office'] .worlds-command-slot { border-radius: 0; }
+:root[data-world-skin='office'] .worlds-ledger-book {
+  padding: 0; background: var(--cth-paper-100);
+  border: 2px solid var(--cth-ink-900); border-radius: 0; box-shadow: none;
+}
+:root[data-world-skin='office'] .worlds-command > :first-child { border-bottom: 2px solid var(--cth-ink-900) !important; background-image: none !important; }
+:root[data-world-skin='office'] .worlds-command > :first-child > :nth-child(2) > :first-child { font-size: 10px !important; line-height: 16px !important; }
+:root[data-world-skin='office'] .worlds-command .cth-tabbar { background-image: none !important; background-color: var(--cth-cream-200) !important; }
+:root[data-world-skin='office'] .worlds-command .worlds-book-spread > .cth-tabbar { background: var(--cth-cream-200) !important; border-inline-end: 2px solid var(--cth-ink-900); }
+:root[data-world-skin='office'] .worlds-command .worlds-book-spread > .cth-tabbar button {
+  color: var(--cth-ink-900) !important; background: var(--cth-paper-100) !important;
+  box-shadow: inset 0 0 0 1px var(--cth-ink-300) !important; border-radius: 0;
+}
+:root[data-world-skin='office'] .worlds-command .worlds-book-spread > .cth-tabbar button[aria-pressed='true'] {
+  background: var(--cth-lemon) !important; color: var(--cth-ink-900) !important;
+  box-shadow: inset 0 0 0 2px var(--cth-ink-900) !important; border-inline-start: 0 !important;
+}
+:root[data-world-skin='office'] .worlds-command .cth-tabbar button { border-radius: 0; }
+:root[data-world-skin='office'] .worlds-book-page { border-inline-start: 0; }
+:root[data-world-skin='office'] .worlds-page-heading { font: 400 10px/18px var(--cth-font-display); text-transform: uppercase; border-bottom: 2px solid var(--cth-ink-900); }
+:root[data-world-skin='office'] .worlds-command-nav-toggle {
+  border: 2px solid var(--cth-ink-900); border-radius: 0; color: var(--cth-ink-900);
+  background: var(--cth-paper-100); box-shadow: 2px 2px 0 var(--cth-ink-900);
+  font: 400 10px/20px var(--cth-font-display);
+}
+:root[data-world-skin='office'] .worlds-parchment-surface {
+  border: 2px solid var(--cth-ink-900); border-radius: 0; box-shadow: none; background: var(--cth-paper-100);
+}
+:root[data-world-skin='office'] .worlds-status-ledger dd { font: 400 14px/26px var(--cth-font-display); }
+:root[data-world-skin='office'] .worlds-status-ledger dt { font-family: var(--cth-font-ui); }
+
+/* Panels, dialogs and buttons. */
+:root[data-world-skin='office'] .worlds-panel--dialog { border: 2px solid var(--cth-ink-900); border-radius: 0; box-shadow: 6px 6px 0 var(--cth-ink-900) !important; }
+:root[data-world-skin='office'] .worlds-panel-title {
+  background: var(--cth-ink-900) !important; color: var(--cth-cream-50) !important;
+  font-family: var(--cth-font-display) !important; font-weight: 400; font-size: 10px !important; line-height: 16px !important;
+  text-transform: uppercase;
+}
+:root[data-world-skin='office'] .worlds-button { border-radius: 0; background-image: none !important; }
+:root[data-world-skin='office'] .worlds-button--primary:not(:disabled) {
+  background-color: var(--cth-lemon) !important; color: #1A1320 !important;
+  box-shadow: inset 0 0 0 2px var(--cth-ink-900), 2px 2px 0 var(--cth-ink-900) !important;
+}
+:root[data-world-skin='office'] .worlds-button--secondary:not(:disabled) { box-shadow: inset 0 0 0 1px var(--cth-ink-300), 2px 2px 0 var(--cth-ink-300) !important; }
+:root[data-world-skin='office'] .worlds-about-entry { border-radius: 0; }
+:root[data-world-skin='office'] .worlds-about-entry summary { font: 400 9px/20px var(--cth-font-display); }
+
+/* Settings and Marketplace: binders and a supply counter. */
+:root[data-world-skin='office'] .worlds-settings-book { border-radius: 0; background: var(--cth-paper-100) !important; }
+:root[data-world-skin='office'] .worlds-settings-index {
+  background: var(--cth-cream-200) !important;
+  border-inline-end: 2px solid var(--cth-ink-900) !important;
+}
+:root[data-world-skin='office'] .worlds-settings-index button { border-radius: 0; }
+:root[data-world-skin='office'] .worlds-settings-page { background: var(--cth-paper-100); box-shadow: none; }
+:root[data-world-skin='office'] .worlds-marketplace { background: var(--cth-cream-200) !important; }
+:root[data-world-skin='office'] .worlds-market-awning {
+  height: 18px; border: 2px solid var(--cth-ink-900); border-bottom: 0; border-radius: 0;
+  background: var(--md-maroon); box-shadow: none;
+}
+:root[data-world-skin='office'] .worlds-market-counter { border: 2px solid var(--cth-ink-900); border-radius: 0; box-shadow: 6px 6px 0 var(--cth-ink-900) !important; }
+:root[data-world-skin='office'] .worlds-market-counter h1 { font-size: 14px !important; line-height: 24px !important; text-transform: uppercase; }
+:root[data-world-skin='office'] .worlds-market-counter h2 { font-size: 9px !important; line-height: 16px !important; }
+:root[data-world-skin='office'] .worlds-market-sign,
+:root[data-world-skin='office'] .worlds-market-order { border: 2px solid var(--cth-ink-900); border-radius: 0; box-shadow: 3px 3px 0 var(--cth-ink-300); }
+:root[data-world-skin='office'] .worlds-market-shelves { background: var(--cth-cream-200); border: 2px solid var(--cth-ink-900); }
+:root[data-world-skin='office'] .worlds-market-shelves li { border-bottom: 3px solid var(--cth-ink-900); border-radius: 0; box-shadow: none !important; }
+:root[data-world-skin='office'] .worlds-shell :focus-visible { outline: 2px solid var(--cth-ink-900); outline-offset: 2px; }
