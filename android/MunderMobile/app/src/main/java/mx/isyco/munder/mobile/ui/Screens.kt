@@ -1,6 +1,15 @@
 package mx.isyco.munder.mobile.ui
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -220,7 +229,7 @@ fun OfficeTab(store: OfficeStore) {
 
 @Composable
 fun Tile(label: String, value: String, extra: String? = null, alert: Boolean = false) {
-    Column(modifier = Modifier.fillMaxWidth().frame(if (alert) Px.coralLight() else Px.paper100(), if (alert) Px.coral() else if (Skin.monster) Px.outline() else Px.ink100(), 1.dp).padding(10.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().popIn().frame(if (alert) Px.coralLight() else Px.paper100(), if (alert) Px.coral() else if (Skin.monster) Px.outline() else Px.ink100(), 1.dp).padding(10.dp)) {
         PixelLabel(label, sizeSp = 7)
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(value, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = if (alert) Px.coral() else Px.ink900())
@@ -238,6 +247,7 @@ fun AgentCardRow(store: OfficeStore, agent: Agent, remote: Boolean, recipient: S
     val borderColor = if (chosen) (if (Skin.monster) Px.sky() else Px.ink900()) else if (boss) Px.lemon() else if (Skin.monster) Px.outline() else Px.ink100()
     Row(
         modifier = Modifier.fillMaxWidth()
+            .popIn()
             .frame(if (boss) Px.lemonLight() else Px.paper100(), borderColor, border)
             .clickable(enabled = !remote) { store.setRecipient(if (boss) "god" else agent.id) }
             .padding(8.dp),
@@ -246,7 +256,7 @@ fun AgentCardRow(store: OfficeStore, agent: Agent, remote: Boolean, recipient: S
         Portrait(Cast.of(agent, names), scale = 2f)
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             PixelLabel(agent.name, sizeSp = 8, color = Px.ink900())
-            Chip(if (boss) "jefe" else if (agent.onHold == true) "contigo" else stateName[agent.status] ?: (agent.status ?: "—"), dot = stateColor(agent.status))
+            Chip(if (boss) "jefe" else if (agent.onHold == true) "contigo" else stateName[agent.status] ?: (agent.status ?: "—"), dot = stateColor(agent.status), pulse = agent.status == "working" || agent.status == "blocked")
             if (agent.role != null) Text(agent.role, fontSize = 11.sp, color = Px.ink500())
         }
     }
@@ -340,7 +350,7 @@ fun TaskCard(store: OfficeStore, task: TaskItem) {
     Row(modifier = Modifier.fillMaxWidth().clip(Skin.shape(14)).background(Px.shadow()).padding(end = 3.dp, bottom = 3.dp)) {
         Box(modifier = Modifier.width(4.dp).background(stripe))
         Column(
-            modifier = Modifier.fillMaxWidth().frame(Px.paper100(), Px.ink300(), 1.dp, radius = 12).clickable { open = !open }.padding(14.dp),
+            modifier = Modifier.fillMaxWidth().then(if (Skin.monster) Modifier.animateContentSize() else Modifier).frame(Px.paper100(), Px.ink300(), 1.dp, radius = 12).clickable { open = !open }.padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -567,21 +577,29 @@ fun MainTabs(store: OfficeStore, initialTab: Int = 0) {
     val qCount = questions?.questions?.size ?: 0
     Column(modifier = Modifier.fillMaxSize().background(Px.cream50())) {
         Box(Modifier.weight(1f)) {
-            when (tab) {
-                0 -> OfficeTab(store)
-                1 -> QuestionsTab(store)
-                2 -> BoardTab(store)
-                3 -> LinkTab(store)
-                else -> PanelTab(store)
-            }
+            // Monster Village funde una pestaña en la otra; la oficina cambia en seco.
+            if (Skin.monster) Crossfade(targetState = tab, label = "tab") { shown -> TabBody(store, shown) }
+            else TabBody(store, tab)
         }
-        Row(modifier = Modifier.fillMaxWidth().background(Px.night()).border(1.dp, if (Skin.monster) Px.outline() else Px.ink100())) {
+        val barShape = if (Skin.monster) RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp) else RectangleShape
+        Row(modifier = Modifier.fillMaxWidth().background(Px.night(), barShape).border(1.dp, if (Skin.monster) Px.outline() else Px.ink100(), barShape)) {
             TabBtn(Skin.place, 0, tab, { tab = 0 }, null, Modifier.weight(1f))
             TabBtn("Preguntas", 1, tab, { tab = 1 }, if (qCount > 0) "$qCount" else null, Modifier.weight(1f))
             TabBtn("Tablero", 2, tab, { tab = 2 }, null, Modifier.weight(1f))
             TabBtn("Enlace", 3, tab, { tab = 3 }, null, Modifier.weight(1f))
             TabBtn("Panel", 4, tab, { tab = 4 }, null, Modifier.weight(1f))
         }
+    }
+}
+
+@Composable
+private fun TabBody(store: OfficeStore, tab: Int) {
+    when (tab) {
+        0 -> OfficeTab(store)
+        1 -> QuestionsTab(store)
+        2 -> BoardTab(store)
+        3 -> LinkTab(store)
+        else -> PanelTab(store)
     }
 }
 
@@ -593,8 +611,14 @@ fun TabBtn(label: String, idx: Int, current: Int, onClick: () -> Unit, badge: St
     val fill = if (monster) (if (on) Px.lemon() else Color.Transparent) else (if (on) Px.ink900() else Px.paper100())
     val fg = if (monster) (if (on) Px.onAccent else Color(0xFFCFE6EE)) else (if (on) Px.cream50() else Px.ink900())
     val labelColor = if (monster) fg else (if (on) Px.cream50() else Px.ink700())
+    val fillNow by animateColorAsState(fill, label = "tabFill")
+    val pop by animateFloatAsState(
+        targetValue = if (on && monster) 1.06f else 1f,
+        animationSpec = spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessMedium),
+        label = "tabPop",
+    )
     Column(
-        modifier = modifier.padding(if (monster) 4.dp else 0.dp).background(fill, Skin.shape(14)).clickable { onClick() }.padding(vertical = 10.dp),
+        modifier = modifier.padding(if (monster) 4.dp else 0.dp).graphicsLayer { scaleX = pop; scaleY = pop }.background(fillNow, Skin.shape(14)).clickable { onClick() }.padding(vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         when (idx) {

@@ -2,7 +2,22 @@ package mx.isyco.munder.mobile.ui
 
 import android.content.Context
 import android.graphics.BitmapFactory
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.graphics.graphicsLayer
+import kotlinx.coroutines.delay
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -112,6 +127,44 @@ object Skin {
     fun dot(): Shape = if (monster) CircleShape else RectangleShape
 }
 
+/**
+ * Movimiento de Monster Village: las superficies entran con un saltito, lo que
+ * se toca cede bajo el dedo, los retratos se mecen. La oficina se queda quieta.
+ */
+@Composable
+fun Modifier.popIn(delayMs: Int = 0): Modifier {
+    if (!Skin.monster) return this
+    var shown by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (delayMs > 0) delay(delayMs.toLong())
+        shown = true
+    }
+    val progress by animateFloatAsState(
+        targetValue = if (shown) 1f else 0f,
+        animationSpec = spring(dampingRatio = 0.62f, stiffness = Spring.StiffnessMediumLow),
+        label = "popIn",
+    )
+    return this.graphicsLayer {
+        alpha = progress.coerceIn(0f, 1f)
+        scaleX = 0.92f + 0.08f * progress
+        scaleY = 0.92f + 0.08f * progress
+        translationY = (1f - progress) * 24f
+    }
+}
+
+/** Respuesta al toque: se encoge un poco mientras está presionado. */
+@Composable
+fun Modifier.pressable(source: MutableInteractionSource): Modifier {
+    if (!Skin.monster) return this
+    val pressed by source.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.95f else 1f,
+        animationSpec = spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMedium),
+        label = "press",
+    )
+    return this.graphicsLayer { scaleX = scale; scaleY = scale }
+}
+
 /** Fondo y borde de una superficie con la forma del mundo activo. */
 @Composable
 fun Modifier.frame(fill: Color, line: Color, width: Dp = 1.dp, radius: Int = 14): Modifier {
@@ -152,6 +205,7 @@ fun PixelCard(
     val shape = Skin.shape(16)
     Box(
         modifier = Modifier
+            .popIn()
             .background(Px.shadow(), shape)
             .padding(start = 0.dp, top = 0.dp, end = if (Skin.monster) 0.dp else 3.dp, bottom = if (Skin.monster) 4.dp else 3.dp),
     ) {
@@ -200,8 +254,10 @@ fun PixelButton(
         kind == PixelKind.PRIMARY -> Px.ink500()
         else -> Px.ink100()
     }
+    val source = remember { MutableInteractionSource() }
     Box(
         modifier = Modifier
+            .pressable(source)
             .background(edge, shape)
             .padding(start = 0.dp, top = 0.dp, end = 0.dp, bottom = if (monster) 4.dp else 2.dp),
     ) {
@@ -209,7 +265,7 @@ fun PixelButton(
             modifier = Modifier
                 .background(fill, shape)
                 .border(if (monster) 2.dp else 1.dp, border, shape)
-                .clickable(enabled = enabled) { onClick() }
+                .clickable(interactionSource = source, indication = LocalIndication.current, enabled = enabled) { onClick() }
                 .padding(vertical = 12.dp),
             contentAlignment = Alignment.Center,
         ) {
@@ -263,18 +319,34 @@ fun PixelEditor(
 }
 
 @Composable
-fun StatusDot(color: Color) {
-    Box(modifier = Modifier.size(8.dp).background(color, Skin.dot()))
+fun StatusDot(color: Color, pulse: Boolean = false) {
+    // En Monster Village el punto late mientras el agente trabaja o está atorado.
+    val beat = if (pulse && Skin.monster) {
+        rememberInfiniteTransition(label = "dot").animateFloat(
+            initialValue = 1f,
+            targetValue = 1.45f,
+            animationSpec = infiniteRepeatable(tween(750, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+            label = "dotScale",
+        )
+    } else {
+        null
+    }
+    Box(
+        modifier = Modifier
+            .size(8.dp)
+            .graphicsLayer { val s = beat?.value ?: 1f; scaleX = s; scaleY = s }
+            .background(color, Skin.dot()),
+    )
 }
 
 @Composable
-fun Chip(text: String, fill: Color = Px.cream200(), dot: Color? = null) {
+fun Chip(text: String, fill: Color = Px.cream200(), dot: Color? = null, pulse: Boolean = false) {
     Row(
         modifier = Modifier.background(fill, Skin.shape(50)).border(1.dp, Px.ink100(), Skin.shape(50)).padding(horizontal = if (Skin.monster) 8.dp else 6.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (dot != null) {
-            StatusDot(dot)
+            StatusDot(dot, pulse)
             androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
         }
         PixelLabel(text, sizeSp = 7, color = Px.ink700())
@@ -364,7 +436,17 @@ fun Portrait(name: String, scale: Float = 2f) {
     val w = ((if (monster) 26 else 18) * scale).dp
     val h = ((if (monster) 26 else 28) * scale).dp
     val shape = Skin.shape(12)
-    val tile = Modifier.size(w, h).background(Px.cream200(), shape).border(if (monster) 2.dp else 1.dp, if (monster) Px.outline() else Px.ink100(), shape)
+    val bob = if (monster) {
+        rememberInfiniteTransition(label = "portrait").animateFloat(
+            initialValue = 0f,
+            targetValue = -3f,
+            animationSpec = infiniteRepeatable(tween(1500, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+            label = "portraitBob",
+        )
+    } else {
+        null
+    }
+    val tile = Modifier.graphicsLayer { translationY = (bob?.value ?: 0f) * density }.size(w, h).background(Px.cream200(), shape).border(if (monster) 2.dp else 1.dp, if (monster) Px.outline() else Px.ink100(), shape)
     if (bmp != null) {
         Image(
             painter = BitmapPainter(bmp.asImageBitmap()),

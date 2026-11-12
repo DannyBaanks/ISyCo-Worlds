@@ -283,6 +283,7 @@ struct Tile: View {
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
         .framed(alert ? Px.coralLight : Px.paper100, alert ? Px.coral : Skin.monster ? Px.outline : Px.ink100, width: 1)
+        .popIn()
     }
 }
 
@@ -297,7 +298,8 @@ struct AgentCard: View {
                 PixelLabel(agent.name, size: 8, color: Px.ink900).lineLimit(1)
                 Chip(text: boss ? "jefe" : agent.onHold == true ? "contigo" : stateName[agent.status ?? ""] ?? (agent.status ?? "—"),
                      fill: agent.status == "working" ? Px.lemonLight : agent.status == "blocked" ? Px.coralLight : Px.cream200,
-                     dot: stateColor(agent.status))
+                     dot: stateColor(agent.status),
+                     pulse: agent.status == "working" || agent.status == "blocked")
                 if let role = agent.role { Text(role).font(.system(size: 11)).foregroundColor(Px.ink500).lineLimit(2) }
             }
             Spacer(minLength: 0)
@@ -305,6 +307,7 @@ struct AgentCard: View {
         .padding(8)
         .frame(maxWidth: .infinity, alignment: .leading)
         .framed(boss ? Px.lemonLight : Px.paper100, chosen ? (Skin.monster ? Px.sky : Px.ink900) : boss ? Px.lemon : Skin.monster ? Px.outline : Px.ink100, width: chosen || boss ? 2 : 1)
+        .popIn()
     }
 }
 
@@ -376,7 +379,7 @@ struct BoardTab: View {
                     let label = item.1
                     let n = tasks.filter { ($0.status ?? "todo") == key }.count
                     let on = filter == key
-                    Button { filter = key } label: {
+                    Button { withAnimation(Skin.motion ? .spring(response: 0.3, dampingFraction: 0.7) : nil) { filter = key } } label: {
                         VStack(spacing: 6) {
                             Text("\(n)").font(.system(size: 18, weight: .semibold)).foregroundColor(on ? (Skin.monster ? Px.onAccent : Px.cream50) : key == "blocked" ? Px.coral : Px.ink900)
                             PixelLabel(label, size: 6, color: on ? (Skin.monster ? Px.onAccent : Px.cream50) : Px.ink700).lineLimit(1).minimumScaleFactor(0.5)
@@ -402,7 +405,7 @@ struct TaskCard: View {
     @State private var open = false
 
     var body: some View {
-        Button { open.toggle() } label: {
+        Button { withAnimation(Skin.motion ? .spring(response: 0.32, dampingFraction: 0.8) : nil) { open.toggle() } } label: {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .top, spacing: 10) {
                     if task.assignee != nil {

@@ -26,6 +26,8 @@ enum Skin {
     static var monster: Bool { world == "monster-trainer" }
     static var boss: String { monster ? "Profesor" : "Michael" }
     static var place: String { monster ? "Pueblo" : "Oficina" }
+    /// Monster Village moves; the office stays still. Reduce Motion turns it off.
+    static var motion: Bool { monster && !UIAccessibility.isReduceMotionEnabled }
 
     static func set(_ next: String) {
         world = next == "monster-trainer" ? "monster-trainer" : "office"
@@ -59,6 +61,47 @@ extension View {
         return background(shape.fill(fill))
             .overlay(shape.strokeBorder(line, lineWidth: Skin.monster ? max(width, 2) : width))
     }
+}
+
+/// Monster Village motion: surfaces pop in when they appear.
+struct PopIn: ViewModifier {
+    var delay: Double = 0
+    @State private var shown = false
+
+    func body(content: Content) -> some View {
+        if Skin.motion {
+            content
+                .opacity(shown ? 1 : 0)
+                .scaleEffect(shown ? 1 : 0.92)
+                .offset(y: shown ? 0 : 12)
+                .onAppear {
+                    withAnimation(.spring(response: 0.42, dampingFraction: 0.68).delay(delay)) { shown = true }
+                }
+        } else {
+            content
+        }
+    }
+}
+
+/// A slow bob, for the monsters' portraits.
+struct Bob: ViewModifier {
+    @State private var up = false
+
+    func body(content: Content) -> some View {
+        if Skin.motion {
+            content
+                .offset(y: up ? -3 : 0)
+                .onAppear {
+                    withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) { up = true }
+                }
+        } else {
+            content
+        }
+    }
+}
+
+extension View {
+    func popIn(delay: Double = 0) -> some View { modifier(PopIn(delay: delay)) }
 }
 
 extension Color {
@@ -132,6 +175,7 @@ struct PixelCard<Content: View>: View {
             .background(shape.fill(fill))
             .overlay(shape.strokeBorder(Skin.monster ? Px.outline : border, lineWidth: Skin.monster ? 3 : 1))
             .background(shape.fill(Px.shadow).offset(x: Skin.monster ? 0 : 3, y: Skin.monster ? 4 : 3))
+            .popIn()
     }
 }
 
@@ -175,6 +219,8 @@ private struct PixelButtonBody<Label: View>: View {
             .overlay(shape.strokeBorder(line, lineWidth: monster ? 2 : 1))
             .offset(y: pressed ? drop : 0)
             .background(shape.fill(edge).offset(y: drop))
+            .scaleEffect(pressed && monster ? 0.96 : 1)
+            .animation(Skin.motion ? .spring(response: 0.25, dampingFraction: 0.55) : nil, value: pressed)
     }
 }
 
@@ -204,16 +250,28 @@ struct PixelEditor: View {
 
 struct StatusDot: View {
     let color: Color
-    var body: some View { SkinShape(radius: 4).fill(color).frame(width: 8, height: 8) }
+    /// In Monster Village the dot beats while the agent works or is stuck.
+    var pulse = false
+    @State private var big = false
+
+    var body: some View {
+        SkinShape(radius: 4).fill(color).frame(width: 8, height: 8)
+            .scaleEffect(big ? 1.45 : 1)
+            .onAppear {
+                guard pulse && Skin.motion else { return }
+                withAnimation(.easeInOut(duration: 0.75).repeatForever(autoreverses: true)) { big = true }
+            }
+    }
 }
 
 struct Chip: View {
     let text: String
     var fill: Color = Px.cream200
     var dot: Color?
+    var pulse = false
     var body: some View {
         HStack(spacing: 6) {
-            if let dot { StatusDot(color: dot) }
+            if let dot { StatusDot(color: dot, pulse: pulse) }
             PixelLabel(text, size: 7, color: Px.ink700)
         }
         .padding(.horizontal, Skin.monster ? 8 : 6).padding(.vertical, 4)
@@ -308,6 +366,7 @@ struct Portrait: View {
         .background(SkinShape(radius: 12).fill(Px.cream200))
         .clipShape(SkinShape(radius: 12))
         .overlay(SkinShape(radius: 12).strokeBorder(Skin.monster ? Px.outline : Px.ink100, lineWidth: Skin.monster ? 2 : 1))
+        .modifier(Bob())
     }
 }
 

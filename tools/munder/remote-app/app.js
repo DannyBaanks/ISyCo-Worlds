@@ -638,11 +638,24 @@
     }
   }
 
+  let lastView = null;
+  let lastPhase = null;
   function render() {
     // Keep whatever the human is typing: re-rendering must never eat a draft or the focus.
     const focused = document.activeElement && document.activeElement.id;
     const caret = focused && document.activeElement.selectionStart;
     const openCards = new Set([...document.querySelectorAll('details[open] h2')].map((e) => e.textContent));
+    // Entrance motion plays when the view changes, never on the 5 s data refresh:
+    // `screen` when the phase changes, `tab` when only the tab or office does.
+    const phase = !state ? 'pair' : !state.paired ? 'code' : 'main';
+    const view = `${phase}:${ui.tab}:${ui.office || ''}:${ui.data ? 1 : 0}`;
+    if (view === lastView) delete $app.dataset.enter;
+    else $app.dataset.enter = phase === lastPhase ? 'tab' : 'screen';
+    lastView = view;
+    lastPhase = phase;
+    // The DOM is rebuilt on every render; looping animations take their phase
+    // from the wall clock so they carry on instead of restarting.
+    document.documentElement.style.setProperty('--clock', `${-(Date.now() % 60000)}ms`);
     $app.replaceChildren(...[].concat(!state ? pairScreen() : !state.paired ? codeScreen() : mainScreen()));
     plainCaps($app);
     document.querySelectorAll('details').forEach((d) => { if (openCards.has(d.querySelector('h2').textContent)) d.open = true; });
