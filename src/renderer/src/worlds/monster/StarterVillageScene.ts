@@ -13,6 +13,10 @@ import {
 } from './StarterVillageScenario';
 import { STARTER_VILLAGE_ATLAS_FRAMES, STARTER_VILLAGE_BUILDING_FRAMES } from './StarterVillageAtlasFrames';
 import { compositionSpan, type WorldCompositionV1 } from '@shared/worldComposition';
+import {
+  borderForestCells, cellHash, CHIMNEYS, cloudShadowTexture, glowTexture, groundDressingTexture,
+  PROP_VISUALS, vignetteTexture, villageGroundModel
+} from './villageDressing';
 
 export const STARTER_VILLAGE_WIDTH = STARTER_VILLAGE_SCENARIO.map.columns * STARTER_VILLAGE_TILE_SIZE;
 export const STARTER_VILLAGE_HEIGHT = STARTER_VILLAGE_SCENARIO.map.rows * STARTER_VILLAGE_TILE_SIZE;
@@ -47,13 +51,84 @@ export interface StarterVillageSceneOptions {
   growthStageForAgent?: (agentId: string) => EvolutionStage;
   locationReactions?: readonly LocationReactionBurst[];
   playerPosition?: { x: number; y: number };
+  /** Freezes ambient motion (water, smoke, butterflies, clouds) on its first frame. */
+  reducedMotion?: boolean;
 }
 export interface AnimatedStarterVillageScene extends Container {
   updateWorkers(motions: readonly WorkerMotionSnapshot[]): void;
   updateLocationReactions(reactions: readonly LocationReactionBurst[]): void;
   updatePlayer(position: { x: number; y: number }): void;
+  /** Advances purely decorative motion; `timeMs` is a wall clock so rebuilt scenes stay in phase. */
+  updateAmbient(timeMs: number): void;
 }
-function markerFor(state: ReturnType<typeof visualStateFor>, x: number, y: number): Graphics { const marker = stateMarker(state); const graphics = new Graphics().setFillStyle({ color: marker.color }); if (marker.shape === 'circle') graphics.circle(x + 4, y + 4, 4).fill(); else if (marker.shape === 'bar') graphics.rect(x, y + 2, 8, 4).fill(); else if (marker.shape === 'triangle') graphics.poly([x + 4, y, x + 8, y + 8, x, y + 8]).fill(); else graphics.poly([x + 4, y, x + 8, y + 4, x + 4, y + 8, x, y + 4]).fill(); return graphics; }
+const INK = 0x2b2440;
+const SHADOW = 0x12261a;
+const FX_Z = 1_000_000;
+
+/**
+ * Status bubble above a worker; the tail tip is the local origin. Each state
+ * keeps its own shape (dot, bar, triangle, diamond) so it never rides on color alone.
+ */
+function drawStateBubble(graphics: Graphics, state: ReturnType<typeof visualStateFor>): void {
+  const marker = stateMarker(state);
+  graphics.clear();
+  if (marker.shape === 'circle') {
+    graphics.circle(0, -5, 3.5).fill({ color: INK, alpha: 0.85 });
+    graphics.circle(0, -5, 2.5).fill({ color: marker.color });
+    return;
+  }
+  graphics.roundRect(-8, -18, 16, 13, 3).fill({ color: INK });
+  graphics.poly([-3, -6, 3, -6, 0, -1]).fill({ color: INK });
+  graphics.roundRect(-7, -17, 14, 11, 2).fill({ color: 0xfff8e6 });
+  graphics.poly([-1.5, -7, 1.5, -7, 0, -3]).fill({ color: 0xfff8e6 });
+  if (marker.shape === 'bar') {
+    graphics.rect(-5, -13, 10, 3).fill({ color: marker.color });
+    graphics.rect(-5, -13, 3, 3).fill({ color: 0x2f8a3c });
+  } else if (marker.shape === 'triangle') {
+    graphics.poly([0, -16, 5, -8, -5, -8]).fill({ color: marker.color });
+    graphics.rect(-0.5, -13.5, 1, 3).fill({ color: 0xfff8e6 });
+    graphics.rect(-0.5, -9.8, 1, 1).fill({ color: 0xfff8e6 });
+  } else {
+    graphics.poly([0, -16.5, 5, -11.5, 0, -6.5, -5, -11.5]).fill({ color: marker.color });
+    graphics.poly([0, -14, 2.5, -11.5, 0, -9, -2.5, -11.5]).fill({ color: 0xfff2bb });
+  }
+}
+
+function contactShadowFor(width: number): Graphics {
+  const shadow = new Graphics();
+  shadow.ellipse(0, 0, width, Math.max(2, width / 3)).fill({ color: SHADOW, alpha: 0.26 });
+  shadow.ellipse(0, 0, width * 0.62, Math.max(1.5, width / 5)).fill({ color: SHADOW, alpha: 0.2 });
+  shadow.eventMode = 'none';
+  return shadow;
+}
+
+/** The player's trainer: whole-pixel blocks with a one-pixel ink outline, feet at the local origin. */
+function buildPlayerAvatar(): { avatar: Container; pointer: Graphics } {
+  const avatar = new Container();
+  avatar.label = 'monster-village-player';
+  avatar.eventMode = 'none';
+  avatar.addChild(contactShadowFor(7));
+  const body = new Graphics();
+  const parts: readonly (readonly [number, number, number, number, number])[] = [
+    [-3, -5, 2, 5, 0x34457a], [1, -5, 2, 5, 0x34457a],
+    [-3, -1, 2, 1, 0x4a2f1c], [1, -1, 2, 1, 0x4a2f1c],
+    [-4, -11, 8, 6, 0xe0503c], [-1, -11, 2, 6, 0xfff2d8],
+    [-5, -10, 1, 4, 0xe0503c], [4, -10, 1, 4, 0xe0503c],
+    [-5, -6, 1, 1, 0xf2c79a], [4, -6, 1, 1, 0xf2c79a],
+    [-3, -16, 6, 5, 0xf2c79a],
+    [-4, -18, 8, 3, 0xfff2d8], [-4, -16, 9, 1, 0xe0503c], [-3, -19, 6, 1, 0xfff2d8]
+  ];
+  for (const [x, y, w, h] of parts) body.rect(x - 1, y - 1, w + 2, h + 2).fill({ color: INK });
+  for (const [x, y, w, h, color] of parts) body.rect(x, y, w, h).fill({ color });
+  body.rect(-2, -14, 1, 2).fill({ color: INK }).rect(1, -14, 1, 2).fill({ color: INK });
+  body.rect(-4, -6, 8, 1).fill({ color: 0x4a2f1c });
+  avatar.addChild(body);
+  const pointer = new Graphics();
+  pointer.poly([-4, -5, 4, -5, 0, 0]).fill({ color: INK });
+  pointer.poly([-2.5, -4.5, 2.5, -4.5, 0, -1.5]).fill({ color: 0xffdf70 });
+  avatar.addChild(pointer);
+  return { avatar, pointer };
+}
 function requireRoster(character: IsycoRosterCharacter): Texture {
   const roster = Assets.get<Texture>(MONSTER_ROSTER_URLS[character]);
   if (!roster) throw new Error(`Monster Village roster for ${character} was not bootstrapped`);
@@ -82,7 +157,9 @@ function drawGuide(root: Container, composition: WorldCompositionV1): void {
   guide.x = position.x * STARTER_VILLAGE_TILE_SIZE + STARTER_VILLAGE_TILE_SIZE / 2;
   guide.y = (position.y + 1) * STARTER_VILLAGE_TILE_SIZE;
   guide.zIndex = guide.y + 1;
-  root.addChild(guide);
+  const shadow = contactShadowFor(9);
+  shadow.x = guide.x; shadow.y = guide.y - 3; shadow.zIndex = guide.y - 0.5;
+  root.addChild(shadow, guide);
 }
 
 function createCreatureSprite(roster: Texture, character: MonsterRosterCharacter): Sprite {
@@ -95,9 +172,23 @@ function createCreatureSprite(roster: Texture, character: MonsterRosterCharacter
   return sprite;
 }
 
+const FOLIAGE_TINTS = [0xffffff, 0xeaf6e0, 0xd6ecd0, 0xfff6dc] as const;
+
 function tileSprite(atlas: Texture, tile: StarterVillageTileId, x: number, y: number): Sprite {
   const frame = STARTER_VILLAGE_ATLAS_FRAMES[tile];
   const sprite = new Sprite(new Texture({ source: atlas.source, frame: FRAMES[tile] }));
+  const visual = PROP_VISUALS[tile];
+  if (visual) {
+    // Aspect-correct prop standing on the bottom edge of its logical tile.
+    const grow = tile === 'tree' || tile === 'shrub' ? 0.9 + cellHash(x, y, 7) * 0.25 : 1;
+    sprite.anchor.set(0.5, 1);
+    sprite.width = Math.round(visual.width * grow);
+    sprite.height = Math.round(visual.height * grow);
+    sprite.x = x * STARTER_VILLAGE_TILE_SIZE + STARTER_VILLAGE_TILE_SIZE / 2;
+    sprite.y = (y + 1) * STARTER_VILLAGE_TILE_SIZE + (visual.sink ?? 0);
+    if (tile === 'tree') sprite.tint = FOLIAGE_TINTS[Math.floor(cellHash(x, y, 8) * FOLIAGE_TINTS.length)];
+    return sprite;
+  }
   sprite.width = frame.renderWidth;
   sprite.height = frame.renderHeight;
   if (frame.rotation) {
@@ -171,15 +262,13 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
   reactionOverlay.label = 'location-reactions';
   reactionOverlay.zIndex = Number.MAX_SAFE_INTEGER;
   root.addChild(reactionOverlay);
-  const playerMarker = new Graphics();
-  playerMarker.label = 'monster-village-player';
-  playerMarker.zIndex = Number.MAX_SAFE_INTEGER - 1;
-  playerMarker.setFillStyle({ color: 0xfff2bb, alpha: 0.95 }).circle(0, 0, 5).fill();
-  playerMarker.setStrokeStyle({ color: 0x6e4b2e, width: 1 }).circle(0, 0, 5).stroke();
+  const { avatar: playerMarker, pointer: playerPointer } = buildPlayerAvatar();
+  playerPointer.y = -24;
   root.addChild(playerMarker);
   root.updatePlayer = (position) => {
     playerMarker.x = position.x * STARTER_VILLAGE_TILE_SIZE + STARTER_VILLAGE_TILE_SIZE / 2;
-    playerMarker.y = (position.y + 1) * STARTER_VILLAGE_TILE_SIZE - 4;
+    playerMarker.y = (position.y + 1) * STARTER_VILLAGE_TILE_SIZE - 1;
+    playerMarker.zIndex = playerMarker.y + 0.25;
   };
   const groundFrame = STARTER_VILLAGE_ATLAS_FRAMES.grass;
   const groundTexture = new Texture({ source: atlas.source, frame: FRAMES.grass });
@@ -201,7 +290,57 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
     sprite.zIndex = 1;
     terrainLayer.addChild(sprite);
   }
+  const mapWidth = citySpan.columns * STARTER_VILLAGE_TILE_SIZE;
+  const mapHeight = citySpan.rows * STARTER_VILLAGE_TILE_SIZE;
+  const groundModel = villageGroundModel(composition, STARTER_VILLAGE_COMPOSITION_DEFINITION, citySpan.columns, citySpan.rows);
+  // Painted once per layout: grass variation, path and shore edges, meadow details, cast shadows.
+  const dressing = new Sprite(groundDressingTexture(composition, STARTER_VILLAGE_COMPOSITION_DEFINITION, citySpan.columns, citySpan.rows));
+  dressing.label = 'ground-dressing';
+  dressing.zIndex = 2;
+  terrainLayer.addChild(dressing);
+  const waterFx = new Graphics();
+  waterFx.label = 'water-shimmer';
+  waterFx.zIndex = 3;
+  terrainLayer.addChild(waterFx);
+  terrainLayer.sortableChildren = true;
   root.addChild(terrainLayer);
+
+  // A decorative forest ring closes the map edge. It only stands on free grass, so it never fights the layout.
+  for (const cell of borderForestCells(groundModel)) {
+    const rows: readonly (readonly [number, number, number])[] = [
+      [0, 0, 1],
+      [cell.x === 0 ? -9 : cell.x === citySpan.columns - 1 ? 9 : 8, cell.y === 0 ? -9 : cell.y === citySpan.rows - 1 ? 7 : -7, 2]
+    ];
+    for (const [dx, dy, salt] of rows) {
+      const tree = new Sprite(new Texture({ source: atlas.source, frame: FRAMES.tree }));
+      const grow = 1 + cellHash(cell.x, cell.y, 20 + salt) * 0.3;
+      tree.anchor.set(0.5, 1);
+      tree.width = Math.round(PROP_VISUALS.tree.width * grow);
+      tree.height = Math.round(PROP_VISUALS.tree.height * grow);
+      tree.x = cell.x * STARTER_VILLAGE_TILE_SIZE + 8 + dx + Math.round((cellHash(cell.x, cell.y, 30 + salt) - 0.5) * 6);
+      tree.y = (cell.y + 1) * STARTER_VILLAGE_TILE_SIZE + 3 + dy + Math.round((cellHash(cell.x, cell.y, 40 + salt) - 0.5) * 4);
+      tree.tint = [0xd6ecd0, 0xc2e0c4, 0xeaf6e0][Math.floor(cellHash(cell.x, cell.y, 50 + salt) * 3)];
+      tree.zIndex = tree.y;
+      tree.eventMode = 'none';
+      root.addChild(tree);
+    }
+  }
+  const glows: Sprite[] = [];
+  const addGlow = (x: number, y: number, size: number, alpha: number): void => {
+    const glow = new Sprite(glowTexture());
+    glow.anchor.set(0.5);
+    glow.x = x; glow.y = y; glow.width = size; glow.height = size;
+    glow.alpha = alpha; glow.blendMode = 'add'; glow.zIndex = FX_Z; glow.eventMode = 'none';
+    glow.label = `glow:${alpha}`;
+    glows.push(glow);
+    root.addChild(glow);
+  };
+  const chimneys: { x: number; y: number; seed: number }[] = [];
+  const smokeFx = new Graphics();
+  smokeFx.label = 'chimney-smoke';
+  smokeFx.zIndex = FX_Z + 1;
+  smokeFx.eventMode = 'none';
+  root.addChild(smokeFx);
 
   for (const placement of composition.placements) {
     const object = STARTER_VILLAGE_COMPOSITION_DEFINITION.objects[placement.definitionId];
@@ -214,8 +353,12 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
       sprite = buildStructureLayers(buildingsAtlas, buildingFrame);
       sprite.x = placement.x * STARTER_VILLAGE_TILE_SIZE;
       sprite.y = placement.y * STARTER_VILLAGE_TILE_SIZE;
+      const chimney = CHIMNEYS[object.assetId];
+      if (chimney) chimneys.push({ x: sprite.x + chimney.x, y: sprite.y + chimney.y, seed: cellHash(placement.x, placement.y, 3) });
+      addGlow(bounds.x + bounds.width / 2, bounds.y + bounds.height * 0.66, bounds.width * 0.9, 0.2);
     } else {
       sprite = tileSprite(atlas, object.assetId as StarterVillageTileId, placement.x, placement.y);
+      if (object.assetId === 'lantern') addGlow(bounds.x + 8, bounds.y + 5, 46, 0.55);
     }
     sprite.zIndex = z;
     root.addChild(sprite);
@@ -234,7 +377,8 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
 
   drawGuide(root, composition);
   const agentById = new Map(options.agents.map((agent) => [agent.id, agent]));
-  const actorVisuals = new Map<string, { body: Sprite; marker: Graphics; source: Texture['source']; stage: EvolutionStage; action: string; direction: string; frame: number; visualState: string }>();
+  const actorVisuals = new Map<string, { body: Sprite; marker: Graphics; shadow: Graphics; source: Texture['source']; stage: EvolutionStage; action: string; direction: string; frame: number; visualState: string }>();
+  let markerBob = 0;
   root.updateWorkers = (motions) => {
     for (const motion of motions) {
       const agent = agentById.get(motion.id);
@@ -242,13 +386,7 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
       if (!agent || !visual) continue;
       const stage = options.growthStageForAgent?.(motion.id) ?? 'baby';
       if (visual.stage !== stage || visual.action !== motion.action || visual.direction !== motion.direction || visual.frame !== motion.frame || visual.visualState !== motion.visualState) {
-        visual.marker.clear();
-        const marker = stateMarker(motion.visualState);
-        visual.marker.setFillStyle({ color: marker.color });
-        if (marker.shape === 'circle') visual.marker.circle(12, 1, 3).fill();
-        else if (marker.shape === 'bar') visual.marker.rect(8, 0, 8, 3).fill();
-        else if (marker.shape === 'triangle') visual.marker.poly([12, -3, 16, 4, 8, 4]).fill();
-        else visual.marker.poly([12, -3, 16, 1, 12, 5, 8, 1]).fill();
+        drawStateBubble(visual.marker, motion.visualState);
         applyActorPose(visual.body, visual.source, motion.action, motion.frame, motion.direction);
         visual.stage = stage; visual.action = motion.action; visual.direction = motion.direction; visual.frame = motion.frame; visual.visualState = motion.visualState;
       }
@@ -256,10 +394,14 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
       const footY = motion.y + STARTER_VILLAGE_TILE_SIZE;
       visual.body.x = footX;
       visual.body.y = footY;
-      visual.marker.x = Math.round(footX - 8);
-      visual.marker.y = visual.body.y - MONSTER_ACTOR_PX - 2;
+      const alert = motion.visualState === 'blocked' || motion.visualState === 'awaitsHuman';
+      visual.marker.x = Math.round(footX);
+      visual.marker.y = Math.round(visual.body.y - MONSTER_ACTOR_PX + 4 + (alert ? markerBob : 0));
+      visual.shadow.x = footX;
+      visual.shadow.y = footY - 3;
+      visual.shadow.zIndex = footY - 0.5;
       visual.body.zIndex = footY;
-      visual.marker.zIndex = footY + 1;
+      visual.marker.zIndex = FX_Z - 1;
     }
   };
   root.updateLocationReactions = (reactions) => {
@@ -290,9 +432,96 @@ export function buildStarterVillageScene(options: StarterVillageSceneOptions): A
       marker.eventMode = 'static'; marker.cursor = 'pointer';
       marker.on('pointertap', () => task ? options.onTaskOpen(task.id) : options.onAgentSelect(agent.id));
     }
-    root.addChild(body, marker);
-    actorVisuals.set(agent.id, { body, marker, source: roster.source, stage: 'baby', action: '', direction: '', frame: -1, visualState: '' });
+    const shadow = contactShadowFor(9);
+    root.addChild(shadow, body, marker);
+    actorVisuals.set(agent.id, { body, marker, shadow, source: roster.source, stage: 'baby', action: '', direction: '', frame: -1, visualState: '' });
   });
+
+  // Ambient life. Everything is a pure function of the clock, so a rebuilt scene continues in phase.
+  const waterCells = composition.terrain.filter((cell) => cell.terrainId === 'water');
+  const clouds = [0, 1, 2].map((index) => {
+    const cloud = new Sprite(cloudShadowTexture());
+    cloud.anchor.set(0.5);
+    cloud.width = 300 + index * 70; cloud.height = 150 + index * 30;
+    cloud.alpha = 0.3; cloud.zIndex = FX_Z + 3; cloud.eventMode = 'none';
+    root.addChild(cloud);
+    return cloud;
+  });
+  const butterflies = new Graphics();
+  butterflies.label = 'butterflies';
+  butterflies.zIndex = FX_Z + 2;
+  butterflies.eventMode = 'none';
+  root.addChild(butterflies);
+  const vignette = new Sprite(vignetteTexture());
+  vignette.label = 'vignette';
+  vignette.width = mapWidth; vignette.height = mapHeight;
+  vignette.zIndex = FX_Z + 4; vignette.eventMode = 'none';
+  root.addChild(vignette);
+  const BUTTERFLY_TONES = [0xfff6d8, 0xffd84a, 0xff9ec4, 0x9fe0ff, 0xff7a5c] as const;
+  const butterflyCount = Math.max(6, Math.round((citySpan.columns * citySpan.rows) / 340));
+  let ambientDrawn = false;
+  let waterStep = -1;
+  root.updateAmbient = (timeMs) => {
+    if (options.reducedMotion && ambientDrawn) return;
+    const t = options.reducedMotion ? 0 : timeMs;
+    ambientDrawn = true;
+    markerBob = Math.round(Math.sin(t / 240) * 1.4);
+    playerPointer.y = -24 + Math.round(Math.sin(t / 260) * 1.5);
+
+    const step = Math.floor(t / 170);
+    if (step !== waterStep) {
+      waterStep = step;
+      waterFx.clear();
+      for (const cell of waterCells) {
+        for (let glint = 0; glint < 2; glint += 1) {
+          const phase = (step + Math.floor(cellHash(cell.x, cell.y, 100 + glint) * 46)) % 46;
+          if (phase > 5) continue;
+          const alpha = [0.3, 0.6, 0.85, 0.85, 0.6, 0.3][phase];
+          const gx = cell.x * STARTER_VILLAGE_TILE_SIZE + 1 + Math.floor(cellHash(cell.x, cell.y, 110 + glint) * 10);
+          const gy = cell.y * STARTER_VILLAGE_TILE_SIZE + 5 + Math.floor(cellHash(cell.x, cell.y, 120 + glint) * 9);
+          waterFx.rect(gx, gy, 4, 1).fill({ color: 0xe6f6ff, alpha });
+          waterFx.rect(gx + 1, gy + 1, 2, 1).fill({ color: 0xe6f6ff, alpha: alpha * 0.5 });
+        }
+      }
+    }
+
+    glows.forEach((glow, index) => {
+      const base = Number(glow.label.slice(5));
+      glow.alpha = base * (0.86 + 0.1 * Math.sin(t / 340 + index * 1.7) + 0.04 * Math.sin(t / 73 + index));
+    });
+
+    smokeFx.clear();
+    for (const chimney of chimneys) {
+      for (let puff = 0; puff < 5; puff += 1) {
+        const age = (t / 3600 + chimney.seed + puff / 5) % 1;
+        const size = 2 + Math.floor(age * 4);
+        const x = chimney.x + Math.round(Math.sin(age * 5 + puff * 1.3) * 2 + age * 9) - size / 2;
+        const y = chimney.y - Math.round(age * 26) - size / 2;
+        smokeFx.rect(Math.round(x), Math.round(y), size, size).fill({ color: 0xf4efe6, alpha: (1 - age) * 0.5 });
+      }
+    }
+
+    clouds.forEach((cloud, index) => {
+      const lane = mapWidth + 520;
+      cloud.x = ((t * (0.007 + index * 0.002) + cellHash(index, 0, 130) * lane) % lane) - 260;
+      cloud.y = mapHeight * (0.2 + index * 0.3) + Math.sin(t / 9000 + index) * 14;
+    });
+
+    butterflies.clear();
+    for (let index = 0; index < butterflyCount; index += 1) {
+      const homeX = 30 + cellHash(index, 1, 140) * (mapWidth - 60);
+      const homeY = 30 + cellHash(index, 2, 141) * (mapHeight - 60);
+      const x = Math.round(homeX + Math.sin(t / 1900 + index * 2.1) * 26 + Math.sin(t / 430 + index) * 3);
+      const y = Math.round(homeY + Math.sin(t / 1300 + index * 1.3) * 14 + Math.cos(t / 370 + index) * 2);
+      const color = BUTTERFLY_TONES[index % BUTTERFLY_TONES.length];
+      const open = Math.floor(t / 130 + index) % 2 === 0;
+      butterflies.rect(x - 2, y + 3, 5, 1).fill({ color: SHADOW, alpha: 0.2 });
+      butterflies.rect(x, y - 3, 1, 2).fill({ color: INK });
+      if (open) butterflies.rect(x - 2, y - 4, 2, 2).fill({ color }).rect(x + 1, y - 4, 2, 2).fill({ color });
+      else butterflies.rect(x - 1, y - 5, 1, 3).fill({ color }).rect(x + 1, y - 5, 1, 3).fill({ color });
+    }
+  };
+  root.updateAmbient(typeof performance === 'undefined' ? 0 : performance.now());
   root.updateWorkers(options.workerMotions ?? []);
   root.updateLocationReactions(options.locationReactions ?? []);
   root.updatePlayer(options.playerPosition ?? { x: 34, y: 13 });
