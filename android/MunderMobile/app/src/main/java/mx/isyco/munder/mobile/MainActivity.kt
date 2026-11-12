@@ -151,7 +151,7 @@ class MainActivity : FragmentActivity() {
                     }
                     if (toast != null) {
                         Box(modifier = Modifier.fillMaxSize().padding(bottom = 90.dp, start = 16.dp, end = 16.dp), contentAlignment = Alignment.BottomCenter) {
-                            Text(toast!!, color = Color(0xFFFFFDF5), modifier = Modifier.background(Color(0xFF1A1320)).padding(horizontal = 14.dp, vertical = 10.dp))
+                            Text(toast!!, color = Color(0xFFFFFDF5), modifier = Modifier.background(if (Skin.monster) Color(0xFF17324A) else Color(0xFF1A1320), Skin.shape(50)).padding(horizontal = if (Skin.monster) 18.dp else 14.dp, vertical = 10.dp))
                         }
                     }
                 }
