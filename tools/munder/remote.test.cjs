@@ -401,7 +401,7 @@ test('overview tells the phone which world the office is, from where its hive li
   const o = await serve(office('world'));
   t.after(() => o.server.close());
   const phone = await pairedPhone(o, 'iPhone');
-  const data = await phone.call('overview');
+  const { result: data } = await phone.call('overview');
   assert.equal(data.office.world, 'office');
   for (const n of ['agua', 'fuego', 'electricidad', 'oscuridad', 'luz', 'aire', 'profesor']) {
     assert.equal(R.STATIC[`monster-${n}.png`], 'image/png', `${n} portrait is served`);
