@@ -146,3 +146,23 @@ test('each world owns its chrome: Munder Difflin and Monster Trainer ship separa
     assert.doesNotMatch(css, /world-wood\.webp|--worlds-wood: url/, `${name} skin drops the shared timber material`);
   }
 });
+
+test('world motion is per-skin, decorative and off under reduced motion', () => {
+  const main = source('src/renderer/src/main.tsx');
+  const motion = source('src/renderer/src/design/skin-motion.css');
+  const card = source('src/renderer/src/components/AgentCard.tsx');
+  assert.match(main, /skin-monster\.css';[\s\S]*skin-motion\.css'/, 'motion loads after the skins it animates');
+  const body = motion.replace(/\/\*[\s\S]*?\*\//g, '').trim();
+  assert.match(body, /^@media \(prefers-reduced-motion: no-preference\) \{/, 'every animation sits inside the no-preference query');
+  assert.equal(body.endsWith('}'), true);
+  let depth = 0;
+  for (let index = body.indexOf('{'); index < body.length - 1; index += 1) {
+    if (body[index] === '{') depth += 1;
+    else if (body[index] === '}') depth -= 1;
+    assert.ok(depth > 0, 'no rule escapes the reduced-motion guard');
+  }
+  assert.match(motion, /data-world-skin='office'/);
+  assert.match(motion, /data-world-skin='monster-trainer'/);
+  assert.doesNotMatch(motion, /animation:[^;]*\b(forwards|both)\b/, 'entrances never leave a transform behind to re-anchor fixed overlays');
+  assert.match(card, /data-status=\{status\}/, 'crew cards expose their agent status for the skins to react to');
+});

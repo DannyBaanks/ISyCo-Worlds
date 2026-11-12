@@ -140,6 +140,7 @@ export function AgentCard({
       className="worlds-worker cth-titlebar-nodrag"
       aria-pressed={!!selected}
       data-coordinator={isGod || undefined}
+      data-status={status}
       role="button"
       tabIndex={0}
       onClick={onClick}
