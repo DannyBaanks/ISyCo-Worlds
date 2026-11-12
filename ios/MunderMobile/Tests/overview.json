@@ -4,7 +4,8 @@
     "name": "michael-victus",
     "fingerprint": "0123 4567 89ab cdef",
     "host": "victus",
-    "version": "fixture"
+    "version": "fixture",
+    "world": "office"
   },
   "capacity": {
     "ram_total_gb": 15.7,

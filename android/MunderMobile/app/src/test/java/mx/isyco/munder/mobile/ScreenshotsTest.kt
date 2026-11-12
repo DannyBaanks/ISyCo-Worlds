@@ -12,6 +12,7 @@ import mx.isyco.munder.mobile.ui.OfficeTab
 import mx.isyco.munder.mobile.ui.PairView
 import mx.isyco.munder.mobile.ui.PanelTab
 import mx.isyco.munder.mobile.ui.QuestionsTab
+import mx.isyco.munder.mobile.ui.Skin
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -48,7 +49,9 @@ class ScreenshotsTest {
             it.loadDemo(res("overview.json"), res("demo-peers.json"), res("demo-panel.json"))
         }
 
-    private fun shoot(name: String, dark: Boolean, content: @Composable () -> Unit) {
+    private fun shoot(name: String, dark: Boolean, world: String = "office", content: @Composable () -> Unit) {
+        // El mundo es estado global de la app: cada captura lo fija, para que el orden no importe.
+        Skin.world = world
         RuntimeEnvironment.setQualifiers(if (dark) "+night" else "+notnight")
         compose.setContent { content() }
         compose.onRoot().captureRoboImage("build/outputs/roborazzi/$name.png")
@@ -92,6 +95,25 @@ class ScreenshotsTest {
 
     @Test fun lockedDark() =
         shoot("locked-dark", dark = true) { LockView(onUnlock = {}, checking = false) }
+
+    // Monster Village: la misma oficina de ejemplo con el look, el elenco y el jefe de ese mundo.
+    @Test fun monsterOfficeLight() =
+        shoot("monster-office-light", dark = false, world = "monster-trainer") { OfficeTab(demoStore()) }
+
+    @Test fun monsterOfficeDark() =
+        shoot("monster-office-dark", dark = true, world = "monster-trainer") { OfficeTab(demoStore()) }
+
+    @Test fun monsterQuestionsLight() =
+        shoot("monster-questions-light", dark = false, world = "monster-trainer") { QuestionsTab(demoStore()) }
+
+    @Test fun monsterBoardLight() =
+        shoot("monster-board-light", dark = false, world = "monster-trainer") { BoardTab(demoStore()) }
+
+    @Test fun monsterTabs() =
+        shoot("monster-tab-0", dark = false, world = "monster-trainer") { MainTabs(demoStore(), initialTab = 0) }
+
+    @Test fun monsterLockedLight() =
+        shoot("monster-locked-light", dark = false, world = "monster-trainer") { LockView(onUnlock = {}, checking = false) }
 
     // Que MainTabs con cada pestaña inicial no truene (el CI de iOS usa -MunderTab N).
     @Test fun tab0() = shoot("tab-0", dark = false) { MainTabs(demoStore(), initialTab = 0) }

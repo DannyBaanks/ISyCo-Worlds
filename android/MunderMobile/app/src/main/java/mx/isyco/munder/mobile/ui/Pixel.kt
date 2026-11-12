@@ -14,6 +14,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
@@ -55,31 +58,66 @@ import java.time.format.DateTimeFormatter
  */
 
 object Px {
-    @Composable fun cream50() = dyn(0xFFFDF5, 0x17171B)
-    @Composable fun cream100() = dyn(0xFFF8E7, 0x1D1D22)
-    @Composable fun cream200() = dyn(0xF4E9C7, 0x26262C)
-    @Composable fun cream300() = dyn(0xE8D9A0, 0x313139)
-    @Composable fun paper100() = dyn(0xFCFAF0, 0x1A1A1F)
-    @Composable fun ink900() = dyn(0x1A1320, 0xDEDBD6)
-    @Composable fun ink700() = dyn(0x3D2E4A, 0xB3B0AC)
-    @Composable fun ink500() = dyn(0x6B5878, 0x96919F)
-    @Composable fun ink300() = dyn(0xA899B5, 0x787684)
-    @Composable fun ink100() = dyn(0xD9CFE0, 0x3E3D46)
-    @Composable fun coral() = dyn(0xD96A62, 0xE08C82)
-    @Composable fun coralLight() = dyn(0xF3D3CD, 0x3B2724)
-    @Composable fun mint() = dyn(0x5CA97A, 0x74C096)
-    @Composable fun lemon() = dyn(0xDCAB3C, 0xCFAA57)
-    @Composable fun lemonLight() = dyn(0xF3E4BC, 0x332C1D)
-    @Composable fun sky() = dyn(0x4F9FAF, 0x6FB3C4)
-    @Composable fun idle() = dyn(0xA199AB, 0x6F6C77)
+    @Composable fun cream50() = dyn(0xFFFDF5, 0x17171B, 0xEEF7E2, 0x0E1A26)
+    @Composable fun cream100() = dyn(0xFFF8E7, 0x1D1D22, 0xE4F1D6, 0x132331)
+    @Composable fun cream200() = dyn(0xF4E9C7, 0x26262C, 0xDCECC8, 0x1B3042)
+    @Composable fun cream300() = dyn(0xE8D9A0, 0x313139, 0xC3DBA8, 0x26425A)
+    @Composable fun paper100() = dyn(0xFCFAF0, 0x1A1A1F, 0xFCFFF8, 0x11202D)
+    @Composable fun ink900() = dyn(0x1A1320, 0xDEDBD6, 0x1C2B3A, 0xE8F3E6)
+    @Composable fun ink700() = dyn(0x3D2E4A, 0xB3B0AC, 0x33475C, 0xC2D3C8)
+    @Composable fun ink500() = dyn(0x6B5878, 0x96919F, 0x536779, 0x9DB0AB)
+    @Composable fun ink300() = dyn(0xA899B5, 0x787684, 0x7D92A4, 0x6F8792)
+    @Composable fun ink100() = dyn(0xD9CFE0, 0x3E3D46, 0xCBD8E0, 0x2B4257)
+    @Composable fun coral() = dyn(0xD96A62, 0xE08C82, 0xD9472F, 0xF0806C)
+    @Composable fun coralLight() = dyn(0xF3D3CD, 0x3B2724, 0xFBD9D0, 0x47241F)
+    @Composable fun mint() = dyn(0x5CA97A, 0x74C096, 0x3F9A4B, 0x7FD08A)
+    @Composable fun lemon() = dyn(0xDCAB3C, 0xCFAA57, 0xFFCF3F, 0xFFD866)
+    @Composable fun lemonLight() = dyn(0xF3E4BC, 0x332C1D, 0xFFF1C2, 0x40371A)
+    @Composable fun sky() = dyn(0x4F9FAF, 0x6FB3C4, 0x2F8FC4, 0x74C0EA)
+    @Composable fun idle() = dyn(0xA199AB, 0x6F6C77, 0x7D92A4, 0x6F8792)
     val onAccent = Color(0xFF1A1320)
+    /** Contorno grueso de Monster Village; en la oficina es la línea de tinta de siempre. */
+    @Composable fun outline() = dyn(0xA899B5, 0x787684, 0x0B1A28, 0x050D15)
+    /** El bisel nocturno de Monster Village (barra de pestañas). */
+    @Composable fun night() = dyn(0xFCFAF0, 0x1A1A1F, 0x17324A, 0x0F2436)
+    @Composable fun berryDark() = dyn(0x6B5878, 0x96919F, 0x7A2318, 0x7A2318)
     @Composable fun shadow() =
-        if (isSystemInDarkTheme()) Color.Black.copy(alpha = 0.45f)
+        if (Skin.monster) outline()
+        else if (isSystemInDarkTheme()) Color.Black.copy(alpha = 0.45f)
         else Color(0xFF1A1320).copy(alpha = 0.14f)
 
     @Composable
-    private fun dyn(light: Long, dark: Long) =
-        if (isSystemInDarkTheme()) Color(dark or 0xFF000000) else Color(light or 0xFF000000)
+    private fun dyn(light: Long, dark: Long, monsterLight: Long, monsterDark: Long): Color {
+        val isDark = isSystemInDarkTheme()
+        val hex = if (Skin.monster) (if (isDark) monsterDark else monsterLight) else (if (isDark) dark else light)
+        return Color(hex or 0xFF000000)
+    }
+}
+
+/**
+ * El mundo de la oficina emparejada decide el look, el elenco y cómo se llama
+ * el jefe. Lo manda la oficina en `overview.office.world`; mientras no llega,
+ * la app se ve como Munder. Es estado de Compose: al cambiar, todo se redibuja.
+ *
+ * Espejo de `Skin` en App/Pixel.swift.
+ */
+object Skin {
+    var world by mutableStateOf("office")
+    val monster: Boolean get() = world == "monster-trainer"
+    val boss: String get() = if (monster) "Profesor" else "Michael"
+    val place: String get() = if (monster) "Pueblo" else "Oficina"
+
+    /** Esquinas: cuadradas en la oficina, redondeadas en Monster Village. */
+    fun shape(radius: Int = 14): Shape = if (monster) RoundedCornerShape(radius.dp) else RectangleShape
+    fun dot(): Shape = if (monster) CircleShape else RectangleShape
+}
+
+/** Fondo y borde de una superficie con la forma del mundo activo. */
+@Composable
+fun Modifier.frame(fill: Color, line: Color, width: Dp = 1.dp, radius: Int = 14): Modifier {
+    val shape = Skin.shape(radius)
+    val w = if (Skin.monster && width < 2.dp) 2.dp else width
+    return this.background(fill, shape).border(w, line, shape)
 }
 
 val PixelFont: FontFamily = try {
@@ -111,15 +149,16 @@ fun PixelCard(
     border: Color = Px.ink300(),
     content: @Composable () -> Unit,
 ) {
+    val shape = Skin.shape(16)
     Box(
         modifier = Modifier
-            .background(Px.shadow())
-            .padding(start = 0.dp, top = 0.dp, end = 3.dp, bottom = 3.dp),
+            .background(Px.shadow(), shape)
+            .padding(start = 0.dp, top = 0.dp, end = if (Skin.monster) 0.dp else 3.dp, bottom = if (Skin.monster) 4.dp else 3.dp),
     ) {
         Box(
             modifier = Modifier
-                .background(fill)
-                .border(1.dp, border, RectangleShape)
+                .background(fill, shape)
+                .border(if (Skin.monster) 3.dp else 1.dp, if (Skin.monster) Px.outline() else border, shape)
                 .padding(14.dp),
         ) { content() }
     }
@@ -134,29 +173,42 @@ fun PixelButton(
     enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
-    val dark = isSystemInDarkTheme()
+    val monster = Skin.monster
+    val shape = Skin.shape(50)
     val fill = when {
         !enabled -> Px.cream300()
-        kind == PixelKind.PRIMARY -> Px.ink900()
-        kind == PixelKind.DANGER -> Px.coral()
-        else -> Px.cream100()
+        kind == PixelKind.PRIMARY -> if (monster) Px.coral() else Px.ink900()
+        kind == PixelKind.DANGER -> if (monster) Px.paper100() else Px.coral()
+        else -> if (monster) Px.paper100() else Px.cream100()
     }
     val fg = when {
         !enabled -> Px.ink500()
-        kind == PixelKind.PRIMARY -> Px.cream50()
-        kind == PixelKind.DANGER -> Px.onAccent
+        kind == PixelKind.PRIMARY -> if (monster) Color.White else Px.cream50()
+        kind == PixelKind.DANGER -> if (monster) Px.coral() else Px.onAccent
         else -> Px.ink900()
     }
-    val border = if (kind == PixelKind.PRIMARY) Px.ink900() else Px.ink300()
+    val border = when {
+        monster && kind == PixelKind.PRIMARY -> Px.berryDark()
+        monster && kind == PixelKind.DANGER -> Px.coral()
+        monster -> Px.outline()
+        kind == PixelKind.PRIMARY -> Px.ink900()
+        else -> Px.ink300()
+    }
+    val edge = when {
+        monster && kind == PixelKind.GHOST -> Px.outline()
+        monster -> Px.berryDark()
+        kind == PixelKind.PRIMARY -> Px.ink500()
+        else -> Px.ink100()
+    }
     Box(
         modifier = Modifier
-            .background(if (kind == PixelKind.PRIMARY) Px.ink500() else Px.ink100())
-            .padding(start = 0.dp, top = 0.dp, end = 0.dp, bottom = 2.dp),
+            .background(edge, shape)
+            .padding(start = 0.dp, top = 0.dp, end = 0.dp, bottom = if (monster) 4.dp else 2.dp),
     ) {
         Box(
             modifier = Modifier
-                .background(if (enabled) fill else fill)
-                .border(1.dp, border)
+                .background(fill, shape)
+                .border(if (monster) 2.dp else 1.dp, border, shape)
                 .clickable(enabled = enabled) { onClick() }
                 .padding(vertical = 12.dp),
             contentAlignment = Alignment.Center,
@@ -168,7 +220,7 @@ fun PixelButton(
 
 @Composable
 fun Modifier.pixelField(): Modifier =
-    this.background(Px.paper100()).border(1.dp, Px.ink300())
+    this.frame(Px.paper100(), Px.ink300(), 1.dp, radius = 12)
 
 @Composable
 fun PixelTextField(
@@ -212,13 +264,13 @@ fun PixelEditor(
 
 @Composable
 fun StatusDot(color: Color) {
-    Box(modifier = Modifier.size(8.dp).background(color))
+    Box(modifier = Modifier.size(8.dp).background(color, Skin.dot()))
 }
 
 @Composable
 fun Chip(text: String, fill: Color = Px.cream200(), dot: Color? = null) {
     Row(
-        modifier = Modifier.background(fill).border(1.dp, Px.ink100()).padding(horizontal = 6.dp, vertical = 4.dp),
+        modifier = Modifier.background(fill, Skin.shape(50)).border(1.dp, Px.ink100(), Skin.shape(50)).padding(horizontal = if (Skin.monster) 8.dp else 6.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (dot != null) {
@@ -232,7 +284,7 @@ fun Chip(text: String, fill: Color = Px.cream200(), dot: Color? = null) {
 @Composable
 fun Bubble(content: @Composable () -> Unit) {
     Box(
-        modifier = Modifier.background(Px.cream50()).border(2.dp, Px.ink900()).padding(12.dp),
+        modifier = Modifier.frame(if (Skin.monster) Px.paper100() else Px.cream50(), if (Skin.monster) Px.outline() else Px.ink900(), if (Skin.monster) 3.dp else 2.dp).padding(12.dp),
     ) { content() }
 }
 
@@ -240,7 +292,23 @@ fun Bubble(content: @Composable () -> Unit) {
 
 object Cast {
     /** Misma regla que la PWA: el jefe es Michael, si no el nombre o id, si no un fijo estable. */
+    val monsters = listOf("agua", "fuego", "electricidad", "oscuridad", "luz", "aire")
+
+    /** Elenco de Monster Village: el Profesor coordina; cada worker conserva su monstruo. */
+    fun monster(who: String): String {
+        if (who == "michael" || who == "profesor") return "profesor"
+        if (monsters.contains(who)) return who
+        var h = 0L
+        for (ch in who) h = (h * 31 + ch.code) and 0xFFFFFFFFL
+        return monsters[(h % monsters.size).toInt()]
+    }
+
     fun of(id: String, name: String, god: Boolean, names: List<String>): String {
+        if (Skin.monster) {
+            if (god) return "profesor"
+            val named = name.lowercase()
+            return if (monsters.contains(named)) named else monster(id)
+        }
         if (god) return "michael"
         for (raw in listOf(name, id)) {
             var key = raw.lowercase()
@@ -283,24 +351,29 @@ fun rememberCastNames(): List<String> {
 @Composable
 fun Portrait(name: String, scale: Float = 2f) {
     val ctx = LocalContext.current
-    val bmp = remember(name) {
+    val monster = Skin.monster
+    val file = if (monster) "Media/Monsters/${Cast.monster(name)}.png" else "Media/Cast/$name.png"
+    val bmp = remember(file) {
         try {
-            ctx.assets.open("Media/Cast/$name.png").use { BitmapFactory.decodeStream(it) }
+            ctx.assets.open(file).use { BitmapFactory.decodeStream(it) }
         } catch (e: Exception) {
             null
         }
     }
-    val w = (18 * scale).dp
-    val h = (28 * scale).dp
+    // El elenco de la oficina es 18×28; los monstruos son cuadrados.
+    val w = ((if (monster) 26 else 18) * scale).dp
+    val h = ((if (monster) 26 else 28) * scale).dp
+    val shape = Skin.shape(12)
+    val tile = Modifier.size(w, h).background(Px.cream200(), shape).border(if (monster) 2.dp else 1.dp, if (monster) Px.outline() else Px.ink100(), shape)
     if (bmp != null) {
         Image(
             painter = BitmapPainter(bmp.asImageBitmap()),
             contentDescription = name,
-            modifier = Modifier.size(w, h).background(Px.cream200()).border(1.dp, Px.ink100()),
+            modifier = tile,
             contentScale = ContentScale.FillBounds,
         )
     } else {
-        Box(modifier = Modifier.size(w, h).background(Px.cream200()).border(1.dp, Px.ink100()))
+        Box(modifier = tile)
     }
 }
 

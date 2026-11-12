@@ -14,33 +14,88 @@ extension UIColor {
     }
 }
 
+/// The paired office's world decides the look, the cast and what the boss is
+/// called. The office sends it in `overview.office.world`; it is remembered so
+/// the next launch starts in the right look, and `-MunderWorld <id>` on launch
+/// sets it for CI screenshots (launch arguments land in UserDefaults).
+///
+/// Mirror of `Skin` in ui/Pixel.kt.
+enum Skin {
+    private static let key = "MunderWorld"
+    private(set) static var world: String = UserDefaults.standard.string(forKey: key) == "monster-trainer" ? "monster-trainer" : "office"
+    static var monster: Bool { world == "monster-trainer" }
+    static var boss: String { monster ? "Profesor" : "Michael" }
+    static var place: String { monster ? "Pueblo" : "Oficina" }
+
+    static func set(_ next: String) {
+        world = next == "monster-trainer" ? "monster-trainer" : "office"
+        UserDefaults.standard.set(world, forKey: key)
+    }
+}
+
+/// Square in the office, rounded in Monster Village. Resolved when drawn, so a
+/// world change only needs the view tree rebuilt (RootView keys it by world).
+struct SkinShape: InsettableShape {
+    var radius: CGFloat = 14
+    var insetAmount: CGFloat = 0
+
+    func path(in rect: CGRect) -> Path {
+        let r = rect.insetBy(dx: insetAmount, dy: insetAmount)
+        guard Skin.monster else { return Path(r) }
+        return Path(roundedRect: r, cornerRadius: min(radius, min(r.width, r.height) / 2))
+    }
+
+    func inset(by amount: CGFloat) -> SkinShape {
+        var shape = self
+        shape.insetAmount += amount
+        return shape
+    }
+}
+
+extension View {
+    /// Fill and outline of a surface in the active world's shape. Monster Village lines are never hairlines.
+    func framed(_ fill: Color, _ line: Color, width: CGFloat = 1, radius: CGFloat = 14) -> some View {
+        let shape = SkinShape(radius: radius)
+        return background(shape.fill(fill))
+            .overlay(shape.strokeBorder(line, lineWidth: Skin.monster ? max(width, 2) : width))
+    }
+}
+
 extension Color {
-    static func dyn(_ light: UInt32, _ dark: UInt32) -> Color {
-        Color(UIColor { $0.userInterfaceStyle == .dark ? UIColor(hex: dark) : UIColor(hex: light) })
+    static func dyn(_ light: UInt32, _ dark: UInt32, _ monsterLight: UInt32, _ monsterDark: UInt32) -> Color {
+        Color(UIColor { traits in
+            let isDark = traits.userInterfaceStyle == .dark
+            return UIColor(hex: Skin.monster ? (isDark ? monsterDark : monsterLight) : (isDark ? dark : light))
+        })
     }
 }
 
 enum Px {
-    static let cream50 = Color.dyn(0xFFFDF5, 0x17171B)
-    static let cream100 = Color.dyn(0xFFF8E7, 0x1D1D22)
-    static let cream200 = Color.dyn(0xF4E9C7, 0x26262C)
-    static let cream300 = Color.dyn(0xE8D9A0, 0x313139)
-    static let paper100 = Color.dyn(0xFCFAF0, 0x1A1A1F)
-    static let ink900 = Color.dyn(0x1A1320, 0xDEDBD6)
-    static let ink700 = Color.dyn(0x3D2E4A, 0xB3B0AC)
-    static let ink500 = Color.dyn(0x6B5878, 0x96919F)
-    static let ink300 = Color.dyn(0xA899B5, 0x787684)
-    static let ink100 = Color.dyn(0xD9CFE0, 0x3E3D46)
-    static let coral = Color.dyn(0xD96A62, 0xE08C82)
-    static let coralLight = Color.dyn(0xF3D3CD, 0x3B2724)
-    static let mint = Color.dyn(0x5CA97A, 0x74C096)
-    static let lemon = Color.dyn(0xDCAB3C, 0xCFAA57)
-    static let lemonLight = Color.dyn(0xF3E4BC, 0x332C1D)
-    static let sky = Color.dyn(0x4F9FAF, 0x6FB3C4)
-    static let idle = Color.dyn(0xA199AB, 0x6F6C77)
+    static let cream50 = Color.dyn(0xFFFDF5, 0x17171B, 0xEEF7E2, 0x0E1A26)
+    static let cream100 = Color.dyn(0xFFF8E7, 0x1D1D22, 0xE4F1D6, 0x132331)
+    static let cream200 = Color.dyn(0xF4E9C7, 0x26262C, 0xDCECC8, 0x1B3042)
+    static let cream300 = Color.dyn(0xE8D9A0, 0x313139, 0xC3DBA8, 0x26425A)
+    static let paper100 = Color.dyn(0xFCFAF0, 0x1A1A1F, 0xFCFFF8, 0x11202D)
+    static let ink900 = Color.dyn(0x1A1320, 0xDEDBD6, 0x1C2B3A, 0xE8F3E6)
+    static let ink700 = Color.dyn(0x3D2E4A, 0xB3B0AC, 0x33475C, 0xC2D3C8)
+    static let ink500 = Color.dyn(0x6B5878, 0x96919F, 0x536779, 0x9DB0AB)
+    static let ink300 = Color.dyn(0xA899B5, 0x787684, 0x7D92A4, 0x6F8792)
+    static let ink100 = Color.dyn(0xD9CFE0, 0x3E3D46, 0xCBD8E0, 0x2B4257)
+    static let coral = Color.dyn(0xD96A62, 0xE08C82, 0xD9472F, 0xF0806C)
+    static let coralLight = Color.dyn(0xF3D3CD, 0x3B2724, 0xFBD9D0, 0x47241F)
+    static let mint = Color.dyn(0x5CA97A, 0x74C096, 0x3F9A4B, 0x7FD08A)
+    static let lemon = Color.dyn(0xDCAB3C, 0xCFAA57, 0xFFCF3F, 0xFFD866)
+    static let lemonLight = Color.dyn(0xF3E4BC, 0x332C1D, 0xFFF1C2, 0x40371A)
+    static let sky = Color.dyn(0x4F9FAF, 0x6FB3C4, 0x2F8FC4, 0x74C0EA)
+    static let idle = Color.dyn(0xA199AB, 0x6F6C77, 0x7D92A4, 0x6F8792)
     static let onAccent = Color(UIColor(hex: 0x1A1320))
-    static let shadow = Color(UIColor {
-        $0.userInterfaceStyle == .dark ? UIColor.black.withAlphaComponent(0.45) : UIColor(hex: 0x1A1320, alpha: 0.14)
+    /// Monster Village's thick outline; in the office it is the usual ink hairline.
+    static let outline = Color.dyn(0xA899B5, 0x787684, 0x0B1A28, 0x050D15)
+    static let berryDark = Color.dyn(0x6B5878, 0x96919F, 0x7A2318, 0x7A2318)
+    static let shadow = Color(UIColor { traits in
+        let isDark = traits.userInterfaceStyle == .dark
+        if Skin.monster { return UIColor(hex: isDark ? 0x050D15 : 0x0B1A28) }
+        return isDark ? UIColor.black.withAlphaComponent(0.45) : UIColor(hex: 0x1A1320, alpha: 0.14)
     })
 
     static func font(_ size: CGFloat) -> Font { .custom("PressStart2P-Regular", fixedSize: size) }
@@ -70,12 +125,13 @@ struct PixelCard<Content: View>: View {
     var border: Color = Px.ink300
     @ViewBuilder let content: () -> Content
     var body: some View {
-        content()
+        let shape = SkinShape(radius: 16)
+        return content()
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(fill)
-            .overlay(Rectangle().strokeBorder(border, lineWidth: 1))
-            .background(Rectangle().fill(Px.shadow).offset(x: 3, y: 3))
+            .background(shape.fill(fill))
+            .overlay(shape.strokeBorder(Skin.monster ? Px.outline : border, lineWidth: Skin.monster ? 3 : 1))
+            .background(shape.fill(Px.shadow).offset(x: Skin.monster ? 0 : 3, y: Skin.monster ? 4 : 3))
     }
 }
 
@@ -94,16 +150,31 @@ private struct PixelButtonBody<Label: View>: View {
     @Environment(\.isEnabled) private var enabled
 
     var body: some View {
-        let fill: Color = !enabled ? Px.cream300 : kind == .primary ? Px.ink900 : kind == .danger ? Px.coral : Px.cream100
-        let text: Color = !enabled ? Px.ink500 : kind == .primary ? Px.cream50 : kind == .danger ? Px.onAccent : Px.ink900
-        label
+        let monster = Skin.monster
+        let shape = SkinShape(radius: 24)
+        let fill: Color = !enabled ? Px.cream300
+            : kind == .primary ? (monster ? Px.coral : Px.ink900)
+            : kind == .danger ? (monster ? Px.paper100 : Px.coral)
+            : (monster ? Px.paper100 : Px.cream100)
+        let text: Color = !enabled ? Px.ink500
+            : kind == .primary ? (monster ? Color.white : Px.cream50)
+            : kind == .danger ? (monster ? Px.coral : Px.onAccent)
+            : Px.ink900
+        let line: Color = monster
+            ? (kind == .primary ? Px.berryDark : kind == .danger ? Px.coral : Px.outline)
+            : (kind == .primary ? Px.ink900 : Px.ink300)
+        let edge: Color = monster
+            ? (kind == .ghost ? Px.outline : Px.berryDark)
+            : (kind == .primary ? Px.ink500 : Px.ink100)
+        let drop: CGFloat = monster ? 4 : 2
+        return label
             .font(.system(size: 15, weight: .semibold))
             .frame(maxWidth: .infinity, minHeight: 44)
             .foregroundColor(text)
-            .background(fill)
-            .overlay(Rectangle().strokeBorder(kind == .primary ? Px.ink900 : Px.ink300, lineWidth: 1))
-            .offset(y: pressed ? 2 : 0)
-            .background(Rectangle().fill(kind == .primary ? Px.ink500 : Px.ink100).offset(y: 2))
+            .background(shape.fill(fill))
+            .overlay(shape.strokeBorder(line, lineWidth: monster ? 2 : 1))
+            .offset(y: pressed ? drop : 0)
+            .background(shape.fill(edge).offset(y: drop))
     }
 }
 
@@ -111,8 +182,7 @@ struct PixelField: ViewModifier {
     func body(content: Content) -> some View {
         content
             .padding(10)
-            .background(Px.paper100)
-            .overlay(Rectangle().strokeBorder(Px.ink300, lineWidth: 1))
+            .framed(Px.paper100, Px.ink300, radius: 12)
     }
 }
 extension View { func pixelField() -> some View { modifier(PixelField()) } }
@@ -134,7 +204,7 @@ struct PixelEditor: View {
 
 struct StatusDot: View {
     let color: Color
-    var body: some View { Rectangle().fill(color).frame(width: 8, height: 8) }
+    var body: some View { SkinShape(radius: 4).fill(color).frame(width: 8, height: 8) }
 }
 
 struct Chip: View {
@@ -146,9 +216,9 @@ struct Chip: View {
             if let dot { StatusDot(color: dot) }
             PixelLabel(text, size: 7, color: Px.ink700)
         }
-        .padding(.horizontal, 6).padding(.vertical, 4)
-        .background(fill)
-        .overlay(Rectangle().strokeBorder(Px.ink100, lineWidth: 1))
+        .padding(.horizontal, Skin.monster ? 8 : 6).padding(.vertical, 4)
+        .background(SkinShape(radius: 12).fill(fill))
+        .overlay(SkinShape(radius: 12).strokeBorder(Px.ink100, lineWidth: 1))
     }
 }
 
@@ -159,8 +229,7 @@ struct Bubble<Content: View>: View {
         content()
             .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Px.cream50)
-            .overlay(Rectangle().strokeBorder(Px.ink900, lineWidth: 2))
+            .framed(Skin.monster ? Px.paper100 : Px.cream50, Skin.monster ? Px.outline : Px.ink900, width: Skin.monster ? 3 : 2)
     }
 }
 
@@ -172,7 +241,21 @@ enum Cast {
         .sorted()
 
     static func image(_ name: String) -> UIImage? {
-        Bundle.main.path(forResource: name, ofType: "png", inDirectory: "Media/Cast").flatMap(UIImage.init(contentsOfFile:))
+        if Skin.monster {
+            return Bundle.main.path(forResource: monster(name), ofType: "png", inDirectory: "Media/Monsters").flatMap(UIImage.init(contentsOfFile:))
+        }
+        return Bundle.main.path(forResource: name, ofType: "png", inDirectory: "Media/Cast").flatMap(UIImage.init(contentsOfFile:))
+    }
+
+    static let monsters = ["agua", "fuego", "electricidad", "oscuridad", "luz", "aire"]
+
+    /// Monster Village cast: the Professor coordinates; every worker keeps a stable monster.
+    static func monster(_ who: String) -> String {
+        if who == "michael" || who == "profesor" { return "profesor" }
+        if monsters.contains(who) { return who }
+        var h: UInt32 = 0
+        for u in who.unicodeScalars { h = h &* 31 &+ u.value }
+        return monsters[Int(h % UInt32(monsters.count))]
     }
 
     /// Same rule as the PWA: the boss is Michael, else the name or id, else a stable pick.
@@ -189,6 +272,11 @@ enum Cast {
     }
 
     static func of(id: String, name: String, god: Bool) -> String {
+        if Skin.monster {
+            if god { return "profesor" }
+            let named = name.lowercased()
+            return monsters.contains(named) ? named : monster(id)
+        }
         if god { return "michael" }
         for raw in [name, id] {
             var key = raw.lowercased()
@@ -215,9 +303,11 @@ struct Portrait: View {
                 Px.cream200
             }
         }
-        .frame(width: 18 * scale, height: 28 * scale)
-        .background(Px.cream200)
-        .overlay(Rectangle().strokeBorder(Px.ink100, lineWidth: 1))
+        // The office cast is 18×28; the monsters are square.
+        .frame(width: (Skin.monster ? 26 : 18) * scale, height: (Skin.monster ? 26 : 28) * scale)
+        .background(SkinShape(radius: 12).fill(Px.cream200))
+        .clipShape(SkinShape(radius: 12))
+        .overlay(SkinShape(radius: 12).strokeBorder(Skin.monster ? Px.outline : Px.ink100, lineWidth: Skin.monster ? 2 : 1))
     }
 }
 

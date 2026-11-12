@@ -33,6 +33,7 @@ import mx.isyco.munder.mobile.ui.MainTabs
 import mx.isyco.munder.mobile.ui.PairView
 import mx.isyco.munder.mobile.ui.Portrait
 import mx.isyco.munder.mobile.ui.Px
+import mx.isyco.munder.mobile.ui.Skin
 
 /**
  * Raíz Android, espejo de App/MunderMobileApp.swift + RootView.
@@ -85,6 +86,9 @@ class MainActivity : FragmentActivity() {
                 store.loadDemo(overview, peers, panel)
             } catch (e: Exception) { }
         }
+        // `--es MunderWorld monster-trainer`: la demo con el look de ese mundo (capturas CI).
+        val demoWorld = intent.getStringExtra("MunderWorld")
+        if (demo && demoWorld != null) Skin.world = demoWorld
 
         setContent {
             val dark = androidx.compose.foundation.isSystemInDarkTheme()
@@ -92,6 +96,12 @@ class MainActivity : FragmentActivity() {
                 val phase by store.phase.collectAsState()
                 val toast by store.toast.collectAsState()
                 var lockTick by remember { mutableStateOf(0) }
+
+                // El mundo de ESTA oficina viste la app. Una oficina ajena que solo
+                // estás mirando no la cambia, y una vieja que no lo manda tampoco.
+                val overview by store.overview.collectAsState()
+                val world = overview?.takeIf { it.remote != true }?.office?.world
+                LaunchedEffect(world) { if (world != null) Skin.world = world }
 
                 // Refresco como MainView.task: direcciones + peers una vez, overview cada 5 s.
                 LaunchedEffect(phase) {

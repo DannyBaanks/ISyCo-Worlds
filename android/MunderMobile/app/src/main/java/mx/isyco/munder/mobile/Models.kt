@@ -45,6 +45,8 @@ data class OfficeInfo(
     val fingerprint: String? = null,
     val host: String? = null,
     val version: String? = null,
+    /** "office" o "monster-trainer": el mundo de esa oficina. Una oficina vieja no lo manda. */
+    val world: String? = null,
 )
 
 @Serializable

@@ -22,7 +22,7 @@ Imagina un equipo donde cada integrante es una IA. **Tú hablas con el coordinad
 
 ISyCo Worlds nació como fork de [Munder Difflin](https://github.com/chaitanyagiri/munder-difflin), de Chaitanya Giri. Hoy es su propio producto: **ISyCo Worlds 0.3v**. Munder Difflin sigue disponible como mundo, con sus créditos.
 
-> **ISyCo Worlds 0.3v** es la primera versión del producto. La app de escritorio se usa de punta a punta: eliges mundo, carpeta y equipo, y el trabajo se ve en el mapa. Monster Village se recorre, se construye con clic y puede crecer. Quedan acabados menores: el Marketplace sigue en vitrina, el panel de GUS está en inglés y las apps de celular todavía llevan la piel de la oficina.
+> **ISyCo Worlds 0.3v** es la primera versión del producto. La app de escritorio se usa de punta a punta: eliges mundo, carpeta y equipo, y el trabajo se ve en el mapa. Monster Village se recorre, se construye con clic y puede crecer. Quedan acabados menores: el Marketplace sigue en vitrina y el panel de GUS está en inglés.
 
 | | |
 |---|---|
@@ -112,7 +112,7 @@ GUS es un ayudante **opcional**. Le cuentas qué quieres hacer («mantener un re
 
 ## 📱 En el celular: iPhone
 
-Tu coordinador te hace una pregunta y no estás en la compu. Contéstale desde el celular y tu equipo sigue trabajando. La app móvil se conecta a Worlds. En 0.3v el escritorio ya es el producto; el celular sigue con la piel de la oficina y los nombres `MunderMobile` de algunos instaladores.
+Tu coordinador te hace una pregunta y no estás en la compu. Contéstale desde el celular y tu equipo sigue trabajando. La app móvil se conecta a Worlds. El celular se viste como el mundo de tu equipo: oficina de papel en Munder Difflin, dispositivo de entrenador con monstruos en Monster Village. Algunos instaladores todavía se llaman `MunderMobile`.
 
 <p align="center">
   <img src="./docs/isyco/mobile/ios/office-light.png" alt="App de iPhone, pestaña Oficina: Michael, workers libres, preguntas y tareas" width="190">

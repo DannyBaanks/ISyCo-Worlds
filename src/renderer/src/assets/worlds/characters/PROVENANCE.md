@@ -25,3 +25,14 @@ The two sheets above stay as the earlier portraits. SHA-256 of the cleaned sheet
 - `roster/luz.png` — `a23c66074d64676f066ee675f9be7742d0f4f2496cccf3bfab5bfdbf395ae7c3`
 - `roster/oscuridad.png` — `24448625c47de1b2da2a5bd9994bca3913e1203847bacf37ca5ceaddd2c1b7a8`
 - `roster/profesor.png` — `6e904ad0aef8d668cb3599f3177398f6694ff12407965fba74115e858964502f`
+
+## Phone portraits
+
+The phone surfaces show the Monster Village cast as 96×96 portraits: the first
+(idle) cell of each `roster/` sheet, cropped square around the figure and
+reduced with nearest-neighbour sampling. They are derived files of the sheets
+above, kept byte-identical in three places:
+
+- `ios/MunderMobile/Media/Monsters/<name>.png`
+- `android/MunderMobile/app/src/main/assets/Media/Monsters/<name>.png` (checked against iOS by `check-assets.cjs`)
+- `tools/munder/remote-app/monster-<name>.png`

@@ -34,6 +34,8 @@ public struct OfficeInfo: Decodable, Hashable {
     public let fingerprint: String?
     public let host: String?
     public let version: String?
+    /// "office" or "monster-trainer": the world that office is. An older office omits it.
+    public let world: String?
 }
 
 public struct Agent: Decodable, Hashable, Identifiable {
