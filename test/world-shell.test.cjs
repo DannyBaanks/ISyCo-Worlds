@@ -48,7 +48,7 @@ test('Monster Trainer HUD skin follows the active visual profile without config 
   const app = source('src/renderer/src/App.tsx');
   const tokens = source('src/renderer/src/design/tokens.css');
   assert.doesNotMatch(app, /worldProfileStatus[\s\S]{0,180}updateConfig\(\{\s*(?:worldSkin|theme)/);
-  assert.match(app, /const worldSkin = worldProfileStatus\?\.activeProfileId === 'monster-trainer' \? 'monster-trainer' : undefined/);
+  assert.match(app, /const worldSkin = worldProfileStatus\?\.activeProfileId === 'monster-trainer' \? 'monster-trainer' : 'office'/, 'every world has a skin of its own');
   assert.match(app, /data-world-skin=\{worldSkin\}/);
   assert.match(tokens, /\.cth-app-shell\[data-world-skin=['"]monster-trainer['"]\]/);
   assert.match(tokens, /data-cth-theme=['"]dark['"][\s\S]*?data-world-skin=['"]monster-trainer['"]/, 'dark skin has its own contrast-preserving palette');
@@ -120,4 +120,29 @@ test('World translations expose the same key set in every supported locale', () 
   );
   const keys = Object.keys(locales[0]).sort();
   for (const entry of locales.slice(1)) assert.deepEqual(Object.keys(entry).sort(), keys);
+});
+
+test('each world owns its chrome: Munder Difflin and Monster Trainer ship separate, scoped skins', () => {
+  const app = source('src/renderer/src/App.tsx');
+  const main = source('src/renderer/src/main.tsx');
+  const brand = source('src/renderer/src/components/WorldBrand.tsx');
+  const office = source('src/renderer/src/design/skin-office.css');
+  const monster = source('src/renderer/src/design/skin-monster.css');
+  assert.match(main, /worlds\.css';[\s\S]*skin-office\.css';[\s\S]*skin-monster\.css'/, 'skins load after the shared layout so they can restyle it');
+  assert.match(app, /root\.dataset\.worldSkin = worldSkin/, 'the skin reaches dialogs and menus through <html>');
+  assert.match(app, /delete root\.dataset\.worldSkin/, 'the world picker and onboarding keep the neutral ISyCo look');
+  assert.match(app, /<WorldBrand skin=\{worldSkin\} \/>/);
+  assert.match(brand, /Munder <strong>Difflin<\/strong>/);
+  assert.match(brand, /Monster <strong>Village<\/strong>/);
+  for (const [name, css, id] of [['office', office, 'office'], ['monster', monster, 'monster-trainer']]) {
+    const selectors = css.replace(/\/\*[\s\S]*?\*\//g, '').split('}').map((rule) => rule.split('{')[0].trim()).filter(Boolean);
+    assert.ok(selectors.length > 40, `${name} skin restyles the shell`);
+    for (const selector of selectors) {
+      for (const part of selector.split(',')) {
+        assert.match(part, new RegExp(`data-world-skin='${id}'`), `${name} skin rule is scoped to its world: ${part.trim()}`);
+      }
+    }
+    assert.match(css, new RegExp(`data-cth-theme='dark'\\]\\[data-world-skin='${id}'`), `${name} skin has a dark variant`);
+    assert.doesNotMatch(css, /world-wood\.webp|--worlds-wood: url/, `${name} skin drops the shared timber material`);
+  }
 });

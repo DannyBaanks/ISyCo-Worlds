@@ -1,0 +1,235 @@
+/* Monster Trainer skin. A trainer's field device: night-teal bezel, grass and
+   sun accents, rounded cards with a thick dark outline and a chunky drop edge.
+   It replaces the timber and parchment of the neutral ISyCo chrome; layout
+   rules stay in worlds.css and the palette in tokens.css. */
+:root[data-world-skin='monster-trainer'] {
+  --mt-outline: #0b1a28;
+  --mt-night: #17324a;
+  --mt-night-light: #24506c;
+  --mt-steel: #4f86a6;
+  --mt-grass: #4fae5a;
+  --mt-grass-light: #7ed36f;
+  --mt-grass-dark: #2c6e36;
+  --mt-sun: #ffcf3f;
+  --mt-sun-light: #ffe27a;
+  --mt-berry: #d9472f;
+  --mt-berry-dark: #7a2318;
+  --mt-on-night: #e4f3f6;
+  --mt-card: #fcfff8;
+  --mt-card-ink: #1c2b3a;
+  --mt-rule: #4fae5a14;
+  --worlds-wood: none;
+  --worlds-chrome: linear-gradient(180deg, var(--mt-night-light), var(--mt-night));
+  --worlds-paper: repeating-linear-gradient(0deg, var(--mt-rule) 0 1px, transparent 1px 18px),
+    linear-gradient(var(--mt-card), var(--mt-card));
+  --worlds-page: var(--mt-card);
+  --worlds-page-edge: #b8cdb0;
+  --worlds-page-ink: var(--mt-card-ink);
+  --worlds-page-muted: #536779;
+  --worlds-rim: var(--mt-outline);
+  --worlds-brass: var(--mt-steel);
+  --worlds-on-wood: var(--mt-on-night);
+  --worlds-timber: var(--mt-night);
+  --worlds-title: var(--cth-font-display);
+}
+:root[data-cth-theme='dark'][data-world-skin='monster-trainer'] {
+  --mt-outline: #050d15;
+  --mt-night: #0f2436;
+  --mt-night-light: #1b3a50;
+  --mt-steel: #3b6885;
+  --mt-card: #11202d;
+  --mt-card-ink: #e8f3e6;
+  --mt-rule: #7fd08a12;
+  --worlds-page-edge: #2b4257;
+  --worlds-page-muted: #9db0ab;
+}
+
+/* Bezel and title bar. */
+:root[data-world-skin='monster-trainer'] .worlds-shell {
+  background:
+    radial-gradient(circle at 50% 0%, #3f9fd033, transparent 60%),
+    linear-gradient(180deg, #1d4a63 0%, var(--mt-night) 45%, #1c4a3c 100%) !important;
+  box-shadow: none;
+}
+:root[data-world-skin='monster-trainer'] .worlds-titlebar {
+  min-height: 64px !important;
+  background: linear-gradient(180deg, var(--mt-night-light), var(--mt-night)) !important;
+  border-bottom: 3px solid var(--mt-outline) !important;
+  box-shadow: inset 0 -3px 0 var(--mt-sun), inset 0 2px 0 #ffffff1f;
+}
+:root[data-world-skin='monster-trainer'] .worlds-titlebar > span,
+:root[data-world-skin='monster-trainer'] .worlds-selector > span { color: var(--mt-on-night) !important; }
+:root[data-world-skin='monster-trainer'] .worlds-titlebar .worlds-brand {
+  gap: 7px; padding: 5px 13px 4px 6px;
+  border: 3px solid var(--mt-outline); border-radius: 999px;
+  background: linear-gradient(var(--mt-sun-light), var(--mt-sun));
+  color: #1c2b3a; text-shadow: none;
+  box-shadow: 0 3px 0 var(--mt-outline), inset 0 2px 0 #ffffff80;
+  font-family: var(--cth-font-display); font-size: 9px; line-height: 16px;
+}
+:root[data-world-skin='monster-trainer'] .worlds-brand-mark {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid var(--mt-outline);
+  background: radial-gradient(circle at 36% 34%, #d9f7c2 0 20%, var(--mt-grass) 21% 100%);
+  box-shadow: inset -2px -2px 0 var(--mt-grass-dark);
+}
+
+/* Global tabs: rounded keys; the current one lights up. */
+:root[data-world-skin='monster-trainer'] .cth-globalnav-tab {
+  height: 32px !important;
+  font-family: var(--cth-font-display) !important; font-weight: 400; font-size: 8px !important; line-height: 12px !important;
+  padding: 4px 14px !important;
+  border: 2px solid #ffffff3d !important; border-radius: 999px !important;
+  background: #ffffff1a !important; color: var(--mt-on-night) !important;
+  box-shadow: none; text-shadow: none;
+}
+:root[data-world-skin='monster-trainer'] .cth-world-nav .cth-globalnav-tab { box-shadow: none; }
+:root[data-world-skin='monster-trainer'] .cth-globalnav-tab:hover { background: #ffffff38 !important; color: #ffffff !important; border-color: #ffffff80 !important; }
+:root[data-world-skin='monster-trainer'] .cth-globalnav-tab[aria-current='page'],
+:root[data-world-skin='monster-trainer'] .cth-globalnav-tab[aria-expanded='true'] {
+  background: linear-gradient(var(--mt-sun-light), var(--mt-sun)) !important; color: #1c2b3a !important;
+  border-color: var(--mt-outline) !important;
+  box-shadow: 0 3px 0 var(--mt-outline); text-shadow: none;
+}
+:root[data-world-skin='monster-trainer'] #cth-settings-menu { border: 3px solid var(--mt-outline); border-radius: 14px; box-shadow: 0 5px 0 var(--mt-outline); }
+:root[data-world-skin='monster-trainer'] .worlds-titlebar > button { border-radius: 50% !important; box-shadow: inset 0 0 0 2px var(--mt-outline), 0 2px 0 var(--mt-outline) !important; }
+
+/* The village screen and the party strip. */
+:root[data-world-skin='monster-trainer'] .worlds-wood-frame,
+:root[data-world-skin='monster-trainer'] .worlds-sidebar {
+  border: 3px solid var(--mt-outline); border-radius: 18px;
+  background: linear-gradient(180deg, var(--mt-night-light), var(--mt-night));
+  box-shadow: inset 0 0 0 2px var(--mt-steel), 0 5px 0 var(--mt-outline);
+}
+:root[data-world-skin='monster-trainer'] .worlds-stage,
+:root[data-world-skin='monster-trainer'] .worlds-world-column .worlds-stage {
+  border: 3px solid var(--mt-outline); border-radius: 12px; box-shadow: 0 0 0 2px var(--mt-steel);
+  background: #1c3b2c;
+}
+:root[data-world-skin='monster-trainer'] .worlds-hanging-sign {
+  padding: 6px 18px 5px;
+  border: 3px solid var(--mt-outline); border-radius: 999px;
+  color: #ffffff; background: linear-gradient(var(--mt-grass-light), var(--mt-grass));
+  box-shadow: 0 3px 0 var(--mt-outline), inset 0 2px 0 #ffffff66;
+  text-shadow: 0 2px 0 var(--mt-grass-dark);
+  font-family: var(--cth-font-display); font-weight: 400; font-size: 9px; line-height: 14px;
+}
+:root[data-world-skin='monster-trainer'] .worlds-hanging-sign::before,
+:root[data-world-skin='monster-trainer'] .worlds-hanging-sign::after { display: none; }
+:root[data-world-skin='monster-trainer'] .worlds-crew-sign,
+:root[data-world-skin='monster-trainer'] .worlds-status-ledger .worlds-hanging-sign {
+  font-size: 8px; padding-block: 4px 3px;
+  color: #1c2b3a; background: linear-gradient(var(--mt-sun-light), var(--mt-sun)); text-shadow: none;
+}
+:root[data-world-skin='monster-trainer'] .worlds-roster { background: transparent !important; box-shadow: none; border-top: 0 !important; }
+:root[data-world-skin='monster-trainer'] .cth-world-agent-strip { background-image: none !important; background-color: transparent !important; border-top: 0 !important; box-shadow: none; }
+:root[data-world-skin='monster-trainer'] .worlds-worker { border-radius: 16px; }
+:root[data-world-skin='monster-trainer'] .worlds-worker-sheet {
+  border-radius: 14px;
+  background-image: none !important; background-color: var(--mt-card) !important;
+  box-shadow: inset 0 0 0 3px var(--mt-outline), 0 4px 0 var(--mt-outline) !important;
+}
+:root[data-world-skin='monster-trainer'] .worlds-worker-sheet::before,
+:root[data-world-skin='monster-trainer'] .worlds-worker-sheet::after { display: none; }
+:root[data-world-skin='monster-trainer'] .worlds-worker[aria-pressed='true'] { outline: 3px solid var(--mt-sun); outline-offset: 3px; }
+:root[data-world-skin='monster-trainer'] .worlds-worker[data-coordinator] .worlds-worker-sheet { border-inline-start: 7px solid var(--mt-berry); }
+:root[data-world-skin='monster-trainer'] .worlds-worker-name > span:first-child > span { font-family: var(--cth-font-display) !important; font-size: 8px !important; font-weight: 400; }
+:root[data-world-skin='monster-trainer'] .worlds-village-viewport { background: radial-gradient(ellipse, #2c5a3a, #14291f) !important; }
+
+/* Command side: the trainer's notebook. */
+:root[data-world-skin='monster-trainer'] .worlds-command-slot { border-radius: 12px; }
+:root[data-world-skin='monster-trainer'] .worlds-ledger-book {
+  padding: 6px; background: linear-gradient(180deg, #2f6f8f, var(--mt-night-light));
+  border: 3px solid var(--mt-outline); border-radius: 14px; box-shadow: none;
+}
+:root[data-world-skin='monster-trainer'] .worlds-command > :first-child { border-bottom: 3px solid var(--mt-outline) !important; background-image: none !important; }
+:root[data-world-skin='monster-trainer'] .worlds-command > :first-child > :nth-child(2) > :first-child { font-size: 10px !important; line-height: 16px !important; }
+:root[data-world-skin='monster-trainer'] .worlds-command .cth-tabbar { background-image: none !important; background-color: var(--cth-cream-200) !important; }
+:root[data-world-skin='monster-trainer'] .worlds-command .cth-tabbar button { border-radius: 10px 10px 0 0 !important; }
+:root[data-world-skin='monster-trainer'] .worlds-command .worlds-book-spread > .cth-tabbar { background: var(--mt-night) !important; padding: 10px 4px !important; }
+:root[data-world-skin='monster-trainer'] .worlds-command .worlds-book-spread > .cth-tabbar button {
+  color: var(--mt-on-night) !important; background: #2f6f8f !important;
+  box-shadow: 0 2px 0 var(--mt-outline) !important; border-radius: 10px !important;
+}
+:root[data-world-skin='monster-trainer'] .worlds-command .worlds-book-spread > .cth-tabbar button[aria-pressed='true'] {
+  background: var(--mt-sun) !important; color: #1c2b3a !important; border-inline-start: 0 !important;
+  box-shadow: inset 0 0 0 2px var(--mt-outline), 0 2px 0 var(--mt-outline) !important;
+}
+:root[data-world-skin='monster-trainer'] .worlds-book-page { border-inline-start: 0; }
+:root[data-world-skin='monster-trainer'] .worlds-page-heading { font: 400 10px/18px var(--cth-font-display); border-bottom: 3px dotted var(--worlds-page-edge); }
+:root[data-world-skin='monster-trainer'] .worlds-command-nav-toggle {
+  border: 2px solid var(--mt-outline); border-radius: 10px !important; color: #1c2b3a;
+  background: var(--mt-sun); box-shadow: 0 2px 0 var(--mt-outline);
+  font: 400 10px/20px var(--cth-font-display);
+}
+:root[data-world-skin='monster-trainer'] .worlds-parchment-surface {
+  border: 3px solid var(--mt-outline); border-radius: 14px;
+  box-shadow: 0 4px 0 var(--mt-outline); background: var(--worlds-paper);
+}
+:root[data-world-skin='monster-trainer'] .worlds-status-ledger dd { font: 400 14px/26px var(--cth-font-display); color: var(--cth-mint); }
+
+/* Panels, dialogs and buttons. */
+:root[data-world-skin='monster-trainer'] .worlds-panel--dialog { border: 4px solid var(--mt-outline); border-radius: 20px; box-shadow: 0 8px 0 var(--mt-outline), 0 18px 40px #00000059 !important; overflow: hidden; }
+:root[data-world-skin='monster-trainer'] .worlds-panel-title {
+  background: linear-gradient(#49a9dc, #2f8fc4) !important; color: #ffffff !important;
+  font-family: var(--cth-font-display) !important; font-weight: 400; font-size: 10px !important; line-height: 16px !important;
+  text-shadow: 0 2px 0 #1b5f88;
+}
+:root[data-world-skin='monster-trainer'] .worlds-button { border-radius: 999px !important; background-image: none !important; }
+:root[data-world-skin='monster-trainer'] .worlds-button--primary:not(:disabled) {
+  background-color: var(--mt-berry) !important; color: #ffffff !important;
+  box-shadow: inset 0 0 0 2px var(--mt-berry-dark), 0 3px 0 var(--mt-berry-dark) !important;
+}
+:root[data-world-skin='monster-trainer'] .worlds-button--secondary:not(:disabled) { box-shadow: inset 0 0 0 2px var(--mt-outline), 0 3px 0 var(--mt-outline) !important; }
+:root[data-world-skin='monster-trainer'] .worlds-button:active:not(:disabled) { transform: translateY(2px); }
+:root[data-world-skin='monster-trainer'] .worlds-about-entry { border-radius: 12px; }
+:root[data-world-skin='monster-trainer'] .worlds-about-entry summary { font: 400 9px/20px var(--cth-font-display); }
+
+/* Settings and Marketplace. */
+:root[data-world-skin='monster-trainer'] .worlds-settings-book { border-radius: 16px; background: var(--worlds-paper) !important; }
+:root[data-world-skin='monster-trainer'] .worlds-settings-index {
+  background: var(--cth-cream-200) !important;
+  border-inline-end: 3px dashed var(--worlds-page-edge) !important;
+}
+:root[data-world-skin='monster-trainer'] .worlds-settings-index button { border-radius: 10px !important; }
+:root[data-world-skin='monster-trainer'] .worlds-settings-page { background: var(--worlds-paper); box-shadow: none; }
+:root[data-world-skin='monster-trainer'] .worlds-marketplace {
+  background: radial-gradient(circle at 50% 0%, #3f9fd033, transparent 60%), linear-gradient(180deg, #1d4a63, var(--mt-night) 55%, #1c4a3c) !important;
+}
+:root[data-world-skin='monster-trainer'] .worlds-market-awning {
+  border: 3px solid var(--mt-outline); border-radius: 14px 14px 20px 20px;
+  background: repeating-linear-gradient(90deg, var(--mt-berry) 0 58px, #ffffff 58px 116px);
+  box-shadow: 0 4px 0 var(--mt-outline);
+}
+:root[data-world-skin='monster-trainer'] .worlds-market-counter { border: 4px solid var(--mt-outline); border-top: 0; border-radius: 0 0 18px 18px; box-shadow: 0 6px 0 var(--mt-outline) !important; }
+:root[data-world-skin='monster-trainer'] .worlds-market-counter h1 { font-size: 14px !important; line-height: 24px !important; }
+:root[data-world-skin='monster-trainer'] .worlds-market-counter h2 { font-size: 9px !important; line-height: 16px !important; }
+:root[data-world-skin='monster-trainer'] .worlds-market-sign,
+:root[data-world-skin='monster-trainer'] .worlds-market-order { border: 3px solid var(--mt-outline); border-radius: 14px; box-shadow: 0 4px 0 var(--mt-outline); }
+:root[data-world-skin='monster-trainer'] .worlds-market-shelves { background: linear-gradient(var(--mt-night-light), var(--mt-night)); border: 3px solid var(--mt-outline); border-radius: 14px; }
+:root[data-world-skin='monster-trainer'] .worlds-market-shelves li { border-bottom: 4px solid var(--mt-sun); border-radius: 10px 10px 0 0; }
+:root[data-world-skin='monster-trainer'] .worlds-shell :focus-visible { outline: 3px solid var(--mt-sun); outline-offset: 2px; }
+
+/* Village HUD cards share the device language. */
+:root[data-world-skin='monster-trainer'] .monster-village-hud { color: var(--mt-card-ink); }
+:root[data-world-skin='monster-trainer'] .monster-village-panel {
+  background: var(--mt-card);
+  border: 3px solid var(--mt-outline); border-radius: 12px;
+  box-shadow: 0 3px 0 var(--mt-outline);
+}
+:root[data-world-skin='monster-trainer'] .monster-village-panel-heading { border-bottom: 2px dotted var(--worlds-page-edge); font: 400 8px/14px var(--cth-font-display); }
+:root[data-world-skin='monster-trainer'] .monster-village-source-badge { border-radius: 999px; padding-inline: 6px; background: var(--mt-grass); border-color: var(--mt-grass-dark); }
+:root[data-world-skin='monster-trainer'] .monster-village-source-badge--world { background: #8370d6; border-color: #4d3f95; }
+:root[data-world-skin='monster-trainer'] .monster-village-task-counts span { border-color: var(--worlds-page-edge); border-radius: 8px; background: var(--cth-paper-200); }
+:root[data-world-skin='monster-trainer'] .monster-village-agent-row,
+:root[data-world-skin='monster-trainer'] .monster-village-mission-row { color: var(--mt-card-ink); background: transparent; border-radius: 8px !important; }
+:root[data-world-skin='monster-trainer'] .monster-village-agent-row:hover,
+:root[data-world-skin='monster-trainer'] .monster-village-mission-row:hover,
+:root[data-world-skin='monster-trainer'] .monster-village-mission-row.is-selected { background: var(--cth-lemon-light); border-color: var(--mt-sun); }
+:root[data-world-skin='monster-trainer'] .monster-village-selected-mission { background: var(--cth-paper-200); border: 2px solid var(--worlds-page-edge); border-radius: 10px; }
+:root[data-world-skin='monster-trainer'] .monster-village-stage { border-radius: 999px; background: #8370d6; }
+:root[data-world-skin='monster-trainer'] .monster-village-status-chip { border-radius: 999px; }
+:root[data-world-skin='monster-trainer'] .monster-village-statline b,
+:root[data-world-skin='monster-trainer'] .monster-village-simulation-row b { font: 400 10px/16px var(--cth-font-display); }
+:root[data-world-skin='monster-trainer'] [data-world-loading] { color: #e4f3f6; font-family: var(--cth-font-display); font-size: 9px; }
+:root[data-world-skin='monster-trainer'] .worlds-titlebar > span.cth-tip { background: var(--mt-sun) !important; color: #1c2b3a !important; border-radius: 999px; padding-inline: 8px !important; box-shadow: inset 0 0 0 2px var(--mt-outline) !important; }

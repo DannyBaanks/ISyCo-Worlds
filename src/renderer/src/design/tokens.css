@@ -172,58 +172,58 @@
   --cth-shadow-hard: 4px 4px 0 rgba(0, 0, 0, 0.45);
 }
 
-/* Monster Trainer's visual skin is intentionally scoped to its live app shell.
-   Office and the standalone Worlds picker continue to use the Munder palette. */
+/* Monster Trainer's palette is scoped to its live app shell: a trainer's field
+   device in night teal, grass green and sun yellow. Munder Difflin and the
+   world picker keep their own. The look itself lives in skin-monster.css. */
 .cth-app-shell[data-world-skin='monster-trainer'] {
-  --cth-cream-50: #fffaf0;
-  --cth-cream-100: #eee3cd;
-  --cth-cream-200: #d7c09c;
-  --cth-cream-300: #c1a478;
-  --cth-paper-100: #fffaf0;
-  --cth-paper-200: #f1e5ce;
-  --cth-ink-900: #332319;
-  --cth-ink-700: #59402e;
-  --cth-ink-500: #785e46;
-  --cth-ink-300: #927755;
-  --cth-ink-100: #d1bd9e;
-  --cth-coral: #b85e4b; --cth-coral-light: #f1d4c7;
-  --cth-mint: #5b8754; --cth-mint-light: #dce8cd;
-  --cth-sky: #4b8490; --cth-sky-light: #d6e8e8;
-  --cth-lemon: #d2a94b; --cth-lemon-light: #f3e4b8;
-  --cth-lilac: #8873aa; --cth-lilac-light: #e7dded;
-  --cth-peach: #c77c50; --cth-peach-light: #f0dcc7;
-  --cth-on-accent: #332319;
-  --cth-world-wall: #eee3cd;
-  --cth-world-wood: #795032;
-  --cth-world-trim: #c79555;
-  --cth-world-titlebar: linear-gradient(180deg, #f1e6cf 0%, #d8c09a 100%);
+  --cth-cream-50: #fbfff4;
+  --cth-cream-100: #eef7e2;
+  --cth-cream-200: #dcecc8;
+  --cth-cream-300: #c3dba8;
+  --cth-paper-100: #fcfff8;
+  --cth-paper-200: #edf6e4;
+  --cth-ink-900: #1c2b3a;
+  --cth-ink-700: #33475c;
+  --cth-ink-500: #536779;
+  --cth-ink-300: #7d92a4;
+  --cth-ink-100: #cbd8e0;
+  --cth-coral: #d9472f; --cth-coral-light: #fbd9d0;
+  --cth-mint: #3f9a4b; --cth-mint-light: #d6efd2;
+  --cth-sky: #2f8fc4; --cth-sky-light: #d3e9f6;
+  --cth-lemon: #ffcf3f; --cth-lemon-light: #fff1c2;
+  --cth-lilac: #8370d6; --cth-lilac-light: #e4defa;
+  --cth-peach: #e98345; --cth-peach-light: #fbe0cc;
+  --cth-on-accent: #1c2b3a;
+  --cth-world-wall: #eef7e2;
+  --cth-world-wood: #0b1a28;
+  --cth-world-trim: #4f86a6;
+  --cth-world-titlebar: linear-gradient(180deg, #24506c 0%, #17324a 100%);
   color-scheme: light;
   background-color: var(--cth-world-wall);
-  box-shadow: inset 0 0 0 4px var(--cth-world-wood), inset 0 0 0 6px var(--cth-world-trim);
 }
 
 :root[data-cth-theme='dark'] .cth-app-shell[data-world-skin='monster-trainer'] {
-  --cth-cream-50: #1b1916;
-  --cth-cream-100: #25221d;
-  --cth-cream-200: #312b22;
-  --cth-cream-300: #43382b;
-  --cth-paper-100: #211f1a;
-  --cth-paper-200: #2b2821;
-  --cth-ink-900: #f0e6d3;
-  --cth-ink-700: #d3c3a5;
-  --cth-ink-500: #ad9b7f;
-  --cth-ink-300: #8b7a61;
-  --cth-ink-100: #484033;
-  --cth-coral: #df8b75; --cth-coral-light: #482c27;
-  --cth-mint: #91b879; --cth-mint-light: #293523;
-  --cth-sky: #83bac0; --cth-sky-light: #25383a;
-  --cth-lemon: #d8b85e; --cth-lemon-light: #39311e;
-  --cth-lilac: #b4a2d0; --cth-lilac-light: #332b3d;
-  --cth-peach: #e3a77d; --cth-peach-light: #3b2c21;
-  --cth-on-accent: #271e16;
-  --cth-world-wall: #25221d;
-  --cth-world-wood: #110e0b;
-  --cth-world-trim: #80603d;
-  --cth-world-titlebar: linear-gradient(180deg, #383026 0%, #29231b 100%);
+  --cth-cream-50: #0e1a26;
+  --cth-cream-100: #132331;
+  --cth-cream-200: #1b3042;
+  --cth-cream-300: #26425a;
+  --cth-paper-100: #11202d;
+  --cth-paper-200: #182c3d;
+  --cth-ink-900: #e8f3e6;
+  --cth-ink-700: #c2d3c8;
+  --cth-ink-500: #9db0ab;
+  --cth-ink-300: #6f8792;
+  --cth-ink-100: #2b4257;
+  --cth-coral: #f0806c; --cth-coral-light: #47241f;
+  --cth-mint: #7fd08a; --cth-mint-light: #1c3a26;
+  --cth-sky: #74c0ea; --cth-sky-light: #1a3548;
+  --cth-lemon: #ffd866; --cth-lemon-light: #40371a;
+  --cth-lilac: #b0a2ef; --cth-lilac-light: #2c2748;
+  --cth-peach: #f2a472; --cth-peach-light: #432b1c;
+  --cth-on-accent: #0f2436;
+  --cth-world-wall: #132331;
+  --cth-world-wood: #050d15;
+  --cth-world-trim: #3b6885;
+  --cth-world-titlebar: linear-gradient(180deg, #1b3a50 0%, #0f2436 100%);
   color-scheme: dark;
 }
