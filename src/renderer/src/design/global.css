@@ -171,62 +171,55 @@ canvas, img, svg { image-rendering: pixelated; image-rendering: crisp-edges; }
   box-shadow: inset 0 0 0 1px var(--cth-ink-300) !important;
 }
 
-/* Monster Trainer: the app chrome becomes a small field-station built from
-   timber, stone and parchment cues. TUI cells keep their own opaque palette. */
+/* Monster Trainer: marker classes on the existing panels, navigation, terminal
+   and agent strip. They only carry the device bezel; the full look is in
+   skin-monster.css. TUI cells keep their own opaque palette. */
 .cth-app-shell[data-world-skin='monster-trainer'] {
   isolation: isolate;
   background-color: var(--cth-world-wall);
 }
 .cth-app-shell[data-world-skin='monster-trainer'] .cth-world-titlebar {
   border-bottom: 3px solid var(--cth-world-wood) !important;
-  box-shadow: inset 0 -1px 0 var(--cth-world-trim);
 }
 .cth-app-shell[data-world-skin='monster-trainer'] .cth-world-nav {
   align-self: stretch;
-  border-inline-start: 1px solid var(--cth-world-trim);
   padding-inline-start: 5px;
-}
-.cth-app-shell[data-world-skin='monster-trainer'] .cth-world-nav .cth-globalnav-tab {
-  border-inline: 1px solid color-mix(in srgb, var(--cth-world-wood) 45%, transparent);
-  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--cth-world-trim) 60%, transparent);
 }
 .cth-app-shell[data-world-skin='monster-trainer'] .cth-world-sidebar {
   background: var(--cth-world-wall);
-  box-shadow: inset 3px 0 0 var(--cth-world-trim);
 }
 .cth-app-shell[data-world-skin='monster-trainer'] .cth-world-panel {
-  background-color: var(--cth-world-wall) !important;
-  box-shadow: inset 0 0 0 3px var(--cth-world-wood), inset 0 0 0 5px var(--cth-world-trim) !important;
+  background-color: var(--cth-paper-100) !important;
+  box-shadow: none !important;
+  border-radius: 10px;
 }
 .cth-app-shell[data-world-skin='monster-trainer'] .cth-world-command-panel > div:first-child {
-  background-image: linear-gradient(180deg, color-mix(in srgb, var(--cth-world-trim) 24%, var(--cth-cream-100)), var(--cth-cream-100));
+  background-image: none;
   border-bottom-color: var(--cth-world-wood) !important;
 }
 .cth-app-shell[data-world-skin='monster-trainer'] .cth-world-terminal {
   min-width: 0;
-  background: #17150f;
-  box-shadow: inset 0 0 0 3px var(--cth-world-wood), inset 0 0 0 4px var(--cth-world-trim);
+  background: #0c1722;
+  box-shadow: inset 0 0 0 3px var(--cth-world-wood);
 }
 .cth-app-shell[data-world-skin='monster-trainer'] .cth-world-terminal .xterm,
 .cth-app-shell[data-world-skin='monster-trainer'] .cth-world-terminal .xterm-screen {
-  background-color: #17150f;
+  background-color: #0c1722;
 }
 .cth-app-shell[data-world-skin='monster-trainer'] .cth-world-agent-strip {
   background-color: var(--cth-cream-200) !important;
-  background-image: repeating-linear-gradient(90deg,
-    transparent 0 30px,
-    color-mix(in srgb, var(--cth-world-wood) 12%, transparent) 30px 32px);
-  border-top: 4px solid var(--cth-world-wood) !important;
-  box-shadow: inset 0 2px 0 var(--cth-world-trim);
+  border-top: 3px solid var(--cth-world-wood) !important;
 }
 .cth-app-shell[data-world-skin='monster-trainer'] button,
-.cth-app-shell[data-world-skin='monster-trainer'] input,
-.cth-app-shell[data-world-skin='monster-trainer'] textarea,
 .cth-app-shell[data-world-skin='monster-trainer'] select {
-  border-radius: 0 !important;
+  border-radius: 10px !important;
+}
+.cth-app-shell[data-world-skin='monster-trainer'] input,
+.cth-app-shell[data-world-skin='monster-trainer'] textarea {
+  border-radius: 8px !important;
 }
 .cth-app-shell[data-world-skin='monster-trainer'] :focus-visible {
-  outline-color: var(--cth-world-wood);
+  outline-color: var(--cth-lemon);
 }
 
 /* First-run setup uses the same field-station language as Monster Trainer:

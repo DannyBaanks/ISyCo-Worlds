@@ -4,6 +4,8 @@ import { App } from './App';
 import brandLogo from '@brand/logo.png?url';
 import './design/global.css';
 import './design/worlds.css';
+import './design/skin-office.css';
+import './design/skin-monster.css';
 import './i18n';
 
 const favicon = document.createElement('link');

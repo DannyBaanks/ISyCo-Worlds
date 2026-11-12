@@ -104,7 +104,8 @@ export function App() {
   const [closing, setClosing] = useState<ClosingTimeState | null>(null);
   const [vpWidth, setVpWidth] = useState<number>(window.innerWidth);
   const density = navDensity(vpWidth);
-  const worldSkin = worldProfileStatus?.activeProfileId === 'monster-trainer' ? 'monster-trainer' : undefined;
+  // Each world owns its chrome: Munder Difflin reads as the paper office, Monster Trainer as a trainer's field device.
+  const worldSkin = worldProfileStatus?.activeProfileId === 'monster-trainer' ? 'monster-trainer' : 'office';
   const activeWorldProfileId = worldProfileStatus?.activeProfileId === 'monster-trainer' ? 'monster-trainer' : 'office';
   const worldPresentationSuspended = shouldSuspendWorldPresentation({
     globalView,
@@ -332,6 +333,17 @@ export function App() {
     useStore.getState().restoreFocusMode();
   }, [config?.onboardingComplete, agents]);
 
+  // The skin also lives on <html> so dialogs, menus and tooltips rendered above
+  // the shell share it. The world picker and onboarding keep the neutral ISyCo look.
+  const shellVisible = !!config?.onboardingComplete && hiveOpened && worldProfileStatusReady
+    && !shouldShowWorldStartScreen({ onboardingComplete: config.onboardingComplete, hiveOpened, activeProfileId: worldProfileStatus?.activeProfileId });
+  useEffect(() => {
+    const root = document.documentElement;
+    if (shellVisible) root.dataset.worldSkin = worldSkin;
+    else delete root.dataset.worldSkin;
+    return () => { delete root.dataset.worldSkin; };
+  }, [shellVisible, worldSkin]);
+
   // Track viewport width for splitter clamping
   useEffect(() => {
     const onResize = () => setVpWidth(window.innerWidth);
@@ -392,7 +404,7 @@ export function App() {
           userSelect: 'none'
         }}
       >
-        <div className="worlds-system-stamp"><WorldBrand />
+        <div className="worlds-system-stamp"><WorldBrand skin={worldSkin} />
         {/* v0.3.7: the version is no longer inert text — it doubles as the
             update control (check / download / restart to update). */}
         <UpdateBadge /></div>
