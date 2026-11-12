@@ -5,6 +5,7 @@ import type { CanonicalWorldSnapshot, VisualTransition, WorldAgent, WorldTask } 
 import type { EvolutionStage } from './monsterArt';
 import { formatSimulationClock, type MonsterVillageGameState, type SimulationSpeed } from './worldSimulation';
 import { objectiveById } from '@shared/monsterVillageDemo';
+import { placeForAgent, VILLAGE_PLACE_LABEL_KEYS } from './villagePlaces';
 
 type Props = {
   snapshot: CanonicalWorldSnapshot;
@@ -54,14 +55,6 @@ function stateLabel(state: WorldAgent['state'], t: (key: string) => string): str
   if (state === 'blocked') return t('worldsVisual.statusBlocked');
   if (state === 'idle') return t('worldsVisual.statusIdle');
   return t('worldsVisual.statusOther');
-}
-
-function stationLabel(station: string | undefined, t: (key: string) => string): string {
-  if (station === 'shelf' || station === 'web' || station === 'mcp') return t('worldsVisual.stationResearch');
-  if (station === 'terminal' || station === 'board') return t('worldsVisual.stationCare');
-  if (station === 'mailbox') return t('worldsVisual.stationProfessor');
-  if (station) return station;
-  return t('worldsVisual.neutral');
 }
 
 function agentName(snapshot: CanonicalWorldSnapshot, id: string | null): string {
@@ -161,7 +154,7 @@ export function MonsterVillageHud({
               <span className="monster-village-agent-dot" data-state={agent.state} aria-hidden="true" />
               <span className="monster-village-agent-copy">
                 <b>{agent.name}</b>
-                <small>{stateLabel(agent.state, t)} · {stationLabel(agent.station, t)}{agent.tool ? ` · ${agent.tool}` : ` · ${t('worldsVisual.neutral')}`}</small>
+                <small>{agent.isGod ? `${t('worldsVisual.roleProfessor')} · ` : ''}{stateLabel(agent.state, t)} · {t(VILLAGE_PLACE_LABEL_KEYS[placeForAgent(agent, snapshot.tasks)])}{agent.tool ? ` · ${agent.tool}` : ''}</small>
               </span>
               <span className="monster-village-stage" title={t('worldsVisual.worldOnly')}>{growthStageForAgent(agent.id)}</span>
             </button>

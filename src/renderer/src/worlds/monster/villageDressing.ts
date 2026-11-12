@@ -26,6 +26,8 @@ export const PROP_VISUALS: Readonly<Record<string, { width: number; height: numb
 
 /** Chimney mouths in building-frame pixels, for the smoke emitters. */
 export const CHIMNEYS: Readonly<Record<string, { x: number; y: number }>> = {
+  library: { x: 44, y: 11 },
+  workshop: { x: 44, y: 11 },
   laboratory: { x: 65, y: 15 },
   'stable-building': { x: 36, y: 9 },
   'village-home': { x: 44, y: 11 }
@@ -97,6 +99,8 @@ export function borderForestCells(model: VillageGroundModel): { x: number; y: nu
   return cells;
 }
 
+const PAINTED_ON_GROUND_LINE = new Set(['observatory', 'portal']);
+const GROUND_SHADOW_PROPS = new Set(['notice-board', 'mailbox', 'well', 'campfire', 'bench', 'barrel', 'hay-bale', 'anvil', 'log-pile', 'training-dummy', 'market-stall']);
 const GRASS_TONES = ['#5c9a2c', '#69a332', '#538f2a'] as const;
 const FLOWER_TONES = ['#fff6d8', '#ffd84a', '#ff9ec4', '#b9a2ff', '#ff7a5c', '#9fe0ff'] as const;
 
@@ -289,9 +293,12 @@ function paintShadows(ctx: CanvasRenderingContext2D, composition: WorldCompositi
     const w = object.footprint.width * TILE; const h = object.footprint.height * TILE;
     if (object.kind === 'structure') {
       // The rasters are three-quarter views; the light comes from the upper left.
-      softShadow(ctx, ox + w / 2 + 3, oy + h - 13, w * 0.46, 8, 0.3);
+      // Code-painted structures stand right on their ground line; the rasters carry bottom padding.
+      if (PAINTED_ON_GROUND_LINE.has(placement.definitionId)) softShadow(ctx, ox + w / 2 + 2, oy + h - 2, w * 0.5, 5, 0.3);
+      else softShadow(ctx, ox + w / 2 + 3, oy + h - 13, w * 0.46, 8, 0.3);
       continue;
     }
+    if (GROUND_SHADOW_PROPS.has(placement.definitionId)) { softShadow(ctx, ox + w / 2 + 1, oy + h - 1, w * 0.46, 3, 0.28); continue; }
     if (placement.definitionId === 'fence-horizontal') { px(ctx, 'rgba(18, 38, 26, 0.28)', ox, oy + TILE - 1, TILE, 2); continue; }
     if (placement.definitionId === 'fence-vertical') { px(ctx, 'rgba(18, 38, 26, 0.24)', ox + 9, oy, 3, TILE); continue; }
     const visual = PROP_VISUALS[placement.definitionId];
@@ -354,9 +361,9 @@ function radial(size: number, stops: readonly [number, string][], squash = 1): H
   return canvas;
 }
 
-/** Warm additive halo for lanterns and lit windows. */
+/** Neutral additive halo; the scene tints it (warm for lanterns and windows, violet for the portal). */
 export function glowTexture(): Texture {
-  return shared('glow', () => radial(64, [[0, 'rgba(255, 214, 120, 0.85)'], [0.35, 'rgba(255, 170, 70, 0.32)'], [1, 'rgba(255, 150, 40, 0)']]));
+  return shared('glow', () => radial(64, [[0, 'rgba(255, 255, 255, 0.85)'], [0.35, 'rgba(255, 255, 255, 0.32)'], [1, 'rgba(255, 255, 255, 0)']]));
 }
 
 /** Soft blob used for drifting cloud shadows. */

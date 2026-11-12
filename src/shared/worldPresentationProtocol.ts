@@ -27,6 +27,7 @@ export interface WorldPresentationProjection {
     monsterCharacter?: 'agua' | 'fuego' | 'electricidad' | 'oscuridad' | 'luz' | 'aire' | 'leaf' | 'fire' | 'water';
     station?: string;
     tool?: string;
+    isGod?: boolean;
   }>;
   tasks: Array<{ id: string; title: string; assignee: string | null; status: string; awaitsHuman: boolean; worldDemo?: MonsterVillageDemoState }>;
   activity?: WorldPresentationActivity[];
@@ -90,7 +91,8 @@ const validProjection = (value: unknown): value is WorldPresentationProjection =
     && p.agents.every((a) => !!a && validId(a.id) && typeof a.name === 'string' && states.includes(a.state) && typeof a.archived === 'boolean'
       && (a.monsterCharacter === undefined || monsterCharacters.includes(a.monsterCharacter))
       && (a.station === undefined || validLabel(a.station))
-      && (a.tool === undefined || validLabel(a.tool)))
+      && (a.tool === undefined || validLabel(a.tool))
+      && (a.isGod === undefined || typeof a.isGod === 'boolean'))
     && p.tasks.every((t) => !!t && validId(t.id) && typeof t.title === 'string' && (t.assignee === null || validId(t.assignee)) && typeof t.status === 'string' && typeof t.awaitsHuman === 'boolean')
     && p.tasks.every((t) => t.worldDemo === undefined || isMonsterVillageDemoState(t.worldDemo))
     && (p.activity === undefined || (Array.isArray(p.activity) && p.activity.every((item) => !!item

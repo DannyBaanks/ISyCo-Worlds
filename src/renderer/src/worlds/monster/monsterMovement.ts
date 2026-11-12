@@ -10,8 +10,9 @@ import {
   type ScenarioAnchorId
 } from './StarterVillageScenario';
 import { visualStateFor, type MonsterVisualState } from './monsterArt';
+import { placeForAgent, VILLAGE_PLACE_IDS, type VillagePlaceId } from './villagePlaces';
 
-export type WorkerDestination = 'professor' | 'stable' | 'training-grass' | 'village-idle' | 'route-exit';
+export type WorkerDestination = VillagePlaceId;
 export type WorkerDirection = 'up' | 'right' | 'down' | 'left';
 export type WorkerAnimation = 'idle' | 'walk' | 'work' | 'blocked' | 'waiting';
 
@@ -52,7 +53,9 @@ interface WorkerMotionRecord extends WorkerMotionSnapshot {
 
 const SOLID_OBJECTS = new Set([
   'laboratory', 'stable', 'village-home', 'tree', 'shrub', 'rock', 'crate',
-  'fence-horizontal', 'fence-vertical', 'fence-post'
+  'fence-horizontal', 'fence-vertical', 'fence-post',
+  'library', 'workshop', 'observatory', 'portal', 'notice-board', 'mailbox', 'well', 'campfire',
+  'bench', 'barrel', 'hay-bale', 'anvil', 'log-pile', 'training-dummy', 'market-stall'
 ]);
 const DIRECTION_STEPS: ReadonlyArray<readonly [number, number, WorkerDirection]> = [
   [0, -1, 'up'], [1, 0, 'right'], [0, 1, 'down'], [-1, 0, 'left']
@@ -120,16 +123,8 @@ export function findTilePath(grid: VillageNavigationGrid, start: GridPoint, goal
 }
 
 /** Runtime facts only choose a visual destination; they never write tasks or agent state. */
-export function destinationForWorker(agent: Pick<WorldAgent, 'id' | 'state' | 'station' | 'tool'>, tasks: readonly WorldTask[]): WorkerDestination {
-  if (tasks.some((task) => task.assignee === agent.id && task.awaitsHuman)) return 'professor';
-  if (agent.state === 'blocked') return 'professor';
-  // Hook/PTY station facts are the only reason to choose a specialized building.
-  // Missing or unknown facts intentionally fall back to the neutral training field.
-  if (agent.state === 'working' && ['shelf', 'web', 'mcp'].includes(agent.station ?? '')) return 'professor';
-  if (agent.state === 'working' && ['terminal', 'board'].includes(agent.station ?? '')) return 'stable';
-  if (agent.state === 'working') return 'training-grass';
-  if (agent.state === 'waiting') return 'village-idle';
-  return 'village-idle';
+export function destinationForWorker(agent: Pick<WorldAgent, 'id' | 'state' | 'station' | 'tool' | 'isGod'>, tasks: readonly WorldTask[]): WorkerDestination {
+  return placeForAgent(agent, tasks);
 }
 
 export function createTileWalker(path: readonly GridPoint[], tileSize = STARTER_VILLAGE_TILE_SIZE): TileWalker {
@@ -181,13 +176,7 @@ function directionBetween(from: GridPoint, to: GridPoint): WorkerDirection {
 }
 
 function anchorPlacements(composition: WorldCompositionV1): Record<ScenarioAnchorId, GridPoint> {
-  return {
-    professor: resolveStarterVillageAnchor(composition, 'professor'),
-    stable: resolveStarterVillageAnchor(composition, 'stable'),
-    'training-grass': STARTER_VILLAGE_SCENARIO.anchorPlacements['training-grass'],
-    'village-idle': STARTER_VILLAGE_SCENARIO.anchorPlacements['village-idle'],
-    'route-exit': STARTER_VILLAGE_SCENARIO.anchorPlacements['route-exit']
-  };
+  return Object.fromEntries(VILLAGE_PLACE_IDS.map((id) => [id, resolveStarterVillageAnchor(composition, id)])) as Record<ScenarioAnchorId, GridPoint>;
 }
 
 function nearestOpenTile(grid: VillageNavigationGrid, origin: GridPoint, reserved: Set<string>): GridPoint | null {
@@ -240,7 +229,7 @@ export class MonsterWorkerMotion {
     activeAgents.forEach((agent, index) => {
       let actor = this.actors.get(agent.id);
       if (!actor) {
-        const preferred = index === 0 ? anchors.stable : anchors['village-idle'];
+        const preferred = agent.isGod ? anchors.professor : index === 0 ? anchors.stable : anchors['village-idle'];
         const spawn = nearestOpenTile(this.grid!, preferred, spawnReserved) ?? preferred;
         const walker = createTileWalker([spawn]);
         actor = {

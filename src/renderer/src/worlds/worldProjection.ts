@@ -15,6 +15,8 @@ export interface WorldAgent {
   archived: boolean;
   /** Selected Monster Village roster sprite; absent for legacy/default records. */
   monsterCharacter?: MonsterRosterCharacter;
+  /** The coordinator (Hive orchestrator). Monster Village shows it as the Professor. */
+  isGod?: boolean;
   /** Live station inferred by the existing hook/PTY read layer, when present. */
   station?: string;
   /** Last tool kind reported by the existing hook/PTY read layer, when present. */
@@ -90,6 +92,7 @@ export function normalizeWorldSnapshot(agents: unknown, rawTasks: unknown, rawAc
       name: stringField(agent.name) ?? id,
       state: normalizeAgentState(agent.status),
       archived: agent.archived === true,
+      ...(agent.isGod === true ? { isGod: true } : {}),
       ...(monsterCharacter ? { monsterCharacter } : {}),
       ...(station ? { station } : {}),
       ...(tool ? { tool } : {})
