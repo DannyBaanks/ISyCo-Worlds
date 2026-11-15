@@ -82,6 +82,8 @@ function transitionDetail(transition: VisualTransition, snapshot: CanonicalWorld
 
 /** Which HUD cards are expanded. Every card starts folded to a one-line tab so
  *  the village stays visible; the choice is a per-viewer convenience. */
+const STAGE_LABEL_KEYS: Record<EvolutionStage, string> = { baby: 'worldsVisual.stageBaby', middle: 'worldsVisual.stageMiddle', final: 'worldsVisual.stageFinal' };
+
 const HUD_OPEN_KEY = 'cth.villageHud.open';
 type HudPanelId = 'ops' | 'missions' | 'demo' | 'simulation' | 'activity';
 
@@ -183,7 +185,7 @@ export function MonsterVillageHud({
                   <b>{agent.name}</b>
                   <small>{agent.isGod ? `${t('worldsVisual.roleProfessor')} · ` : ''}{stateLabel(agent.state, t)} · {t(VILLAGE_PLACE_LABEL_KEYS[placeForAgent(agent, snapshot.tasks)])}{agent.tool ? ` · ${agent.tool}` : ''}</small>
                 </span>
-                <span className="monster-village-stage" title={t('worldsVisual.worldOnly')}>{t(`worldsVisual.stage.${growthStageForAgent(agent.id)}`)}</span>
+                <span className="monster-village-stage" title={t('worldsVisual.worldOnly')}>{t(STAGE_LABEL_KEYS[growthStageForAgent(agent.id)])}</span>
               </button>
             )) : <span className="monster-village-empty">{t('worldsVisual.noAgents')}</span>}
           </div>

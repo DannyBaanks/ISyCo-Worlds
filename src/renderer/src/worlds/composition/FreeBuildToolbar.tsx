@@ -61,16 +61,16 @@ export function FreeBuildToolbar(props: FreeBuildToolbarProps) {
   };
 
   return (
-    <section aria-label={t('worldsVisual.build.label', { defaultValue: 'Village composition controls' })} data-free-build-toolbar={props.mode}
+    <section aria-label={t('worldsVisual.buildLabel', { defaultValue: 'Village composition controls' })} data-free-build-toolbar={props.mode}
       className="village-build-bar">
       <header>
-        <button type="button" className="village-build-key" aria-pressed={props.mode === 'explore'} onClick={() => props.onModeChange('explore')}>{t('worldsVisual.build.explore', { defaultValue: 'Explore' })}</button>
-        <button type="button" className="village-build-key" aria-pressed={props.mode === 'build'} onClick={() => props.onModeChange('build')}>{t('worldsVisual.build.build', { defaultValue: 'Build' })}</button>
+        <button type="button" className="village-build-key" aria-pressed={props.mode === 'explore'} onClick={() => props.onModeChange('explore')}>{t('worldsVisual.buildExplore', { defaultValue: 'Explore' })}</button>
+        <button type="button" className="village-build-key" aria-pressed={props.mode === 'build'} onClick={() => props.onModeChange('build')}>{t('worldsVisual.buildBuild', { defaultValue: 'Build' })}</button>
         <span className="village-build-zoom">{props.zoomPercent}%</span>
-        <button type="button" className="village-build-key" onClick={props.onFit}>{t('worldsVisual.build.fit', { defaultValue: 'Fit' })}</button>
+        <button type="button" className="village-build-key" onClick={props.onFit}>{t('worldsVisual.buildFit', { defaultValue: 'Fit' })}</button>
       </header>
       {props.mode === 'build' && <>
-        <p>{t('worldsVisual.build.hint', { defaultValue: 'Pick a piece, then click the map. Wheel zooms. Middle-drag looks around.' })}</p>
+        <p>{t('worldsVisual.buildHint', { defaultValue: 'Pick a piece, then click the map. Wheel zooms. Middle-drag looks around.' })}</p>
         <div className="village-build-row">
           {props.catalog.map((item) => {
             const pressed = props.tool.kind === 'place' && props.tool.definitionId === item.id;
@@ -78,24 +78,24 @@ export function FreeBuildToolbar(props: FreeBuildToolbarProps) {
           })}
         </div>
         <div className="village-build-row">
-          <button type="button" aria-pressed={props.tool.kind === 'move'} className="village-build-key" onClick={() => props.onToolChange({ kind: 'move' })}>{t('worldsVisual.build.move', { defaultValue: 'Move' })}</button>
+          <button type="button" aria-pressed={props.tool.kind === 'move'} className="village-build-key" onClick={() => props.onToolChange({ kind: 'move' })}>{t('worldsVisual.buildMove', { defaultValue: 'Move' })}</button>
           {props.terrainIds.map((id) => {
             const pressed = props.tool.kind === 'paint' && props.tool.terrainId === id;
             return <button type="button" key={id} aria-pressed={pressed} className="village-build-key" onClick={() => props.onToolChange({ kind: 'paint', terrainId: id })}>{id}</button>;
           })}
-          <button type="button" aria-pressed={props.tool.kind === 'paint' && props.tool.terrainId === null} className="village-build-key" onClick={() => props.onToolChange({ kind: 'paint', terrainId: null })}>{t('worldsVisual.build.erase', { defaultValue: 'Erase' })}</button>
+          <button type="button" aria-pressed={props.tool.kind === 'paint' && props.tool.terrainId === null} className="village-build-key" onClick={() => props.onToolChange({ kind: 'paint', terrainId: null })}>{t('worldsVisual.buildErase', { defaultValue: 'Erase' })}</button>
         </div>
         <div className="village-build-row">
-          <span>{t('worldsVisual.build.city', { defaultValue: 'City' })} {columns}×{rows}</span>
-          <button type="button" className="village-build-key" disabled={columns + CITY_EXPAND_STEP > MAX_CITY_SPAN} onClick={() => grow(columns + CITY_EXPAND_STEP, rows)}>{t('worldsVisual.build.wider', { defaultValue: 'Wider' })}</button>
-          <button type="button" className="village-build-key" disabled={rows + CITY_EXPAND_STEP > MAX_CITY_SPAN} onClick={() => grow(columns, rows + CITY_EXPAND_STEP)}>{t('worldsVisual.build.taller', { defaultValue: 'Taller' })}</button>
-          <button type="button" className="village-build-key" disabled={columns + CITY_EXPAND_STEP > MAX_CITY_SPAN || rows + CITY_EXPAND_STEP > MAX_CITY_SPAN} onClick={() => grow(columns + CITY_EXPAND_STEP, rows + CITY_EXPAND_STEP)}>{t('worldsVisual.build.expand', { defaultValue: 'Expand' })}</button>
+          <span>{t('worldsVisual.buildCity', { defaultValue: 'City' })} {columns}×{rows}</span>
+          <button type="button" className="village-build-key" disabled={columns + CITY_EXPAND_STEP > MAX_CITY_SPAN} onClick={() => grow(columns + CITY_EXPAND_STEP, rows)}>{t('worldsVisual.buildWider', { defaultValue: 'Wider' })}</button>
+          <button type="button" className="village-build-key" disabled={rows + CITY_EXPAND_STEP > MAX_CITY_SPAN} onClick={() => grow(columns, rows + CITY_EXPAND_STEP)}>{t('worldsVisual.buildTaller', { defaultValue: 'Taller' })}</button>
+          <button type="button" className="village-build-key" disabled={columns + CITY_EXPAND_STEP > MAX_CITY_SPAN || rows + CITY_EXPAND_STEP > MAX_CITY_SPAN} onClick={() => grow(columns + CITY_EXPAND_STEP, rows + CITY_EXPAND_STEP)}>{t('worldsVisual.buildExpand', { defaultValue: 'Expand' })}</button>
         </div>
         <div className="village-build-row">
-          <button type="button" className="village-build-key" onClick={props.onUndo}>{t('worldsVisual.build.undo', { defaultValue: 'Undo' })}</button>
-          <button type="button" className="village-build-key" onClick={props.onCancel}>{t('worldsVisual.build.cancel', { defaultValue: 'Cancel' })}</button>
-          <button type="button" className="village-build-key" onClick={props.onSave}>{t('worldsVisual.build.save', { defaultValue: 'Save' })}</button>
-          <button type="button" className="village-build-key" onClick={props.onReset}>{t('worldsVisual.build.reset', { defaultValue: 'Reset preset' })}</button>
+          <button type="button" className="village-build-key" onClick={props.onUndo}>{t('worldsVisual.buildUndo', { defaultValue: 'Undo' })}</button>
+          <button type="button" className="village-build-key" onClick={props.onCancel}>{t('worldsVisual.buildCancel', { defaultValue: 'Cancel' })}</button>
+          <button type="button" className="village-build-key" onClick={props.onSave}>{t('worldsVisual.buildSave', { defaultValue: 'Save' })}</button>
+          <button type="button" className="village-build-key" onClick={props.onReset}>{t('worldsVisual.buildReset', { defaultValue: 'Reset preset' })}</button>
         </div>
         {props.feedback && <p role="status" style={{ whiteSpace: 'pre-wrap' }}>{props.feedback}</p>}
       </>}
