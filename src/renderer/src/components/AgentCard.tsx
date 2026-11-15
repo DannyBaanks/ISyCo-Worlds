@@ -283,7 +283,7 @@ export function AgentCard({
                   <span
                     title={note}
                     style={{
-                      flex: 1, minWidth: 0, fontSize: 10.5, lineHeight: '14px',
+                      flex: 1, minWidth: 0, fontSize: 11, lineHeight: '14px',
                       color: 'var(--cth-ink-500)', fontStyle: 'italic',
                       whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                     }}
@@ -302,9 +302,9 @@ export function AgentCard({
                     style={{
                       flexShrink: 0, width: 24, height: 24, margin: '-5px -4px',
                       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 10, lineHeight: 1, cursor: 'pointer',
+                      fontSize: 11, lineHeight: 1, cursor: 'pointer',
                       // Quiet until the card is hovered — discoverable, not noisy.
-                      color: hover ? 'var(--cth-ink-500)' : 'var(--cth-ink-300)'
+                      color: 'var(--cth-ink-500)'
                     }}
                   >✎</span>
                 )}

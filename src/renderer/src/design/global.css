@@ -512,3 +512,9 @@ canvas, img, svg { image-rendering: pixelated; image-rendering: crisp-edges; }
 :root:lang(es) .worlds-panel-title,
 :root:lang(es) .worlds-market-counter h1,
 :root:lang(es) .cth-onboarding-progress { text-transform: none !important; }
+
+/* Small glyph buttons (dismiss, info, inline links) keep their drawn size but
+   answer to a 24px target: the invisible ::after pad extends the hit area
+   without moving anything around it. */
+.cth-hit { position: relative; }
+.cth-hit::after { content: ''; position: absolute; inset: 50% auto auto 50%; width: max(100%, 24px); height: max(100%, 24px); transform: translate(-50%, -50%); }

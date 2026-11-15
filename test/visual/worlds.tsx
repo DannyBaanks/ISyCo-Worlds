@@ -2,12 +2,7 @@
  * The production App and components render against explicit, inert IPC data. */
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import '../../src/renderer/src/design/global.css';
-import '../../src/renderer/src/design/worlds.css';
-import '../../src/renderer/src/design/skin-office.css';
-import '../../src/renderer/src/design/skin-monster.css';
-import '../../src/renderer/src/design/depth.css';
-import '../../src/renderer/src/design/skin-motion.css';
+import '../../src/renderer/src/design/shell.css';
 const params = new URLSearchParams(location.search);
 localStorage.setItem('cth.language', params.get('lang') || 'es');
 if (!['start','firstrun'].includes(params.get('view')||'')) localStorage.setItem('cth.skipHivePickerOnce', '1'); else localStorage.removeItem('cth.skipHivePickerOnce');
@@ -36,6 +31,7 @@ const api = {
   toolsStatus: async () => [{ id: 'claude', installed: true, version: '2.1.0' }, { id: 'codex', installed: true, version: '0.50' }, { id: 'opencode', installed: false }],
   hiveLog: async () => [],
   setWorldPresentationBounds: () => {},
+  captureWorldPresentation: async () => null,
   startWorldPresentation: async (profileId) => ({ phase: 'READY', profileId, generation: 1 }),
   getWorldComposition: async () => ({ ok: true, layout: null }),
   worldHelperSnapshot: async () => null,

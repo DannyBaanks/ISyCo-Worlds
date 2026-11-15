@@ -715,6 +715,10 @@ const api = {
   disposeWorldPresentation: (): Promise<void> => ipcRenderer.invoke('world-presentation:dispose'),
   setWorldPresentationBounds: (bounds: { x: number; y: number; width: number; height: number }): void =>
     ipcRenderer.send('world-presentation:bounds', bounds),
+  /** A still of the world view as a data URL, or null when there is nothing to
+   *  capture. Shown in the world's place while a menu or dialog covers it. */
+  captureWorldPresentation: (): Promise<string | null> =>
+    ipcRenderer.invoke('world-presentation:snapshot'),
   onWorldPresentationStatus: (cb: (status: WorldPresentationStatus) => void): (() => void) => {
     const listener = (_event: IpcRendererEvent, status: WorldPresentationStatus) => cb(status);
     ipcRenderer.on('world-presentation:status', listener);

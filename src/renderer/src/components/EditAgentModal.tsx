@@ -171,7 +171,7 @@ export function EditAgentModal({ agent, onClose, profileId = 'office' }: EditAge
                           }}
                         >
                           <WorldCharacterPortrait character={c} width={40} height={48} />
-                          <span style={{ fontSize: 10, color: 'var(--cth-ink-700)' }}>{t(MONSTER_ROSTER_LABEL_KEYS[c])}</span>
+                          <span style={{ fontSize: 11, color: 'var(--cth-ink-700)' }}>{t(MONSTER_ROSTER_LABEL_KEYS[c])}</span>
                         </button>
                       );
                     })
@@ -201,7 +201,7 @@ export function EditAgentModal({ agent, onClose, profileId = 'office' }: EditAge
                           }}>
                             <SpritePortrait character={c.name} scale={1.5} />
                           </div>
-                          <span style={{ fontSize: 10, color: 'var(--cth-ink-700)' }}>{c.displayName}</span>
+                          <span style={{ fontSize: 11, color: 'var(--cth-ink-700)' }}>{c.displayName}</span>
                         </button>
                       );
                     })}

@@ -108,7 +108,7 @@
 :root[data-world-skin='office'] .worlds-hanging-sign::before,
 :root[data-world-skin='office'] .worlds-hanging-sign::after { display: none; }
 :root[data-world-skin='office'] .worlds-crew-sign,
-:root[data-world-skin='office'] .worlds-status-ledger .worlds-hanging-sign { font-size: 7px; padding-block: 4px 3px; color: var(--cth-ink-900); background: var(--cth-cream-50); }
+:root[data-world-skin='office'] .worlds-status-ledger .worlds-hanging-sign { font-size: 11px; padding-block: 4px 3px; color: var(--cth-ink-900); background: var(--cth-cream-50); }
 :root[data-world-skin='office'] .worlds-roster { background: transparent !important; box-shadow: none; border-top: 0 !important; }
 :root[data-world-skin='office'] .worlds-worker,
 :root[data-world-skin='office'] .worlds-worker-sheet { border-radius: 0; }
@@ -134,7 +134,7 @@
   border: 2px solid var(--cth-ink-900); border-radius: 0; box-shadow: none;
 }
 :root[data-world-skin='office'] .worlds-command > :first-child { border-bottom: 2px solid var(--cth-ink-900) !important; background-image: none !important; }
-:root[data-world-skin='office'] .worlds-command > :first-child > :nth-child(2) > :first-child { font-size: 10px !important; line-height: 16px !important; }
+:root[data-world-skin='office'] .worlds-command > :first-child > :nth-child(2) > :first-child { font-size: 11px !important; line-height: 16px !important; }
 :root[data-world-skin='office'] .worlds-command .cth-tabbar { background-image: none !important; background-color: var(--cth-cream-200) !important; }
 :root[data-world-skin='office'] .worlds-command .worlds-book-spread > .cth-tabbar { background: var(--cth-cream-200) !important; border-inline-end: 2px solid var(--cth-ink-900); }
 :root[data-world-skin='office'] .worlds-command .worlds-book-spread > .cth-tabbar button {
@@ -190,7 +190,7 @@
 }
 :root[data-world-skin='office'] .worlds-market-counter { border: 2px solid var(--cth-ink-900); border-radius: 0; box-shadow: 6px 6px 0 var(--cth-ink-900) !important; }
 :root[data-world-skin='office'] .worlds-market-counter h1 { font-size: 14px !important; line-height: 24px !important; text-transform: uppercase; }
-:root[data-world-skin='office'] .worlds-market-counter h2 { font-size: 9px !important; line-height: 16px !important; }
+:root[data-world-skin='office'] .worlds-market-counter h2 { font-size: 11px !important; line-height: 16px !important; }
 :root[data-world-skin='office'] .worlds-market-sign,
 :root[data-world-skin='office'] .worlds-market-order { border: 2px solid var(--cth-ink-900); border-radius: 0; box-shadow: 3px 3px 0 var(--cth-ink-300); }
 :root[data-world-skin='office'] .worlds-market-shelves { background: var(--cth-cream-200); border: 2px solid var(--cth-ink-900); }

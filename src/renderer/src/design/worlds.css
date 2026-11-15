@@ -215,8 +215,8 @@
 .worlds-worker-identity { display: grid !important; grid-template-columns: minmax(0, 1fr) auto; gap: 3px !important; }
 .worlds-worker-name { grid-column: 1 / -1; }
 .worlds-worker-name > span:first-child > span { font-family: var(--cth-font-ui) !important; font-size: 12px !important; font-weight: 700; }
-.worlds-worker-role { font-family: var(--cth-font-ui); font-size: 10px; color: var(--cth-ink-700); }
-.worlds-worker-identity > span:last-child { font-size: 10px !important; justify-self: start; }
+.worlds-worker-role { font-family: var(--cth-font-ui); font-size: 11px; color: var(--cth-ink-700); }
+.worlds-worker-identity > span:last-child { font-size: 11px !important; justify-self: start; }
 .worlds-settings-book { background: var(--worlds-paper) !important; }
 .worlds-settings-index {
   overflow-y: auto;
@@ -373,10 +373,10 @@
 .worlds-status-ledger dl { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); margin: 10px 0 0; gap: 8px; }
 .worlds-status-ledger dl > div { display: flex; flex-direction: column-reverse; text-align: center; border-inline-end: 1px solid var(--cth-ink-100); }
 .worlds-status-ledger dl > div:last-child { border: 0; }
-.worlds-status-ledger dt { font-size: 10px; line-height: 13px; color: var(--cth-ink-700); overflow-wrap: anywhere; }
+.worlds-status-ledger dt { font-size: 11px; line-height: 13px; color: var(--cth-ink-700); overflow-wrap: anywhere; }
 .worlds-status-ledger dd { margin: 0; font: 700 24px/28px var(--worlds-title); color: var(--cth-ink-900); }
 .worlds-system-stamp { display: flex; align-items: center; flex-direction: column; flex-shrink: 0; gap: 3px; }
-.worlds-system-stamp > span > button, .worlds-system-stamp > span > button span { color: var(--worlds-on-wood) !important; font-size: 10px !important; line-height: 13px !important; }
+.worlds-system-stamp > span > button, .worlds-system-stamp > span > button span { color: var(--worlds-on-wood) !important; font-size: 11px !important; line-height: 13px !important; }
 .worlds-titlebar { min-height: 77px !important; }
 .worlds-about-entry { padding: 10px 12px; border: 1px solid var(--cth-ink-100); border-radius: 3px; }
 .worlds-about-entry summary { cursor: pointer; font: 700 17px/25px var(--worlds-title); color: var(--cth-ink-700); }

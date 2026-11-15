@@ -204,6 +204,7 @@ export function AskMeTab() {
                   The card's Q&A history is preserved (the question stays on the
                   card, just marked dismissed). */}
               <button
+        className="cth-hit"
                 onClick={() => void dismiss(t)}
                 disabled={sending === t.id}
                 title={translate('askMe.dismissTitle')}
@@ -291,7 +292,7 @@ export function AskMeTab() {
                       <span style={{ color: 'var(--cth-ink-500)' }}>└</span>
                       <span style={{ width: 7, height: 7, flexShrink: 0, background: d.status === 'blocked' ? 'var(--cth-coral)' : 'var(--cth-sky)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)' }} />
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.title}</span>
-                      {nameFor(d.assignee) && <span style={{ fontSize: 10, color: 'var(--cth-ink-500)' }}>({nameFor(d.assignee)})</span>}
+                      {nameFor(d.assignee) && <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>({nameFor(d.assignee)})</span>}
                     </div>
                   ))}
                   {stuck.length > 6 && (

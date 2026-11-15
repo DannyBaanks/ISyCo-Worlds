@@ -260,7 +260,7 @@ function TaskCard({ task, accent, assigneeName, onOpen, onDismiss }: {
               column, so the 18px right padding keeps it clear of the ✕ and
               the '?' badge. */}
           <span style={{
-            fontFamily: 'var(--cth-font-mono)', fontSize: 10,
+            fontFamily: 'var(--cth-font-mono)', fontSize: 11,
             color: 'var(--cth-ink-500)'
           }}>{task.id}</span>
           <span style={{
@@ -285,6 +285,7 @@ function TaskCard({ task, accent, assigneeName, onOpen, onDismiss }: {
       </button>
       {/* Dismiss — sibling button (not nested) so it never triggers onOpen. */}
       <button
+        className="cth-hit"
         onClick={(e) => { e.stopPropagation(); onDismiss(); }}
         title={t('kanban.dismissTitle')}
         aria-label={t('kanban.dismissAria')}
@@ -352,7 +353,7 @@ export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose 
                   it is the handle every dispatch and every message uses to name
                   this task, so it should be the first thing here too. */}
               <span style={{
-                fontFamily: 'var(--cth-font-mono)', fontSize: 10, color: 'var(--cth-ink-500)'
+                fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-500)'
               }}>{task.id}</span>
               <span style={{
                 fontFamily: 'var(--cth-font-display)', fontSize: 8, padding: '2px 6px 1px',

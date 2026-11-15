@@ -120,7 +120,7 @@ export function AgentNameEditor({
           flexShrink: 0, width: 24, height: 24, margin: '-5px -4px', padding: 0,
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
           border: 'none', background: 'transparent', cursor: 'text',
-          color: 'var(--cth-ink-500)', fontFamily: 'var(--cth-font-ui)', fontSize: 9, lineHeight: 1
+          color: 'var(--cth-ink-500)', fontFamily: 'var(--cth-font-ui)', fontSize: 11, lineHeight: 1
         }}
       >✎</button>
     </span>

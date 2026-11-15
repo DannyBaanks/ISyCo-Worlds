@@ -236,7 +236,7 @@ export function AgentStrip({ config, onOverlayVisibilityChange, profileId = 'off
                       lineHeight: '18px', color: 'var(--cth-ink-900)'
                     }}
                   />
-                  <span style={{ fontSize: 10, color: 'var(--cth-ink-500)' }}>
+                  <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>
                     {t('agentStrip.oneLineOneBullet')}
                   </span>
                 </div>

@@ -237,6 +237,7 @@ export function RealtimeMichaelToggle({ compact = false }: RealtimeMichaelToggle
       {noKey && (
         <span ref={hintRef} style={{ display: 'inline-flex', flexShrink: 0 }}>
           <button
+        className="cth-hit"
             ref={iconRef}
             type="button"
             aria-label={t('realtimeToggle.whyDisabled')}

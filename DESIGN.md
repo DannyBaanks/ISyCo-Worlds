@@ -793,9 +793,22 @@ live summary (crew count, blocked missions, world clock). Opening a card is the
 viewer's choice and is remembered. The village must stay readable at the
 minimum window size (1280 by 800) with every card folded.
 
-### 19.4 Text
+### 19.4 The world under menus and dialogs
 
-- Minimum 11 px for anything the user reads in the HUD; 12 px for body copy.
+Monster Village renders in a native view that always paints above the shell,
+so it must give up its rectangle whenever a menu or dialog opens over it. Just
+before it does, the shell asks main for a still (`world-presentation:snapshot`)
+and shows it in the view's place, so the floor keeps its picture instead of
+going blank. The still lives only in memory and is dropped a moment after the
+view takes its rectangle back.
+
+### 19.5 Text
+
+- Minimum text size: 11 px for the UI and mono faces, 8 px for Press Start 2P
+  (it is drawn on an 8 px grid and smaller sizes blur). This holds across the
+  whole shell, not only the HUD.
+- Glyph-sized controls (dismiss, info, inline links) take the `.cth-hit` class,
+  which pads their hit area to 24 px without changing their drawn size.
 - Spanish headings are written in sentence case and are never upper-cased by
   CSS: Press Start 2P draws accented capitals at lowercase height, so
   "BÚSQUEDA" renders as "BúSQUEDA".

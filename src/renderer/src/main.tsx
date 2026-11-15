@@ -2,12 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import brandLogo from '@brand/logo.png?url';
-import './design/global.css';
-import './design/worlds.css';
-import './design/skin-office.css';
-import './design/skin-monster.css';
-import './design/depth.css';
-import './design/skin-motion.css';
+import './design/shell.css';
 import './i18n';
 
 const favicon = document.createElement('link');

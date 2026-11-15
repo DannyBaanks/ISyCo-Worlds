@@ -1,0 +1,15 @@
+/* The app shell's styles, in cascade order. This file is the only stylesheet
+   main.tsx imports, on purpose.
+
+   Imported one by one from main.tsx, the bundler is free to move a sheet that
+   another entry also uses (worlds.css, global.css) into a shared chunk, and it
+   links that chunk AFTER the entry's own CSS. The skins then load before the
+   layout they restyle and lose every equal-specificity conflict in the built
+   app while winning them in development. Inlined here, the order is fixed:
+   layout, then skins, then depth, then motion. */
+@import './global.css';
+@import './worlds.css';
+@import './skin-office.css';
+@import './skin-monster.css';
+@import './depth.css';
+@import './skin-motion.css';

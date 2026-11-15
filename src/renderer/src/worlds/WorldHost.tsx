@@ -19,6 +19,11 @@ import {
   MONSTER_VILLAGE_DEMO_TASK_ID
 } from '@shared/monsterVillageDemo';
 
+/** How long the capture may take before the view yields without a still. */
+const STILL_CAPTURE_TIMEOUT_MS = 250;
+/** How long the still stays up after the view gets its rectangle back. */
+const STILL_RELEASE_MS = 140;
+
 const IDLE: WorldEngineState = { phase: 'IDLE', pendingDisposals: [] };
 
 async function handleMonsterDemoIntent(intent: Extract<WorldPresentationIntent, { type: 'monster-demo' }>, tasks: WorldPresentationProjection['tasks']): Promise<void> {
@@ -178,6 +183,12 @@ function IsolatedWorldViewport({ profileId, suspended }: { profileId: 'monster-t
   projectionRef.current = projection;
   const [status, setStatus] = useState<WorldPresentationStatus>({ phase: 'BOOTSTRAPPING', profileId, generation: 0 });
   const started = useRef(false);
+  // The native view cannot be covered by the shell's DOM, so it yields its
+  // rectangle while a menu or dialog is open. `yielded` trails `suspended` by
+  // one capture: a still of the world is taken first and shown in its place,
+  // so the floor holds its picture instead of blinking to an empty frame.
+  const [yielded, setYielded] = useState(suspended);
+  const [still, setStill] = useState<string | null>(null);
   const acceptStatus = (next: WorldPresentationStatus): void => setStatus((current) => {
     if (next.generation < current.generation) return current;
     if (next.generation === current.generation && (current.phase === 'READY' || current.phase === 'RECOVERY')) return current;
@@ -245,7 +256,7 @@ function IsolatedWorldViewport({ profileId, suspended }: { profileId: 'monster-t
       // covered by React z-index. Keep its renderer alive but yield its native
       // rectangle while another app surface needs to paint over the floor.
       window.cth.setWorldPresentationBounds(resolveWorldPresentationBounds(
-        bounds, status.phase === 'READY', suspended
+        bounds, status.phase === 'READY', yielded
       ));
     };
     update();
@@ -253,10 +264,43 @@ function IsolatedWorldViewport({ profileId, suspended }: { profileId: 'monster-t
     observer.observe(viewport);
     window.addEventListener('resize', update);
     return () => { observer.disconnect(); window.removeEventListener('resize', update); };
-  }, [status.phase, suspended]);
+  }, [status.phase, yielded]);
+
+  useEffect(() => {
+    let live = true;
+    if (!suspended) {
+      // Give the view its rectangle back first; drop the still once it has had
+      // a moment to paint, so the hand-over shows no gap.
+      setYielded(false);
+      const timer = window.setTimeout(() => { if (live) setStill(null); }, STILL_RELEASE_MS);
+      return () => { live = false; window.clearTimeout(timer); };
+    }
+    void (async () => {
+      let image: string | null = null;
+      if (status.phase === 'READY') {
+        try {
+          image = await Promise.race([
+            window.cth.captureWorldPresentation(),
+            new Promise<null>((resolve) => window.setTimeout(() => resolve(null), STILL_CAPTURE_TIMEOUT_MS))
+          ]);
+        } catch { /* no still: the frame shows empty, as it did before */ }
+      }
+      if (!live) return;
+      if (typeof image === 'string' && image.startsWith('data:image/')) setStill(image);
+      setYielded(true);
+    })();
+    return () => { live = false; };
+    // status.phase is read once per suspension on purpose: a phase change while
+    // covered must not re-capture a view that has already yielded.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [suspended]);
 
   return (
     <div ref={viewportRef} data-world-presentation-viewport={profileId} style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+      {still && (
+        <img src={still} alt="" aria-hidden="true" data-world-still="true" draggable={false}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', pointerEvents: 'none', userSelect: 'none' }} />
+      )}
       {status.phase === 'RECOVERY' && (
         <WorldRecoverySurface error={status.error ? {
           phase: status.error.phase, worldId: status.error.profileId, cause: new Error(status.error.cause.message),

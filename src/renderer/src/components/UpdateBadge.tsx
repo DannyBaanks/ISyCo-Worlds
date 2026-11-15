@@ -235,7 +235,7 @@ export function UpdateBadge() {
           {t('updateBadge.hoverBody')}
         </div>
         <div style={{
-          marginTop: 8, fontFamily: 'var(--cth-font-mono, monospace)', fontSize: 9,
+          marginTop: 8, fontFamily: 'var(--cth-font-mono, monospace)', fontSize: 11,
           letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--cth-ink-500)'
         }}>{t('updateBadge.hoverOs', { os: steps.os })}</div>
         <ol style={{ margin: '4px 0 0', paddingLeft: 18, color: 'var(--cth-ink-700)' }}>

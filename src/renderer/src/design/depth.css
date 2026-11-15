@@ -147,7 +147,7 @@
 }
 [dir='rtl'] .cth-strip-add { background: linear-gradient(to left, transparent, var(--cth-strip-fade, var(--cth-cream-200)) 18px); }
 :root[data-world-skin='office'] .cth-strip-add { --cth-strip-fade: var(--cth-cream-100); }
-:root[data-world-skin='monster-trainer'] .cth-strip-add { --cth-strip-fade: var(--mt-night); }
+:root[data-world-skin='monster-trainer'] .cth-strip-add { --cth-strip-fade: color-mix(in srgb, var(--mt-night) 82%, var(--mt-night-light)); }
 
 /* ---------- Keys: every button has a wall and travels ---------- */
 :root[data-world-skin] .worlds-button { transition: transform 70ms ease-out, box-shadow 70ms ease-out, filter 120ms ease-out; }

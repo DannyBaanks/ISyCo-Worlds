@@ -400,7 +400,7 @@
   .cth-world-start { padding: 0; }
   .cth-world-start-frame { min-height: 100vh; border-width: 0; outline: 0; }
   .cth-world-start-header { grid-template-columns: 1fr auto; gap: 12px; padding: 14px; }
-  .cth-world-start-brand { font-size: 8px; }
+  .cth-world-start-brand { font-size: 11px; }
   .cth-world-start-welcome { grid-column: 1 / -1; grid-row: 2; }
   .cth-world-start-welcome p { font-size: 12px; }
   .cth-world-start-language { grid-column: 2; grid-row: 1; }
