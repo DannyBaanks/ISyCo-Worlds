@@ -15,6 +15,7 @@ const applyLanguage = (code: string | null): void => {
 };
 try { applyLanguage(window.localStorage.getItem('cth.language')); } catch { applyLanguage(null); }
 window.addEventListener('storage', (event) => { if (event.key === 'cth.language') applyLanguage(event.newValue); });
+window.setInterval(() => { try { applyLanguage(window.localStorage.getItem('cth.language')); } catch { /* keep current */ } }, 1000);
 
 document.documentElement.style.background = 'transparent';
 document.body.style.background = 'transparent';

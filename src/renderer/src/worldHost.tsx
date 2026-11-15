@@ -17,7 +17,8 @@ function applyLanguage(code: string | null): void {
 }
 
 function applyTheme(value: string | null): void {
-  document.documentElement.dataset.cthTheme = value === 'dark' ? 'dark' : 'light';
+  const next = value === 'dark' ? 'dark' : 'light';
+  if (document.documentElement.dataset.cthTheme !== next) document.documentElement.dataset.cthTheme = next;
 }
 
 function read(key: string): string | null {
@@ -30,6 +31,13 @@ window.addEventListener('storage', (event) => {
   if (event.key === LANGUAGE_KEY) applyLanguage(event.newValue);
   if (event.key === THEME_KEY) applyTheme(event.newValue);
 });
+// The storage event does not reliably cross into this view in the packaged app
+// (file:// pages in separate renderers), so also re-read on a slow timer. Two
+// localStorage reads a second is negligible, and a toggle lands within it.
+window.setInterval(() => {
+  applyLanguage(read(LANGUAGE_KEY));
+  applyTheme(read(THEME_KEY));
+}, 1000);
 
 const element = document.getElementById('world-root');
 if (!element) throw new Error('world presentation root is missing');

@@ -23,6 +23,14 @@ class SurfaceErrorBoundary extends Component<{
   }
 }
 
+// Pixi decodes textures with fetch() + createImageBitmap by default, and fetch()
+// of a data: URL is governed by connect-src, which the packaged app's CSP keeps
+// narrow. Small images inlined by the bundler as data: URLs therefore failed to
+// load in the packaged app only (dev has no CSP), and Munder Difflin fell back
+// to another world. An <img> element is governed by img-src, which allows data:,
+// so decode through it instead of widening the CSP.
+Assets.setPreferences({ preferCreateImageBitmap: false, preferWorkers: false });
+
 export function createBrowserResourceResolver(): WorldResourceResolver {
   const runtime = import.meta.env.DEV ? 'dev' : 'packaged';
   return {
