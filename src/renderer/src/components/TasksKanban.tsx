@@ -176,33 +176,33 @@ export function TasksKanban() {
         <span style={{ fontFamily: 'var(--cth-font-display)', fontSize: 9, color: 'var(--cth-ink-500)' }}>
           {t('kanban.count', { count: tasks.length })}
         </span>
-        <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--cth-ink-300)' }}>
+        <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--cth-ink-500)' }}>
           {t('kanban.newWorkHint')}
         </span>
       </div>
 
       {/* Columns */}
-      <div style={{
+      <div className="cth-kanban-columns" style={{
         flex: 1, minHeight: 0, display: 'flex', gap: 8, padding: 10, overflowX: 'auto'
       }}>
         {COLUMNS.map((col) => {
           const cards = tasks.filter((t) => t.status === col.key);
           return (
-            <div key={col.key} style={{
+            <div key={col.key} className="cth-kanban-col" style={{
               flex: '1 1 0', minWidth: 170, display: 'flex', flexDirection: 'column',
               background: 'var(--cth-cream-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
             }}>
-              <div style={{
+              <div className="cth-kanban-col-head" style={{
                 display: 'flex', alignItems: 'center', gap: 6, padding: '5px 8px 4px',
                 background: col.accent, boxShadow: 'inset 0 -1px 0 var(--cth-ink-900)',
-                fontFamily: 'var(--cth-font-display)', fontSize: 9, color: 'var(--cth-ink-900)'
+                fontFamily: 'var(--cth-font-display)', fontSize: 9, color: 'var(--cth-on-accent)'
               }}>
                 {t(col.labelKey)}
                 <span style={{ marginLeft: 'auto', fontSize: 11, fontFamily: 'var(--cth-font-ui)' }}>{cards.length}</span>
               </div>
               <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 6, display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {cards.length === 0 && (
-                  <div style={{ fontSize: 12, color: 'var(--cth-ink-300)', textAlign: 'center', padding: '8px 0' }}>—</div>
+                  <div style={{ fontSize: 12, color: 'var(--cth-ink-500)', textAlign: 'center', padding: '8px 0' }}>—</div>
                 )}
                 {cards.map((t) => (
                   <TaskCard
@@ -240,6 +240,7 @@ function TaskCard({ task, accent, assigneeName, onOpen, onDismiss }: {
   return (
     <div style={{ position: 'relative', display: 'flex' }}>
       <button
+        className="cth-kanban-card"
         onClick={onOpen}
         title={t('kanban.openTaskDetails')}
         style={{
@@ -259,7 +260,7 @@ function TaskCard({ task, accent, assigneeName, onOpen, onDismiss }: {
               column, so the 18px right padding keeps it clear of the ✕ and
               the '?' badge. */}
           <span style={{
-            fontFamily: 'var(--cth-font-mono)', fontSize: 10,
+            fontFamily: 'var(--cth-font-mono)', fontSize: 11,
             color: 'var(--cth-ink-500)'
           }}>{task.id}</span>
           <span style={{
@@ -277,13 +278,14 @@ function TaskCard({ task, accent, assigneeName, onOpen, onDismiss }: {
           <span title={t('kanban.needsYouTitle')} style={{
             alignSelf: 'center', marginRight: 18, flexShrink: 0,
             fontFamily: 'var(--cth-font-display)', fontSize: 10, padding: '2px 5px 1px',
-            background: 'var(--cth-lilac)', color: 'var(--cth-ink-900)',
+            background: 'var(--cth-lilac)', color: 'var(--cth-on-accent)',
             boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
           }}>?</span>
         )}
       </button>
       {/* Dismiss — sibling button (not nested) so it never triggers onOpen. */}
       <button
+        className="cth-hit"
         onClick={(e) => { e.stopPropagation(); onDismiss(); }}
         title={t('kanban.dismissTitle')}
         aria-label={t('kanban.dismissAria')}
@@ -351,15 +353,15 @@ export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose 
                   it is the handle every dispatch and every message uses to name
                   this task, so it should be the first thing here too. */}
               <span style={{
-                fontFamily: 'var(--cth-font-mono)', fontSize: 10, color: 'var(--cth-ink-500)'
+                fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-500)'
               }}>{task.id}</span>
               <span style={{
                 fontFamily: 'var(--cth-font-display)', fontSize: 8, padding: '2px 6px 1px',
-                background: col.accent, color: 'var(--cth-ink-900)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+                background: col.accent, color: 'var(--cth-on-accent)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
               }}>{t(col.labelKey)}</span>
               {assigneeName
                 ? <PixelBadge status="working" label={assigneeName} />
-                : <span style={{ fontSize: 11, color: 'var(--cth-ink-300)' }}>{t('kanban.unassigned')}</span>}
+                : <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>{t('kanban.unassigned')}</span>}
               <PriorityDots level={Math.max(1, Math.min(5, task.priority))} />
               <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--cth-ink-500)', fontFamily: 'var(--cth-font-display)' }}>
                 {isNaN(created.getTime()) ? '' : created.toLocaleString()}
@@ -373,7 +375,7 @@ export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose 
               fontFamily: 'var(--cth-font-mono)', fontSize: 12, lineHeight: '18px',
               color: 'var(--cth-ink-900)', whiteSpace: 'pre-wrap', wordBreak: 'break-word'
             }} dir={rtl ? 'auto' : undefined}>
-              {task.description?.trim() || <span style={{ color: 'var(--cth-ink-300)' }}>{t('kanban.noDescription')}</span>}
+              {task.description?.trim() || <span style={{ color: 'var(--cth-ink-500)' }}>{t('kanban.noDescription')}</span>}
             </div>
 
             {/* The human Q&A trail — every decision documented on the card.

@@ -160,7 +160,7 @@ export function AgentStrip({ config, onOverlayVisibilityChange, profileId = 'off
             selected={a.id === selectedId}
             isGod={a.isGod}
             onClick={() => select(a.id)}
-            onRename={profileId === 'office' ? (name) => renameAgent(a.id, name) : undefined}
+            onRename={(name) => renameAgent(a.id, name)}
             doingCount={doingByAgent[a.id]?.length ?? 0}
             onTaskNoteClick={() => {
               const first = doingByAgent[a.id]?.[0];
@@ -236,7 +236,7 @@ export function AgentStrip({ config, onOverlayVisibilityChange, profileId = 'off
                       lineHeight: '18px', color: 'var(--cth-ink-900)'
                     }}
                   />
-                  <span style={{ fontSize: 10, color: 'var(--cth-ink-500)' }}>
+                  <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>
                     {t('agentStrip.oneLineOneBullet')}
                   </span>
                 </div>
@@ -245,16 +245,19 @@ export function AgentStrip({ config, onOverlayVisibilityChange, profileId = 'off
           })()}
         </div>
       ))}
-      <PixelButton
-        variant="secondary"
-        size="lg"
-        style={{ alignSelf: 'center', flexShrink: 0 }}
-        onClick={() => setAddAgentOpen(true)}
-      >
-        <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', whiteSpace: 'nowrap' }}>
-          <Icon name="plus" /> {t('agentStrip.addAgent')}
-        </span>
-      </PixelButton>
+      {/* Pinned to the strip's trailing edge: with enough cards the row scrolls,
+          and the one action that grows the crew must not scroll away with it. */}
+      <span className="cth-strip-add">
+        <PixelButton
+          variant="secondary"
+          size="lg"
+          onClick={() => setAddAgentOpen(true)}
+        >
+          <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', whiteSpace: 'nowrap' }}>
+            <Icon name="plus" /> {t('agentStrip.addAgent')}
+          </span>
+        </PixelButton>
+      </span>
       {/* ONE restore control, pinned to the strip's right edge. Busy (manual OR
           boot auto-restore) collapses to a single disabled "restoring your
           team…"; otherwise the button opens an upward dropdown listing last

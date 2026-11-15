@@ -20,6 +20,10 @@ import { forceLayout, type Positions } from './memoryGraph/forceLayout';
  *
  *  All data comes from the existing preload bridge: store.agents + hiveLog +
  *  hiveMemory. No new IPC. Click an agent to jump to its memory; hover to peek. */
+/** Room a node needs around its centre: half a label sideways, the hint line
+ *  above and the legend below. */
+const GRAPH_INSET = { x: 52, top: 64, bottom: 96 };
+
 export function MemoryGraphPanel({
   godId,
   onJumpToMemory
@@ -122,8 +126,18 @@ export function MemoryGraphPanel({
   }, []);
 
   const posOf = useCallback(
-    (id: string) => (live && live.id === id ? { x: live.x, y: live.y } : layout.get(id)),
-    [live, layout]
+    (id: string) => {
+      if (live && live.id === id) return { x: live.x, y: live.y };
+      const at = layout.get(id);
+      if (!at) return at;
+      // Keep every node, with its label, clear of the panel edges, the hint
+      // line at the top and the legend at the bottom.
+      return {
+        x: Math.max(GRAPH_INSET.x, Math.min(dims.w - GRAPH_INSET.x, at.x)),
+        y: Math.max(GRAPH_INSET.top, Math.min(dims.h - GRAPH_INSET.bottom, at.y))
+      };
+    },
+    [live, layout, dims.w, dims.h]
   );
 
   const startDrag = useCallback((e: React.MouseEvent, id: string) => {
@@ -347,7 +361,7 @@ export function MemoryGraphPanel({
           <div style={{
             position: 'absolute', top: 10, left: 0, right: 0, textAlign: 'center',
             fontSize: 12, color: 'var(--cth-ink-500)', pointerEvents: 'none'
-          }}>No messages logged yet — the hive is quiet. Agents shown as roster.</div>
+          }}>{t('memoryGraph.emptyHint')}</div>
         )}
 
         {/* tooltip */}
@@ -436,7 +450,7 @@ function Legend() {
       display: 'flex', flexWrap: 'wrap', gap: '2px 10px', maxWidth: 280, pointerEvents: 'none'
     }}>
       {items.map((it) => (
-        <span key={it.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--cth-ink-700)' }}>
+        <span key={it.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--cth-ink-700)' }}>
           <span style={{ width: 9, height: 3, background: it.c, display: 'inline-block' }} /> {it.label}
         </span>
       ))}

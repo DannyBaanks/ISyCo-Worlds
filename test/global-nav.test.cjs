@@ -106,10 +106,10 @@ test('the menu is a real ARIA menu button and closes on outside click', () => {
 
 test('title bar keeps version, auto mode, theme and focus-mode controls', () => {
   assert.match(app, /<UpdateBadge \/>/);
-  assert.match(app, /'auto mode on' : 'auto mode off'/);
-  assert.match(app, /'AUTO ON' : 'AUTO OFF'/);
-  assert.match(app, /aria-label="Toggle dark mode"/);
-  assert.match(app, /aria-label="Toggle focus mode"/);
+  assert.match(app, /t\('shell\.autoMode\.on'\) : t\('shell\.autoMode\.off'\)/);
+  assert.match(app, /t\('shell\.autoMode\.badgeOn'\) : t\('shell\.autoMode\.badgeOff'\)/);
+  assert.match(app, /aria-label=\{t\('shell\.theme\.toggle'\)\}/);
+  assert.match(app, /aria-label=\{t\('shell\.focus\.toggle'\)\}/);
 });
 
 test('every locale carries the shell strings', () => {

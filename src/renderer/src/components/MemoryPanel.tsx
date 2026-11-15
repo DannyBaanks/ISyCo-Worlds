@@ -81,7 +81,7 @@ export function MemoryPanel({ onOpenChange }: { onOpenChange?: (open: boolean) =
   const canSearch = !!status?.available && !!status?.enabled;
 
   return (
-    <div style={{ position: 'absolute', bottom: 12, left: 12, width: open ? 380 : 'auto', zIndex: 40 }}>
+    <div className="cth-memory-dock" style={{ position: 'absolute', bottom: 12, insetInlineStart: 12, width: open ? 380 : 'auto', zIndex: 40 }}>
       {!open ? (
         <button
           onClick={() => { setOpen(true); refreshStatus(); }}

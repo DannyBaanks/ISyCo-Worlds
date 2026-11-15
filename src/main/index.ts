@@ -3938,6 +3938,24 @@ ipcMain.on('world-presentation:bounds', (event, value: unknown) => {
 });
 
 // ─── IPC: config ────────────────────────────────────────────────────────────
+// A still of the world, taken just before the shell covers it. The world is a
+// native view that always paints above the shell's DOM, so it has to give up
+// its rectangle whenever a menu or dialog opens over the floor; without a still
+// the floor would blink to an empty frame each time. The image goes only to the
+// window that owns the view and is never written to disk.
+ipcMain.handle('world-presentation:snapshot', async (event): Promise<string | null> => {
+  if (!worldPresentationOwner || worldPresentationOwner.isDestroyed() || event.sender !== worldPresentationOwner.webContents || !worldPresentationView) return null;
+  const { width, height } = worldPresentationView.getBounds();
+  if (width <= 0 || height <= 0 || worldPresentationView.webContents.isDestroyed()) return null;
+  try {
+    const image = await worldPresentationView.webContents.capturePage();
+    if (image.isEmpty()) return null;
+    return `data:image/jpeg;base64,${image.toJPEG(82).toString('base64')}`;
+  } catch {
+    return null;
+  }
+});
+
 ipcMain.handle('config:get', (): HarnessConfig => readConfig());
 ipcMain.handle('config:update', async (_evt, patch: Partial<HarnessConfig>) => {
   // FIRST RUN: every hive-bound service is started by bootstrapHiveServices(),

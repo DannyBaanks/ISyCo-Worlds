@@ -51,6 +51,7 @@ export function MarketplaceView() {
               color: 'var(--cth-ink-900)', margin: 0
             }}>
               {t('shell.marketplace.title')}
+              {!connected && <span className="worlds-soon-tag">{t('shell.marketplace.soon')}</span>}
             </h1>
             <p style={{ margin: 0, fontSize: 14, color: 'var(--cth-ink-700)' }}>
               {t('shell.marketplace.tagline')}

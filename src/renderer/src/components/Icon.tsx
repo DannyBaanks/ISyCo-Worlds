@@ -7,7 +7,7 @@ export type IconName =
   | 'gear' | 'plus' | 'x' | 'check' | 'arrow-right' | 'pause' | 'play'
   | 'bell' | 'folder' | 'terminal' | 'code' | 'web' | 'mcp' | 'sparkle'
   | 'expand' | 'minimize' | 'clock' | 'mic' | 'ledger' | 'info' | 'sidebar'
-  | 'image' | 'edit' | 'git';
+  | 'image' | 'edit' | 'git' | 'chat' | 'bars' | 'archive';
 
 interface IconDef {
   ink: string;     // primary color path d
@@ -58,6 +58,21 @@ const paths: Record<IconName, IconDef> = {
   play: {
     accentColor: 'var(--cth-mint)',
     ink:   'M4 3h2v2h2v2h2v2H8v2H6v2H4V3z'
+  },
+  // Speech bubble with three dots: a question waiting on the human.
+  chat: {
+    accentColor: 'var(--cth-peach)',
+    ink:   'M2 2h12v9H8v1H7v1H6v1H5v-3H2V2zM4 6h2v2H4zM7 6h2v2H7zM10 6h2v2h-2z'
+  },
+  // Three rising bars: the activity feed.
+  bars: {
+    accentColor: 'var(--cth-sky)',
+    ink:   'M2 9h3v5H2zM6 5h3v9H6zM10 2h3v12h-3z'
+  },
+  // Archive box with a handle: stored memory.
+  archive: {
+    accentColor: 'var(--cth-lilac)',
+    ink:   'M1 2h14v4H1zM2 7h12v7H2zM6 9h4v2H6z'
   },
   bell: {
     accentColor: 'var(--cth-peach)',

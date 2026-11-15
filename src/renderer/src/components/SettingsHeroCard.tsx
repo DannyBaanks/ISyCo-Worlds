@@ -95,7 +95,7 @@ export function SettingsHeroCard() {
               }}>v{version}</span>
             )}
             <span style={{
-              fontFamily: MONO, fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase',
+              fontFamily: MONO, fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase',
               padding: '2px 7px', background: 'var(--cth-mint-light)',
               boxShadow: 'inset 0 0 0 1px var(--cth-mint)', color: INK
             }}>{PLAN.label}</span>
@@ -134,7 +134,7 @@ export function SettingsHeroCard() {
             border: `2px solid ${INK}`
           }}>
             <span style={{
-              fontFamily: MONO, fontSize: 9, letterSpacing: '.18em',
+              fontFamily: MONO, fontSize: 11, letterSpacing: '.18em',
               textTransform: 'uppercase', color: 'var(--cth-ink-500)', flexShrink: 0
             }}>{t('settingsHero.sponsoredBy')}</span>
             <span style={{ fontSize: 13, color: INK, flexShrink: 0 }}>{SPONSOR.name}</span>

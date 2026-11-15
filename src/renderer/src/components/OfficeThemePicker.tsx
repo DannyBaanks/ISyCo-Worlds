@@ -145,12 +145,12 @@ export function OfficeThemePicker({ config }: { config: HarnessConfig }) {
                       {theme.label}
                     </span>
                     {isCurrent && (
-                      <span style={{ fontFamily: 'var(--cth-font-display)', fontSize: 7, color: 'var(--cth-mint)', textTransform: 'uppercase' }}>
+                      <span style={{ fontFamily: 'var(--cth-font-display)', fontSize: 8, color: 'var(--cth-mint)', textTransform: 'uppercase' }}>
                         {t('officeTheme.current')}
                       </span>
                     )}
                     {!theme.built && !isCurrent && (
-                      <span style={{ fontFamily: 'var(--cth-font-display)', fontSize: 7, color: 'var(--cth-ink-500)', textTransform: 'uppercase' }}>
+                      <span style={{ fontFamily: 'var(--cth-font-display)', fontSize: 8, color: 'var(--cth-ink-500)', textTransform: 'uppercase' }}>
                         {t('officeTheme.soon')}
                       </span>
                     )}

@@ -125,10 +125,15 @@ test('World translations expose the same key set in every supported locale', () 
 test('each world owns its chrome: Munder Difflin and Monster Trainer ship separate, scoped skins', () => {
   const app = source('src/renderer/src/App.tsx');
   const main = source('src/renderer/src/main.tsx');
+  // One ordered sheet: imported separately, the bundler hoists shared sheets
+  // into a chunk that links after the skins and the built app's cascade flips.
+  const shell = source('src/renderer/src/design/shell.css');
+  assert.match(main, /import '\.\/design\/shell\.css';/);
+  assert.doesNotMatch(main, /design\/(global|worlds|skin-[a-z]+|depth)\.css/, 'main.tsx imports the shell sheet only');
   const brand = source('src/renderer/src/components/WorldBrand.tsx');
   const office = source('src/renderer/src/design/skin-office.css');
   const monster = source('src/renderer/src/design/skin-monster.css');
-  assert.match(main, /worlds\.css';[\s\S]*skin-office\.css';[\s\S]*skin-monster\.css'/, 'skins load after the shared layout so they can restyle it');
+  assert.match(shell, /global\.css';[\s\S]*worlds\.css';[\s\S]*skin-office\.css';[\s\S]*skin-monster\.css';[\s\S]*depth\.css'/, 'skins load after the shared layout so they can restyle it');
   assert.match(app, /root\.dataset\.worldSkin = worldSkin/, 'the skin reaches dialogs and menus through <html>');
   assert.match(app, /delete root\.dataset\.worldSkin/, 'the world picker and onboarding keep the neutral ISyCo look');
   assert.match(app, /<WorldBrand skin=\{worldSkin\} \/>/);
@@ -148,7 +153,7 @@ test('each world owns its chrome: Munder Difflin and Monster Trainer ship separa
 });
 
 test('world motion is per-skin, decorative and off under reduced motion', () => {
-  const main = source('src/renderer/src/main.tsx');
+  const main = source('src/renderer/src/design/shell.css');
   const motion = source('src/renderer/src/design/skin-motion.css');
   const card = source('src/renderer/src/components/AgentCard.tsx');
   assert.match(main, /skin-monster\.css';[\s\S]*skin-motion\.css'/, 'motion loads after the skins it animates');

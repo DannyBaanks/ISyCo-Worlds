@@ -170,7 +170,7 @@ export function AskMeTab() {
       {waiting.length === 0 && (
         <div style={{ textAlign: 'center', padding: '24px 12px', color: 'var(--cth-ink-500)', fontSize: 12 }}>
           {translate('askMe.emptyTitle')}<br />
-          <span style={{ fontSize: 11, color: 'var(--cth-ink-300)' }}>
+          <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>
             {translate('askMe.emptySub')}
           </span>
         </div>
@@ -204,6 +204,7 @@ export function AskMeTab() {
                   The card's Q&A history is preserved (the question stays on the
                   card, just marked dismissed). */}
               <button
+        className="cth-hit"
                 onClick={() => void dismiss(t)}
                 disabled={sending === t.id}
                 title={translate('askMe.dismissTitle')}
@@ -288,14 +289,14 @@ export function AskMeTab() {
                       paddingLeft: 8 + Math.min(i, 3) * 8,
                       fontSize: 12, color: 'var(--cth-ink-700)'
                     }}>
-                      <span style={{ color: 'var(--cth-ink-300)' }}>└</span>
+                      <span style={{ color: 'var(--cth-ink-500)' }}>└</span>
                       <span style={{ width: 7, height: 7, flexShrink: 0, background: d.status === 'blocked' ? 'var(--cth-coral)' : 'var(--cth-sky)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)' }} />
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.title}</span>
-                      {nameFor(d.assignee) && <span style={{ fontSize: 10, color: 'var(--cth-ink-500)' }}>({nameFor(d.assignee)})</span>}
+                      {nameFor(d.assignee) && <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>({nameFor(d.assignee)})</span>}
                     </div>
                   ))}
                   {stuck.length > 6 && (
-                    <div style={{ paddingLeft: 14, fontSize: 11, color: 'var(--cth-ink-300)' }}>{translate('askMe.more', { count: stuck.length - 6 })}</div>
+                    <div style={{ paddingLeft: 14, fontSize: 11, color: 'var(--cth-ink-500)' }}>{translate('askMe.more', { count: stuck.length - 6 })}</div>
                   )}
                 </div>
               )}

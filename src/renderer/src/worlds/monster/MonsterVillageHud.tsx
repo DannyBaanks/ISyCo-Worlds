@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useId, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WorldPresentationActivity } from '@shared/worldPresentationProtocol';
 import type { CanonicalWorldSnapshot, VisualTransition, WorldAgent, WorldTask } from '../worldProjection';
@@ -23,15 +23,6 @@ type Props = {
   activeDemoObjectiveId?: string;
   onDemoSeed: () => void;
   onDemoAction: () => void;
-};
-
-const buttonStyle: React.CSSProperties = {
-  border: '1px solid #8b673d',
-  background: 'linear-gradient(#fff0c9, #d6ae70)',
-  color: '#332719',
-  padding: '4px 7px',
-  font: '700 10px/14px var(--cth-font-ui)',
-  cursor: 'pointer'
 };
 
 const statusClass = (status: string): string => {
@@ -66,24 +57,59 @@ function taskTitle(snapshot: CanonicalWorldSnapshot, id: string): string {
   return snapshot.tasks.find((task) => task.id === id)?.title ?? id;
 }
 
-function transitionDetail(transition: VisualTransition, snapshot: CanonicalWorldSnapshot): string {
+function transitionDetail(transition: VisualTransition, snapshot: CanonicalWorldSnapshot, t: (key: string, options?: Record<string, unknown>) => string): string {
+  const state = (value: string): string => stateLabel(value as WorldAgent['state'], t);
   if (transition.kind === 'agent-state-changed') {
     const name = agentName(snapshot, transition.agentId);
-    return `${name}: ${transition.from} → ${transition.to}`;
+    return `${name}: ${state(transition.from)} → ${state(transition.to)}`;
   }
   if (transition.kind === 'task-status-changed') {
-    return `${taskTitle(snapshot, transition.taskId)}: ${transition.from} → ${transition.to}`;
+    return `${taskTitle(snapshot, transition.taskId)}: ${statusLabel(transition.from, t)} → ${statusLabel(transition.to, t)}`;
   }
   if (transition.kind === 'task-assignee-changed') {
     const task = taskTitle(snapshot, transition.taskId);
     return `${task}: ${agentName(snapshot, transition.from)} → ${agentName(snapshot, transition.to)}`;
   }
-  if (transition.kind === 'task-awaits-human-changed') return `${taskTitle(snapshot, transition.taskId)}: human input ${transition.to ? 'requested' : 'cleared'}`;
-  if (transition.kind === 'task-added') return `Task added: ${taskTitle(snapshot, transition.taskId)}`;
-  if (transition.kind === 'task-removed') return `Task removed: ${transition.taskId}`;
-  if (transition.kind === 'agent-added') return `Agent added: ${agentName(snapshot, transition.agentId)}`;
-  if (transition.kind === 'agent-removed') return `Agent removed: ${transition.agentId}`;
-  return `Transition: ${transition.kind}`;
+  if (transition.kind === 'task-awaits-human-changed') {
+    return t(transition.to ? 'worldsVisual.activityHumanRequested' : 'worldsVisual.activityHumanCleared', { task: taskTitle(snapshot, transition.taskId) });
+  }
+  if (transition.kind === 'task-added') return t('worldsVisual.activityTaskAdded', { task: taskTitle(snapshot, transition.taskId) });
+  if (transition.kind === 'task-removed') return t('worldsVisual.activityTaskRemoved', { task: transition.taskId });
+  if (transition.kind === 'agent-added') return t('worldsVisual.activityAgentAdded', { name: agentName(snapshot, transition.agentId) });
+  if (transition.kind === 'agent-removed') return t('worldsVisual.activityAgentRemoved', { name: transition.agentId });
+  return '';
+}
+
+/** Which HUD cards are expanded. Every card starts folded to a one-line tab so
+ *  the village stays visible; the choice is a per-viewer convenience. */
+const STAGE_LABEL_KEYS: Record<EvolutionStage, string> = { baby: 'worldsVisual.stageBaby', middle: 'worldsVisual.stageMiddle', final: 'worldsVisual.stageFinal' };
+
+const HUD_OPEN_KEY = 'cth.villageHud.open';
+type HudPanelId = 'ops' | 'missions' | 'demo' | 'simulation' | 'activity';
+
+function readOpenPanels(): Partial<Record<HudPanelId, boolean>> {
+  try {
+    const raw = JSON.parse(window.localStorage.getItem(HUD_OPEN_KEY) ?? '{}') as unknown;
+    return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Partial<Record<HudPanelId, boolean>> : {};
+  } catch { return {}; }
+}
+
+function HudPanel({ id, title, summary, badge, badgeWorld, open, onToggle, children, ...rest }: {
+  id: HudPanelId; title: string; summary?: ReactNode; badge?: string; badgeWorld?: boolean;
+  open: boolean; onToggle: (id: HudPanelId) => void; children: ReactNode;
+} & Record<`data-${string}`, string>) {
+  const bodyId = useId();
+  return (
+    <section className={`monster-village-panel monster-village-panel--${id}`} data-open={open ? 'true' : 'false'} {...rest}>
+      <button type="button" className="monster-village-panel-heading" aria-expanded={open} aria-controls={bodyId} onClick={() => onToggle(id)}>
+        <span className="monster-village-panel-chevron" aria-hidden="true" />
+        <strong>{title}</strong>
+        {!open && summary !== undefined && <span className="monster-village-panel-summary">{summary}</span>}
+        {open && badge && <span className={`monster-village-source-badge${badgeWorld ? ' monster-village-source-badge--world' : ''}`}>{badge}</span>}
+      </button>
+      {open && <div id={bodyId} className="monster-village-panel-body">{children}</div>}
+    </section>
+  );
 }
 
 function ActivityRow({ item, sourceLabel }: { item: WorldPresentationActivity; sourceLabel?: string }) {
@@ -114,6 +140,12 @@ export function MonsterVillageHud({
   onDemoAction
 }: Props) {
   const { t } = useTranslation();
+  const [openPanels, setOpenPanels] = useState(readOpenPanels);
+  const togglePanel = useCallback((id: HudPanelId) => setOpenPanels((current) => {
+    const next = { ...current, [id]: !current[id] };
+    try { window.localStorage.setItem(HUD_OPEN_KEY, JSON.stringify(next)); } catch { /* stays for this session only */ }
+    return next;
+  }), []);
   const activeAgents = snapshot.agents.filter((agent) => !agent.archived);
   const counts = useMemo(() => ({
     todo: snapshot.tasks.filter((task) => statusClass(task.status) === 'todo').length,
@@ -127,131 +159,114 @@ export function MonsterVillageHud({
     ts: Date.now(),
     source: t('worldsVisual.hiveSnapshot'),
     kind: 'snapshot',
-    detail: transitionDetail(transition, snapshot)
+    detail: transitionDetail(transition, snapshot, t)
   }));
   const activity = [...transitionRows, ...snapshot.activity].sort((a, b) => b.ts - a.ts).slice(0, 8);
 
   return (
     <div className="monster-village-hud" aria-label={t('worldsVisual.hudTitle')}>
-      <section className="monster-village-panel monster-village-panel--ops">
-        <div className="monster-village-panel-heading">
-          <strong>{t('worldsVisual.operational')}</strong>
-          <span className="monster-village-source-badge">{t('worldsVisual.sourceHive')}</span>
-        </div>
-        <div className="monster-village-statline">
-          <span>{t('worldsVisual.activeAgents')} <b>{activeAgents.length}</b></span>
-          <span>{t('worldsVisual.tasks')} <b>{snapshot.tasks.length}</b></span>
-        </div>
-        <div className="monster-village-task-counts" aria-label={t('worldsVisual.taskCounts')}>
-          <span className="todo">{t('worldsVisual.statusTodo')} {counts.todo}</span>
-          <span className="doing">{t('worldsVisual.statusDoing')} {counts.doing}</span>
-          <span className="blocked">{t('worldsVisual.statusBlocked')} {counts.blocked}</span>
-          <span className="done">{t('worldsVisual.statusDone')} {counts.done}</span>
-        </div>
-        <div className="monster-village-agent-list">
-          {activeAgents.length ? activeAgents.map((agent) => (
-            <button key={agent.id} type="button" className="monster-village-agent-row" onClick={() => onAgentSelect(agent.id)}>
-              <span className="monster-village-agent-dot" data-state={agent.state} aria-hidden="true" />
-              <span className="monster-village-agent-copy">
-                <b>{agent.name}</b>
-                <small>{agent.isGod ? `${t('worldsVisual.roleProfessor')} · ` : ''}{stateLabel(agent.state, t)} · {t(VILLAGE_PLACE_LABEL_KEYS[placeForAgent(agent, snapshot.tasks)])}{agent.tool ? ` · ${agent.tool}` : ''}</small>
-              </span>
-              <span className="monster-village-stage" title={t('worldsVisual.worldOnly')}>{growthStageForAgent(agent.id)}</span>
-            </button>
-          )) : <span className="monster-village-empty">{t('worldsVisual.noAgents')}</span>}
-        </div>
-      </section>
+      <div className="monster-village-hud-column">
+        <HudPanel id="ops" title={t('worldsVisual.operational')} badge={t('worldsVisual.sourceHive')} summary={<>{activeAgents.length} · {counts.doing} {t('worldsVisual.statusDoing')}{counts.blocked ? <b className="is-alert"> · {counts.blocked} {t('worldsVisual.statusBlocked')}</b> : null}</>} open={!!openPanels.ops} onToggle={togglePanel}>
+          <div className="monster-village-statline">
+            <span>{t('worldsVisual.activeAgents')} <b>{activeAgents.length}</b></span>
+            <span>{t('worldsVisual.tasks')} <b>{snapshot.tasks.length}</b></span>
+          </div>
+          <div className="monster-village-task-counts" aria-label={t('worldsVisual.taskCounts')}>
+            <span className="todo">{t('worldsVisual.statusTodo')} {counts.todo}</span>
+            <span className="doing">{t('worldsVisual.statusDoing')} {counts.doing}</span>
+            <span className="blocked">{t('worldsVisual.statusBlocked')} {counts.blocked}</span>
+            <span className="done">{t('worldsVisual.statusDone')} {counts.done}</span>
+          </div>
+          <div className="monster-village-agent-list">
+            {activeAgents.length ? activeAgents.map((agent) => (
+              <button key={agent.id} type="button" className="monster-village-agent-row" onClick={() => onAgentSelect(agent.id)}>
+                <span className="monster-village-agent-dot" data-state={agent.state} aria-hidden="true" />
+                <span className="monster-village-agent-copy">
+                  <b>{agent.name}</b>
+                  <small>{agent.isGod ? `${t('worldsVisual.roleProfessor')} · ` : ''}{stateLabel(agent.state, t)} · {t(VILLAGE_PLACE_LABEL_KEYS[placeForAgent(agent, snapshot.tasks)])}{agent.tool ? ` · ${agent.tool}` : ''}</small>
+                </span>
+                <span className="monster-village-stage" title={t('worldsVisual.worldOnly')}>{t(STAGE_LABEL_KEYS[growthStageForAgent(agent.id)])}</span>
+              </button>
+            )) : <span className="monster-village-empty">{t('worldsVisual.noAgents')}</span>}
+          </div>
+        </HudPanel>
 
-      <section className="monster-village-panel monster-village-panel--missions">
-        <div className="monster-village-panel-heading">
-          <strong>{t('worldsVisual.backlog')}</strong>
-          <span className="monster-village-source-badge">tasks.json</span>
-        </div>
-        <div className="monster-village-mission-list">
-          {snapshot.tasks.slice(0, 6).map((task) => (
-            <button
-              key={task.id}
-              type="button"
-              className={`monster-village-mission-row${selectedTask?.id === task.id ? ' is-selected' : ''}`}
-              aria-pressed={selectedTask?.id === task.id}
-              onClick={() => onTaskSelect(task.id)}
-            >
-              <span className={`monster-village-status-chip ${statusClass(task.status)}`}>{statusLabel(task.status, t)}</span>
-              <span className="monster-village-mission-title">{task.title}</span>
-              <span className="monster-village-mission-owner">{agentName(snapshot, task.assignee)}</span>
-            </button>
-          ))}
-          {!snapshot.tasks.length && <span className="monster-village-empty">{t('worldsVisual.noMissions')}</span>}
-        </div>
-        <div className="monster-village-selected-mission">
-          <span className="monster-village-kicker">{t('worldsVisual.mission')}</span>
-          <b>{selectedTask?.title ?? t('worldsVisual.noMission')}</b>
-          {selectedTask && (
+        <HudPanel id="demo" title={t('worldsVisual.demoTitle')} badge={t('worldsVisual.demoFixture')} badgeWorld summary={demoTask ? statusLabel(demoTask.status, t) : undefined} open={!!openPanels.demo} onToggle={togglePanel} data-monster-demo-mission="true">
+          {!demoTask ? (
             <>
-              <small>{statusLabel(selectedTask.status, t)} · {agentName(snapshot, selectedTask.assignee)}</small>
-              <button type="button" style={buttonStyle} onClick={() => onTaskOpen(selectedTask.id)}>{t('worldsVisual.openTask')}</button>
+              <p className="monster-village-demo-copy">{t('worldsVisual.demoIntro')}</p>
+              <button type="button" className="monster-village-button" onClick={onDemoSeed}>{t('worldsVisual.demoStart')}</button>
+            </>
+          ) : (
+            <>
+              <b>{demoTask.title}</b>
+              <small className="monster-village-demo-controls">{t('worldsVisual.demoControls')} · {t('worldsVisual.demoPosition', { x: playerPosition.x, y: playerPosition.y })}</small>
+              <ul className="monster-village-demo-objectives">
+                {demoTask.worldDemo?.objectiveIds.map((objectiveId) => (
+                  <li key={objectiveId} data-complete={demoTask.worldDemo?.completedObjectiveIds.includes(objectiveId) ? 'true' : 'false'}>
+                    {demoTask.worldDemo?.completedObjectiveIds.includes(objectiveId) ? '✓' : '○'} {objectiveById(objectiveId)?.label ?? objectiveId}
+                  </li>
+                ))}
+              </ul>
+              {demoTask.status !== 'done' && <button type="button" className="monster-village-button" disabled={!activeDemoObjectiveId} onClick={onDemoAction}>
+                {demoTask.status === 'todo' ? t('worldsVisual.demoAccept') : activeDemoObjectiveId === 'return-professor' ? t('worldsVisual.demoDeliver') : t('worldsVisual.demoInteract')}
+              </button>}
+              {demoTask.status === 'done' && <small>{t('worldsVisual.demoComplete')}</small>}
             </>
           )}
-        </div>
-      </section>
+        </HudPanel>
 
-      <section className="monster-village-panel monster-village-panel--demo" data-monster-demo-mission="true">
-        <div className="monster-village-panel-heading">
-          <strong>{t('worldsVisual.demoTitle')}</strong>
-          <span className="monster-village-source-badge monster-village-source-badge--world">{t('worldsVisual.demoFixture')}</span>
-        </div>
-        {!demoTask ? (
-          <>
-            <p className="monster-village-demo-copy">{t('worldsVisual.demoIntro')}</p>
-            <button type="button" style={buttonStyle} onClick={onDemoSeed}>{t('worldsVisual.demoStart')}</button>
-          </>
-        ) : (
-          <>
-            <b>{demoTask.title}</b>
-            <small className="monster-village-demo-controls">{t('worldsVisual.demoControls')} · {t('worldsVisual.demoPosition', { x: playerPosition.x, y: playerPosition.y })}</small>
-            <ul className="monster-village-demo-objectives">
-              {demoTask.worldDemo?.objectiveIds.map((objectiveId) => (
-                <li key={objectiveId} data-complete={demoTask.worldDemo?.completedObjectiveIds.includes(objectiveId) ? 'true' : 'false'}>
-                  {demoTask.worldDemo?.completedObjectiveIds.includes(objectiveId) ? '✓' : '○'} {objectiveById(objectiveId)?.label ?? objectiveId}
-                </li>
-              ))}
-            </ul>
-            {demoTask.status !== 'done' && <button type="button" style={buttonStyle} disabled={!activeDemoObjectiveId} onClick={onDemoAction}>
-              {demoTask.status === 'todo' ? t('worldsVisual.demoAccept') : activeDemoObjectiveId === 'return-professor' ? t('worldsVisual.demoDeliver') : t('worldsVisual.demoInteract')}
-            </button>}
-            {demoTask.status === 'done' && <small>{t('worldsVisual.demoComplete')}</small>}
-          </>
-        )}
-      </section>
+        <HudPanel id="simulation" title={t('worldsVisual.worldState')} badge={t('worldsVisual.worldOnly')} badgeWorld summary={<>{formatSimulationClock(game.elapsedMs)}{game.paused ? ` · ${t('worldsVisual.paused')}` : ''}</>} open={!!openPanels.simulation} onToggle={togglePanel}>
+          <div className="monster-village-simulation-row">
+            <span>{t('worldsVisual.worldClock')} <b>{formatSimulationClock(game.elapsedMs)}</b></span>
+            <span>{t('worldsVisual.rewards')} <b>{game.rewardIds.length}</b></span>
+          </div>
+          <div className="monster-village-simulation-controls">
+            <button type="button" className="monster-village-button" aria-pressed={game.paused} onClick={onPauseToggle}>{game.paused ? t('worldsVisual.resume') : t('worldsVisual.pause')}</button>
+            {[0.5, 1, 2].map((speed) => (
+              <button key={speed} type="button" className="monster-village-button" aria-pressed={game.speed === speed} onClick={() => onSpeedChange(speed as SimulationSpeed)}>{speed}×</button>
+            ))}
+          </div>
+          <small>{t('worldsVisual.worldStateNote')}</small>
+        </HudPanel>
+      </div>
+      <div className="monster-village-hud-column monster-village-hud-column--end">
+        <HudPanel id="missions" title={t('worldsVisual.backlog')} badge={t('worldsVisual.sourceHive')} summary={<>{snapshot.tasks.length}{counts.blocked ? <b className="is-alert"> · {counts.blocked} {t('worldsVisual.statusBlocked')}</b> : null}</>} open={!!openPanels.missions} onToggle={togglePanel}>
+          <div className="monster-village-mission-list">
+            {snapshot.tasks.slice(0, 6).map((task) => (
+              <button
+                key={task.id}
+                type="button"
+                className={`monster-village-mission-row${selectedTask?.id === task.id ? ' is-selected' : ''}`}
+                aria-pressed={selectedTask?.id === task.id}
+                onClick={() => onTaskSelect(task.id)}
+              >
+                <span className={`monster-village-status-chip ${statusClass(task.status)}`}>{statusLabel(task.status, t)}</span>
+                <span className="monster-village-mission-title">{task.title}</span>
+                <span className="monster-village-mission-owner">{agentName(snapshot, task.assignee)}</span>
+              </button>
+            ))}
+            {!snapshot.tasks.length && <span className="monster-village-empty">{t('worldsVisual.noMissions')}</span>}
+          </div>
+          <div className="monster-village-selected-mission">
+            <span className="monster-village-kicker">{t('worldsVisual.mission')}</span>
+            <b>{selectedTask?.title ?? t('worldsVisual.noMission')}</b>
+            {selectedTask && (
+              <>
+                <small>{statusLabel(selectedTask.status, t)} · {agentName(snapshot, selectedTask.assignee)}</small>
+                <button type="button" className="monster-village-button" onClick={() => onTaskOpen(selectedTask.id)}>{t('worldsVisual.openTask')}</button>
+              </>
+            )}
+          </div>
+        </HudPanel>
 
-      <section className="monster-village-panel monster-village-panel--simulation">
-        <div className="monster-village-panel-heading">
-          <strong>{t('worldsVisual.worldState')}</strong>
-          <span className="monster-village-source-badge monster-village-source-badge--world">{t('worldsVisual.worldOnly')}</span>
-        </div>
-        <div className="monster-village-simulation-row">
-          <span>{t('worldsVisual.worldClock')} <b>{formatSimulationClock(game.elapsedMs)}</b></span>
-          <span>{t('worldsVisual.rewards')} <b>{game.rewardIds.length}</b></span>
-        </div>
-        <div className="monster-village-simulation-controls">
-          <button type="button" style={buttonStyle} aria-pressed={game.paused} onClick={onPauseToggle}>{game.paused ? t('worldsVisual.resume') : t('worldsVisual.pause')}</button>
-          {[0.5, 1, 2].map((speed) => (
-            <button key={speed} type="button" style={{ ...buttonStyle, opacity: game.speed === speed ? 1 : 0.62 }} aria-pressed={game.speed === speed} onClick={() => onSpeedChange(speed as SimulationSpeed)}>{speed}×</button>
-          ))}
-        </div>
-        <small>{t('worldsVisual.worldStateNote')}</small>
-      </section>
-
-      <section className="monster-village-panel monster-village-panel--activity">
-        <div className="monster-village-panel-heading">
-          <strong>{t('worldsVisual.recentActivity')}</strong>
-          <span className="monster-village-source-badge">{t('worldsVisual.sourceHive')}</span>
-        </div>
-        <ul className="monster-village-activity-list">
-          {activity.map((item) => <ActivityRow key={item.id} item={item} sourceLabel={item.source === t('worldsVisual.hiveSnapshot') ? item.source : undefined} />)}
-          {!activity.length && <li className="monster-village-empty">{t('worldsVisual.noActivity')}</li>}
-        </ul>
-      </section>
+        <HudPanel id="activity" title={t('worldsVisual.recentActivity')} badge={t('worldsVisual.sourceHive')} summary={activity.length || undefined} open={!!openPanels.activity} onToggle={togglePanel}>
+          <ul className="monster-village-activity-list">
+            {activity.map((item) => <ActivityRow key={item.id} item={item} sourceLabel={item.source === t('worldsVisual.hiveSnapshot') ? item.source : undefined} />)}
+            {!activity.length && <li className="monster-village-empty">{t('worldsVisual.noActivity')}</li>}
+          </ul>
+        </HudPanel>
+      </div>
     </div>
   );
 }

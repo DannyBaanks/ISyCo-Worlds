@@ -397,7 +397,7 @@ export function IdePanel() {
             >{target.agent.name}</span>
             {target.agent.isGod && (
               <span style={{
-                fontFamily: 'var(--cth-font-display)', fontSize: 7, padding: '1px 3px',
+                fontFamily: 'var(--cth-font-display)', fontSize: 8, padding: '1px 3px',
                 background: 'var(--cth-lilac-light)', color: 'var(--cth-ink-900)'
               }}>god</span>
             )}
@@ -475,7 +475,7 @@ export function IdePanel() {
                   // folds, and together they are a bigger hit target than the
                   // caret alone was.
                   display: 'flex', alignItems: 'center', gap: 3, width: 'auto', padding: '0 3px',
-                  fontFamily: 'var(--cth-font-mono)', fontSize: 10, lineHeight: '14px',
+                  fontFamily: 'var(--cth-font-mono)', fontSize: 11, lineHeight: '14px',
                   color: 'var(--cth-ink-700)'
                 }}
               >
@@ -590,7 +590,7 @@ export function IdePanel() {
                   >
                     {tab.mode !== 'edit' && (
                       <span style={{
-                        fontFamily: 'var(--cth-font-display)', fontSize: 7, padding: '1px 3px',
+                        fontFamily: 'var(--cth-font-display)', fontSize: 8, padding: '1px 3px',
                         background: tab.mode === 'revdiff' ? 'var(--cth-lilac-light)'
                           : tab.mode === 'image' ? 'var(--cth-peach-light)'
                           : 'var(--cth-sky-light)',
@@ -847,7 +847,7 @@ function ShortcutHint() {
   return (
     <div style={{
       marginTop: 10, display: 'grid', gap: 2, justifyItems: 'center',
-      fontFamily: 'var(--cth-font-ui)', fontSize: 11, color: 'var(--cth-ink-300)'
+      fontFamily: 'var(--cth-font-ui)', fontSize: 11, color: 'var(--cth-ink-500)'
     }}>
       {EDITOR_SHORTCUTS.map(([keys, label]) => (
         <div key={label} style={{ display: 'flex', gap: 6, alignItems: 'baseline' }}>

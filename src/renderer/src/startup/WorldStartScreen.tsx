@@ -23,10 +23,6 @@ const PROFILE_LABELS: Record<WorldId, string> = {
   office: 'startScreen.munderDifflin',
   'monster-trainer': 'startScreen.monsterTrainer'
 };
-const PROFILE_ART_LABEL: Record<WorldId, string> = {
-  office: 'Munder Difflin',
-  'monster-trainer': 'Monster Village'
-};
 const PROFILE_SCENE: Record<WorldId, string> = {
   office: officeSceneUrl,
   'monster-trainer': monsterTrainerSceneUrl
@@ -268,7 +264,6 @@ export function WorldStartScreen({ config, worldProfileStatus, onConfigSaved, on
             <div className="cth-world-start-world-title">
               <span className="cth-world-start-kicker">{t('startScreen.world')}</span>
               <h2 id="start-world-heading">{t(PROFILE_LABELS[selectedProfile])}</h2>
-              <span className="cth-world-start-landmark">{PROFILE_ART_LABEL[selectedProfile]}</span>
             </div>
             <div className="cth-world-start-art-window" data-world-profile={selectedProfile} aria-hidden="true">
               <img src={PROFILE_SCENE[selectedProfile]} alt="" />

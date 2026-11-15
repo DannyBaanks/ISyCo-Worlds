@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Assets } from 'pixi.js';
+import { useTranslation } from 'react-i18next';
 import { PixelButton } from '@/components/PixelButton';
 import type { WorldLifecycleError, WorldMount, WorldResourceResolver } from './WorldEngine';
 import type { WorldPresentationCommand, WorldPresentationComposition, WorldPresentationIntent, WorldPresentationProjection } from '@shared/worldPresentationProtocol';
@@ -21,6 +22,14 @@ class SurfaceErrorBoundary extends Component<{
     return this.state.failed ? null : this.props.children;
   }
 }
+
+// Pixi decodes textures with fetch() + createImageBitmap by default, and fetch()
+// of a data: URL is governed by connect-src, which the packaged app's CSP keeps
+// narrow. Small images inlined by the bundler as data: URLs therefore failed to
+// load in the packaged app only (dev has no CSP), and Munder Difflin fell back
+// to another world. An <img> element is governed by img-src, which allows data:,
+// so decode through it instead of widening the CSP.
+Assets.setPreferences({ preferCreateImageBitmap: false, preferWorkers: false });
 
 export function createBrowserResourceResolver(): WorldResourceResolver {
   const runtime = import.meta.env.DEV ? 'dev' : 'packaged';
@@ -85,11 +94,12 @@ export function WorldRuntimeSurface({
   );
 }
 
-export function WorldRecoverySurface({ error, onRetry, retryLabel = 'Retry Office' }: {
+export function WorldRecoverySurface({ error, onRetry, retryLabel }: {
   error?: WorldLifecycleError;
   onRetry: () => void;
   retryLabel?: string;
 }) {
+  const { t } = useTranslation();
   const detail = error
     ? `${error.phase} · ${error.worldId} · ${error.cause.message}`
     : 'World renderer did not reach READY.';
@@ -102,9 +112,9 @@ export function WorldRecoverySurface({ error, onRetry, retryLabel = 'Retry Offic
       }}
     >
       <div style={{ maxWidth: 460, textAlign: 'center', display: 'grid', gap: 12 }}>
-        <strong style={{ fontFamily: 'var(--cth-font-display)', fontSize: 13 }}>WORLD RECOVERY</strong>
+        <strong style={{ fontFamily: 'var(--cth-font-display)', fontSize: 13 }}>{t('shell.worldRecovery.title')}</strong>
         <span style={{ fontFamily: 'monospace', fontSize: 12, whiteSpace: 'pre-wrap' }}>{detail}</span>
-        <div><PixelButton variant="secondary" size="sm" onClick={onRetry}>{retryLabel}</PixelButton></div>
+        <div><PixelButton variant="secondary" size="sm" onClick={onRetry}>{retryLabel ?? t('shell.worldRecovery.retry', { world: t('startScreen.munderDifflin') })}</PixelButton></div>
       </div>
     </div>
   );
