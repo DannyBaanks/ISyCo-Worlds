@@ -539,7 +539,6 @@ export function AddAgentModal({ onClose, config, onConfigChange, profileId = 'of
         <PixelPanel
           variant="dialog"
           title={tr('addAgent.title')}
-          style={{ padding: 16 }}
           noPadding
         >
           {/* Sectioned config with a left sidebar index. The form has 11+ fields,

@@ -735,7 +735,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                   background: 'var(--cth-paper-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', color: 'var(--cth-ink-700)'
                 }}>{lastTool[a.id]}</span>
               )}
-              <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 10, color: 'var(--cth-ink-300)', flexShrink: 0 }}>{t('commandCenter.budget')}</span>
+              <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 10, color: 'var(--cth-ink-500)', flexShrink: 0 }}>{t('commandCenter.budget')}</span>
               <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-900)', width: 56, textAlign: 'right' }}>{fmtTokens(tokens)}</span>
               <div
                 title={t('commandCenter.meterTitle', {
@@ -756,7 +756,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                 spend, this one is headroom before compaction. */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ flex: 1 }} />
-              <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 10, color: 'var(--cth-ink-300)', flexShrink: 0 }}>{t('commandCenter.ctx')}</span>
+              <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 10, color: 'var(--cth-ink-500)', flexShrink: 0 }}>{t('commandCenter.ctx')}</span>
               {a.contextTokens !== undefined && a.contextLimit ? (() => {
                 const cpct = Math.min(100, Math.round((a.contextTokens! / a.contextLimit!) * 100));
                 const ccolor = cpct >= 88 ? 'var(--cth-coral)' : cpct >= 75 ? 'var(--cth-lemon)' : `var(--cth-${a.accent})`;
@@ -779,7 +779,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                   </>
                 );
               })() : (
-                <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-300)' }}>
+                <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-500)' }}>
                   {t('commandCenter.noStatusTick')}
                 </span>
               )}
@@ -1274,7 +1274,7 @@ function ActivityTab() {
         {log.length === 0 && <Muted>{t('commandCenter.nothingYet')}</Muted>}
         {[...log].reverse().map((e, i) => (
           <div key={i} style={{ fontSize: 12, color: 'var(--cth-ink-700)', padding: '2px 0', display: 'flex', gap: 6 }}>
-            <span style={{ color: 'var(--cth-ink-300)', flexShrink: 0 }}>{e.kind ?? '·'}</span>
+            <span style={{ color: 'var(--cth-ink-500)', flexShrink: 0 }}>{e.kind ?? '·'}</span>
             <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fmt(e)}</span>
           </div>
         ))}

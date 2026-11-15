@@ -290,7 +290,12 @@
 .cth-kanban-columns { scroll-snap-type: x proximity; scrollbar-width: thin; }
 .cth-kanban-col { scroll-snap-align: start; }
 :root[data-world-skin] .cth-kanban-col { box-shadow: inset 0 0 0 1px var(--cth-ink-300), var(--depth-recessed) !important; }
-:root[data-world-skin] .cth-kanban-col-head { box-shadow: inset 0 3px 0 #ffffff59, inset 0 -2px 0 #00000029 !important; }
+:root[data-world-skin] .cth-kanban-col-head {
+  /* A wash of white over the accent keeps the dark label above 4.5:1 on every
+     column colour, coral included. */
+  background-image: linear-gradient(#ffffff61, #ffffff61) !important;
+  box-shadow: inset 0 3px 0 #ffffff59, inset 0 -2px 0 #00000029 !important;
+}
 :root[data-world-skin] .cth-kanban-card { transition: transform 90ms ease-out, box-shadow 90ms ease-out; }
 :root[data-world-skin='office'] .cth-kanban-card { box-shadow: inset 0 0 0 1px var(--cth-ink-900), 2px 2px 0 var(--cth-ink-900) !important; }
 :root[data-world-skin='office'] .cth-kanban-card:hover { transform: translate(-1px, -1px); box-shadow: inset 0 0 0 1px var(--cth-ink-900), 3px 3px 0 var(--cth-ink-900), 6px 6px 0 var(--depth-cast) !important; }
@@ -325,3 +330,22 @@
 
 /* The memory tab sits above the village's build bar instead of over it. */
 :root[data-world-skin='monster-trainer'] .cth-memory-dock { bottom: 70px !important; }
+
+/* Nothing in the Marketplace works yet, so it says so at a glance: a tag on
+   the title, a search well that is visibly closed, stock that does not react. */
+.worlds-soon-tag {
+  display: inline-block; margin-inline-start: 12px; padding: 3px 9px 2px; vertical-align: middle;
+  color: var(--cth-on-accent); background: var(--cth-lemon);
+  box-shadow: inset 0 0 0 2px var(--cth-ink-900), 2px 2px 0 var(--cth-ink-900);
+  font: 400 8px/12px var(--cth-font-display); transform: rotate(-3deg);
+}
+:root[data-world-skin='monster-trainer'] .worlds-soon-tag { border-radius: 999px; box-shadow: inset 0 0 0 2px var(--mt-outline), 0 3px 0 var(--mt-outline); }
+.worlds-marketplace input[type='search']:disabled {
+  cursor: not-allowed; color: var(--cth-ink-500);
+  background: repeating-linear-gradient(135deg, var(--cth-cream-200) 0 8px, var(--cth-cream-100) 8px 16px) !important;
+}
+.worlds-marketplace .worlds-market-shelves li { cursor: default; opacity: .8; }
+
+/* Ledger counts read as ink, not as a pale accent on a pale well. */
+:root[data-world-skin='monster-trainer'] .worlds-status-ledger dd { color: var(--mt-grass-dark); }
+:root[data-cth-theme='dark'][data-world-skin='monster-trainer'] .worlds-status-ledger dd { color: var(--cth-mint); }

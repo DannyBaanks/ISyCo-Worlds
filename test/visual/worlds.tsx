@@ -10,11 +10,14 @@ import '../../src/renderer/src/design/depth.css';
 import '../../src/renderer/src/design/skin-motion.css';
 const params = new URLSearchParams(location.search);
 localStorage.setItem('cth.language', params.get('lang') || 'es');
-localStorage.setItem('cth.skipHivePickerOnce', '1');
+if (!['start','firstrun'].includes(params.get('view')||'')) localStorage.setItem('cth.skipHivePickerOnce', '1'); else localStorage.removeItem('cth.skipHivePickerOnce');
+// The shell hosts Munder Difflin inline; Monster Village renders in its own
+// renderer (see scene.html), so the default here is the world with a canvas.
+const WORLD = params.get('world') || 'office';
 localStorage.setItem('cth.theme', params.get('theme') || 'light');
 const config = {
-  onboardingComplete: true, harnessHome: null, registeredRepos: [], recentHives: [],
-  defaultCommand: 'codex', autoMode: false, worldsEnabled: true,
+  onboardingComplete: params.get('view') !== 'firstrun', harnessHome: params.get('view') === 'firstrun' ? null : '/workspace/isyco-worlds', preferredWorldProfile: WORLD, registeredRepos: [], recentHives: ['/workspace/isyco-worlds', '/workspace/another-world-with-a-rather-long-name'],
+  defaultCommand: 'codex', autoMode: params.get('auto') === '1', worldsEnabled: true,
   selectedWorld: 'monster-trainer', freeflowEnabled: false,
   terminalTheme: params.get('theme') || 'light', godName: 'Coordinador',
   webhookTriggers: [{ id: 'visual', enabled: false, name: 'Visual fixture', secret: '', mode: 'notify', schema: '{}', createdAt: 0 }],
@@ -29,8 +32,20 @@ const api = {
   onConfigChanged: (fn) => { configChanged = fn; return () => {}; },
   updateConfig: async (patch) => { Object.assign(config, patch); configChanged({...config}); return config; },
   listPtys: async () => [],
+  getWorldProfileStatus: async () => ({ state: 'READY', activeProfileId: params.get('noprofile') ? null : WORLD, pendingProfileId: null, sessionId: 's1', preferredWorldProfile: WORLD }),
+  toolsStatus: async () => [{ id: 'claude', installed: true, version: '2.1.0' }, { id: 'codex', installed: true, version: '0.50' }, { id: 'opencode', installed: false }],
+  hiveLog: async () => [],
+  setWorldPresentationBounds: () => {},
+  startWorldPresentation: async (profileId) => ({ phase: 'READY', profileId, generation: 1 }),
+  getWorldComposition: async () => ({ ok: true, layout: null }),
+  worldHelperSnapshot: async () => null,
   hiveRegistry: async () => ({ agents: [] }),
-  hiveTasks: async () => ({ tasks: [] }),
+  hiveTasks: async () => ({ tasks: [
+    { id: 't1', title: 'Pulir la pantalla de inicio', assignee: 'flora', status: 'doing', createdAt: Date.now()-3600e3 },
+    { id: 't2', title: 'Revisar contraste del modo oscuro en el panel de comando', assignee: 'ember', status: 'blocked', humanQA: [{ q: '¿Usamos el tono madera o el pergamino para el fondo?' }], createdAt: Date.now()-7200e3 },
+    { id: 't3', title: 'Escribir pruebas del selector de mundo', assignee: null, status: 'todo', createdAt: Date.now()-100e3 },
+    { id: 't4', title: 'Migrar tokens', assignee: 'flora', status: 'done', result: 'Listo', createdAt: Date.now()-9000e3 }
+  ] }),
   hiveMemory: async () => '',
   hiveBoard: async () => '',
   listWorkers: async () => ({ workers: [], events: [] }),

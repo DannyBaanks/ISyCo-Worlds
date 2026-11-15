@@ -1730,7 +1730,8 @@
       "intentPlaceholder": "我希望 ISyCo Worlds 能够…",
       "prepare": "准备贡献",
       "pipelineSoon": "即将推出：贡献流程尚未接入。",
-      "noCatalog": "尚未接入任何目录。这里不会安装或运行任何东西。"
+      "noCatalog": "尚未接入任何目录。这里不会安装或运行任何东西。",
+      "soon": "即将推出"
     },
     "autoMode": {
       "on": "自动模式已开启",

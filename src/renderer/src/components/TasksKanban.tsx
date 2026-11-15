@@ -202,7 +202,7 @@ export function TasksKanban() {
               </div>
               <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 6, display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {cards.length === 0 && (
-                  <div style={{ fontSize: 12, color: 'var(--cth-ink-300)', textAlign: 'center', padding: '8px 0' }}>—</div>
+                  <div style={{ fontSize: 12, color: 'var(--cth-ink-500)', textAlign: 'center', padding: '8px 0' }}>—</div>
                 )}
                 {cards.map((t) => (
                   <TaskCard
@@ -360,7 +360,7 @@ export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose 
               }}>{t(col.labelKey)}</span>
               {assigneeName
                 ? <PixelBadge status="working" label={assigneeName} />
-                : <span style={{ fontSize: 11, color: 'var(--cth-ink-300)' }}>{t('kanban.unassigned')}</span>}
+                : <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>{t('kanban.unassigned')}</span>}
               <PriorityDots level={Math.max(1, Math.min(5, task.priority))} />
               <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--cth-ink-500)', fontFamily: 'var(--cth-font-display)' }}>
                 {isNaN(created.getTime()) ? '' : created.toLocaleString()}
@@ -374,7 +374,7 @@ export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose 
               fontFamily: 'var(--cth-font-mono)', fontSize: 12, lineHeight: '18px',
               color: 'var(--cth-ink-900)', whiteSpace: 'pre-wrap', wordBreak: 'break-word'
             }} dir={rtl ? 'auto' : undefined}>
-              {task.description?.trim() || <span style={{ color: 'var(--cth-ink-300)' }}>{t('kanban.noDescription')}</span>}
+              {task.description?.trim() || <span style={{ color: 'var(--cth-ink-500)' }}>{t('kanban.noDescription')}</span>}
             </div>
 
             {/* The human Q&A trail — every decision documented on the card.

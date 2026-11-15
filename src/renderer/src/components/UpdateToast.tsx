@@ -263,7 +263,7 @@ export function UpdateToast() {
                 display: 'flex', gap: 6,
                 fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-700)'
               }}>
-                <span aria-hidden style={{ color: 'var(--cth-ink-300)' }}>•</span>
+                <span aria-hidden style={{ color: 'var(--cth-ink-500)' }}>•</span>
                 <span>{line}</span>
               </li>
             ))}

@@ -847,7 +847,7 @@ function SidebarRow({
                   color: 'var(--cth-ink-500)'
                 }}
               >
-                <span style={{ flexShrink: 0, color: 'var(--cth-ink-300)' }}>•</span>
+                <span style={{ flexShrink: 0, color: 'var(--cth-ink-500)' }}>•</span>
                 {/* Exactly one line per bullet — a wrapping row would make the
                     roster's height jump around as notes are typed. The full
                     text is on hover (title, and the editor beside it). */}
@@ -859,7 +859,7 @@ function SidebarRow({
             {bullets.length === 0 && (
               <span style={{
                 fontSize: scale.note, lineHeight: 1.35,
-                color: 'var(--cth-ink-300)', fontStyle: 'italic'
+                color: 'var(--cth-ink-500)', fontStyle: 'italic'
               }}>no note</span>
             )}
           </div>

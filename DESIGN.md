@@ -4,6 +4,13 @@
 
 ---
 
+> **Scope note.** Sections 3 to 15 describe the original Munder Difflin look and
+> remain its reference. The app now ships two worlds with their own skins
+> (Munder Difflin and Monster Trainer) and a shared depth model; section 19 is
+> canonical for those and wins where it disagrees with the older sections.
+
+---
+
 ## 1. Principles
 
 1. **Pixel-snapped everything.** No half-pixels. No CSS blur. No floaty `border-radius`. The grid is real.
@@ -718,3 +725,80 @@ Both files import from a single source-of-truth `tokens.json` at build time (fut
 3. Resizable rooms vs fixed grid — currently spec'd fixed; may want to drag-resize rooms.
 4. Whether to add ambient floor decorations (flowers, rugs) — yes, low-priority polish.
 5. Custom mouse cursor (pixel-style hand) — defer.
+
+---
+
+## 19. Worlds, skins and depth
+
+### 19.1 Where the look lives
+
+| File | Owns |
+|---|---|
+| `design/tokens.css` | Palette, type scale, spacing. Light and dark. |
+| `design/worlds.css` | Shared layout of the shell (frame, crew strip, command side). No world-specific colour. |
+| `design/skin-office.css` | Munder Difflin: cream stock, ink rules, square corners. Every rule scoped to `data-world-skin='office'`. |
+| `design/skin-monster.css` | Monster Trainer: night-teal device, rounded cards, dark outline. Scoped to `data-world-skin='monster-trainer'`. |
+| `design/depth.css` | Height: shadows, lit edges, key travel. Loaded after the skins, before motion. |
+| `design/skin-motion.css` | Animation, all inside `prefers-reduced-motion: no-preference`. |
+| `design/village-hud.css` | Monster Village HUD and build bar. Loaded only by the scene renderer (`worldHost.tsx`), which shares no stylesheet with the shell, so it carries its own palette. |
+| `startup/world-start-screen.css` | The neutral timber-and-parchment entry screen, including its own depth rules. |
+
+Fonts in use are `Press Start 2P` (display), `Inter` (UI) and `JetBrains Mono`
+(code and terminals). They are bundled; nothing loads from the network.
+
+### 19.2 Depth model
+
+One light, from the top-left, for every world. The shell is drawn at three
+heights instead of one flat plane:
+
+| Height | What sits there | How it is drawn |
+|---|---|---|
+| **Recessed** | The world screen, inputs, portrait tiles, kanban columns, ledger counters | Inner shadow on the top and left edges |
+| **Raised** | The two columns, crew cards, signs, the ledger | Lit top edge, shaded bottom edge, a solid side wall, a cast shadow |
+| **Floating** | Dialogs, menus, the Marketplace counter | A taller wall and a longer cast shadow |
+
+Controls are **keys**: a face on a side wall. Hover lifts a key by one step;
+pressing removes the wall and moves the face down by the wall's height. A
+selected tab is a key that stays pressed in. A disabled key is flush with the
+surface: no wall, no light, muted label.
+
+Each skin supplies the same seven custom properties and nothing else changes
+between worlds:
+
+`--depth-lit`, `--depth-shade`, `--depth-wall`, `--depth-cast`, `--depth-well`,
+and the composed shadows `--depth-raised`, `--depth-card`, `--depth-card-up`,
+`--depth-floating`, `--depth-recessed`.
+
+| | Munder Difflin | Monster Trainer |
+|---|---|---|
+| Material | Stacked paper | Moulded plastic |
+| Cast shadow | Hard, stepped, offset down-right. No blur. | Solid drop edge plus a soft contact shadow |
+| Hover | Card shifts up-left in steps | Card lifts and tilts back (`rotateX`) under `perspective` |
+| Corners | Square | Rounded |
+
+Rules:
+
+1. New surfaces pick a height and use the matching `--depth-*` shadow. Do not
+   write a one-off `box-shadow` for elevation.
+2. Depth never carries meaning on its own: selection also changes colour, and
+   focus keeps its outline.
+3. Tilt and lift are decoration. They are off under reduced motion and nothing
+   waits on them.
+4. The world itself is not restyled: sprites and tiles stay pixel-snapped.
+
+### 19.3 Village HUD
+
+The HUD cards over Monster Village start **folded** to a one-line tab with a
+live summary (crew count, blocked missions, world clock). Opening a card is the
+viewer's choice and is remembered. The village must stay readable at the
+minimum window size (1280 by 800) with every card folded.
+
+### 19.4 Text
+
+- Minimum 11 px for anything the user reads in the HUD; 12 px for body copy.
+- Spanish headings are written in sentence case and are never upper-cased by
+  CSS: Press Start 2P draws accented capitals at lowercase height, so
+  "BÚSQUEDA" renders as "BúSQUEDA".
+- Spanish copy addresses the user as "tú" throughout.
+- Text on an accent fill uses `--cth-on-accent`, never `--cth-ink-900`, so it
+  stays readable when the theme inverts the ink ramp.

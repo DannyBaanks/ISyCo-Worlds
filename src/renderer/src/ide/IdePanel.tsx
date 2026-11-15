@@ -847,7 +847,7 @@ function ShortcutHint() {
   return (
     <div style={{
       marginTop: 10, display: 'grid', gap: 2, justifyItems: 'center',
-      fontFamily: 'var(--cth-font-ui)', fontSize: 11, color: 'var(--cth-ink-300)'
+      fontFamily: 'var(--cth-font-ui)', fontSize: 11, color: 'var(--cth-ink-500)'
     }}>
       {EDITOR_SHORTCUTS.map(([keys, label]) => (
         <div key={label} style={{ display: 'flex', gap: 6, alignItems: 'baseline' }}>
