@@ -111,6 +111,10 @@ export function AgentCard({
   // missing) has somewhere to sit rather than pushing the row apart.
   const width = 252;
   const height = 110;
+  // The second line under the name: the coordinator's role, or the species this
+  // agent wears in a world. Left out when it would only repeat the name.
+  const roleText = presentationName ?? (isGod ? t('worldsVisual.coordinator') : undefined);
+  const roleLabel = roleText && roleText.trim().toLowerCase() !== name.trim().toLowerCase() ? roleText : undefined;
   const lift = (isGod ? -2 : 0) - (hover ? 1 : 0) - (selected ? 1 : 0);
   /** God's distinction: a tinted surface plus a thin accent border all the way
    *  around — NOT the 3px rule that used to sit on the top edge alone. That rule
@@ -157,7 +161,7 @@ export function AgentCard({
       // The ring is the visual answer to "which terminal is open"; this is the
       // same answer for a screen reader. Matches SidebarRow in fullscreen.
       aria-current={selected ? 'true' : undefined}
-      aria-label={presentationName ? `${presentationName} — ${name}` : undefined}
+      aria-label={presentationName ? `${name} — ${presentationName}` : undefined}
       style={{
         width, minWidth: width, height,
         padding: 0, border: 'none', background: 'transparent', cursor: 'pointer', textAlign: 'left',
@@ -197,7 +201,7 @@ export function AgentCard({
       >
         <div style={{ display: 'flex', gap: 8, height: '100%' }}>
           {/* Portrait tile — vertically centred so the card reads calm and even. */}
-          <div style={{
+          <div className="worlds-worker-portrait" style={{
             width: worldProfileId === 'monster-trainer' ? 56 : 36,
             height: worldProfileId === 'monster-trainer' ? (isGod ? 68 : 60) : (isGod ? 50 : 46), alignSelf: 'center',
             // God's CARD is now accent-light, so the tile cannot be — it would
@@ -219,7 +223,7 @@ export function AgentCard({
             {/* Identity row: name (+ BOSS tag) + status. */}
             <div className="worlds-worker-identity" style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'space-between', minWidth: 0 }}>
               <span className="worlds-worker-name" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, minWidth: 0, flex: 1 }}>
-                {onRename && !presentationName ? (
+                {onRename ? (
                   <AgentNameEditor name={name} onCommit={onRename} uppercase />
                 ) : (
                   <span style={{
@@ -229,12 +233,12 @@ export function AgentCard({
                     color: 'var(--cth-ink-900)',
                     flex: 1, minWidth: 0,
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                  }} title={presentationName ? `${presentationName} · ${name}` : name}>
-                    {(presentationName ?? name).toUpperCase()}
+                  }} title={presentationName ? `${name} · ${presentationName}` : name}>
+                    {name.toUpperCase()}
                   </span>
                 )}
               </span>
-              {isGod && <span className="worlds-worker-role">{t('worldsVisual.coordinator')}</span>}
+              {roleLabel && <span className="worlds-worker-role">{roleLabel}</span>}
               {/* flexShrink:0 — the badge is a fixed 2-to-5 character chip; when
                   it was allowed to shrink, the browser resolved the overflow by
                   eating the NAME instead. Truncation should land on the longest,
@@ -296,7 +300,7 @@ export function AgentCard({
                     title={note ? t('agentCard.editNote') : t('agentCard.addNote')}
                     aria-label={t('agentCard.editNoteAria', { name })}
                     style={{
-                      flexShrink: 0, width: 15, height: 14,
+                      flexShrink: 0, width: 24, height: 24, margin: '-5px -4px',
                       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: 10, lineHeight: 1, cursor: 'pointer',
                       // Quiet until the card is hovered — discoverable, not noisy.

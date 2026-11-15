@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { HarnessConfig } from '@/store/config';
 import { WorldEngine, type WorldEngineState, type WorldMount } from './WorldEngine';
 import { FALLBACK_WORLD_ID, WORLD_REGISTRY } from './worldRegistry';
@@ -64,6 +65,7 @@ export function WorldSceneHost({
   presentation?: { profileId: 'office' | 'monster-trainer'; generation: number; projection: WorldPresentationProjection; composition?: WorldPresentationComposition; compositionSaveResult?: Extract<import('@shared/worldPresentationProtocol').WorldPresentationCommand, { type: 'update-composition' }>; onIntent: (intent: WorldPresentationIntent) => void };
   onPresentationState?: (status: WorldPresentationStatus) => void;
 }) {
+  const { t } = useTranslation();
   const [state, setState] = useState<WorldEngineState>(IDLE);
   const presentationRef = useRef(presentation);
   const onPresentationStateRef = useRef(onPresentationState);
@@ -143,7 +145,7 @@ export function WorldSceneHost({
       ))}
       {!state.active && state.phase !== 'RECOVERY' && (
         <div data-world-loading={state.phase} style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
-          Loading world…
+          {t('shell.loadingWorld')}
         </div>
       )}
       {state.error && state.phase !== 'RECOVERY' && (
@@ -162,6 +164,8 @@ function visibleMounts(state: WorldEngineState): readonly WorldMount[] {
 }
 
 function IsolatedWorldViewport({ profileId, suspended }: { profileId: 'monster-trainer'; suspended: boolean }) {
+  const { t } = useTranslation();
+  const worldName = t(profileId === 'monster-trainer' ? 'startScreen.monsterTrainer' : 'startScreen.munderDifflin');
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const { snapshot, visualIdentities } = useWorldProjection();
   const projection = useMemo<WorldPresentationProjection>(() => ({
@@ -257,10 +261,10 @@ function IsolatedWorldViewport({ profileId, suspended }: { profileId: 'monster-t
         <WorldRecoverySurface error={status.error ? {
           phase: status.error.phase, worldId: status.error.profileId, cause: new Error(status.error.cause.message),
           runtime: 'host', category: status.error.category === 'resource' ? 'resource' : 'renderer'
-        } : undefined} retryLabel={profileId === 'monster-trainer' ? 'Retry Monster Village' : 'Retry Munder Difflin'} onRetry={() => { void window.cth.restartWorldPresentation().then(acceptStatus); }} />
+        } : undefined} retryLabel={t('shell.worldRecovery.retry', { world: worldName })} onRetry={() => { void window.cth.restartWorldPresentation().then(acceptStatus); }} />
       )}
       {status.phase !== 'READY' && status.phase !== 'RECOVERY' && (
-        <div data-world-loading={status.phase} style={{ position: 'absolute', inset: 0, zIndex: 2, display: 'grid', placeItems: 'center', pointerEvents: 'none' }}>Loading {profileId === 'monster-trainer' ? 'Monster Village' : 'Munder Difflin'}…</div>
+        <div data-world-loading={status.phase} style={{ position: 'absolute', inset: 0, zIndex: 2, display: 'grid', placeItems: 'center', pointerEvents: 'none' }}>{t('shell.worldLoading', { world: worldName })}</div>
       )}
     </div>
   );

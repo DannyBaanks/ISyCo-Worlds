@@ -1264,7 +1264,8 @@
     "legendPropose": "提议",
     "legendAgreeDone": "同意/完成",
     "legendRefuse": "拒绝",
-    "legendInformTopic": "告知/主题"
+    "legendInformTopic": "告知/主题",
+    "emptyHint": "还没有消息。代理以名单形式显示。"
   },
   "integrations": {
     "errLabel": "请给它一个名称。",
@@ -1730,6 +1731,41 @@
       "prepare": "准备贡献",
       "pipelineSoon": "即将推出：贡献流程尚未接入。",
       "noCatalog": "尚未接入任何目录。这里不会安装或运行任何东西。"
+    },
+    "autoMode": {
+      "on": "自动模式已开启",
+      "off": "自动模式已关闭",
+      "badgeOn": "自动 开",
+      "badgeOff": "自动 关",
+      "open": "打开自主设置"
+    },
+    "theme": {
+      "light": "浅色主题",
+      "dark": "深色主题",
+      "toggle": "切换深色模式"
+    },
+    "focus": {
+      "enter": "专注模式",
+      "exit": "退出专注模式 (Esc)",
+      "toggle": "切换专注模式"
+    },
+    "loadingWorld": "正在加载你的世界…",
+    "worldLoading": "正在加载 {{world}}…",
+    "worldRecovery": {
+      "title": "世界恢复",
+      "retry": "重试 {{world}}"
+    },
+    "emptyFloor": {
+      "title": "这里还没有人",
+      "body": "添加一个代理，它的实时输出会显示在这里。"
+    },
+    "booting": {
+      "title": "正在唤醒",
+      "body": "{{name}} 正在准备，终端马上会出现在这里。"
+    },
+    "noAgent": {
+      "title": "未选择代理",
+      "body": "从下方选择一位伙伴，或添加一位新伙伴。它的终端和命令栏会显示在这里。"
     }
   },
   "worldsVisual": {

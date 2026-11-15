@@ -71,12 +71,12 @@ const TABS: { key: CCTab; labelKey: string; icon: Parameters<typeof Icon>[0]['na
   { key: 'terminal', labelKey: 'commandCenter.tabs.terminal', icon: 'terminal' },
   { key: 'floor', labelKey: 'commandCenter.tabs.floor', icon: 'mcp' },
   { key: 'tasks', labelKey: 'commandCenter.tabs.tasks', icon: 'check' },
-  { key: 'human', labelKey: 'commandCenter.tabs.human', icon: 'bell' },
+  { key: 'human', labelKey: 'commandCenter.tabs.human', icon: 'chat' },
   { key: 'triggers', labelKey: 'commandCenter.tabs.triggers', icon: 'clock' },
   { key: 'trigger-history', labelKey: 'commandCenter.tabs.history', icon: 'ledger' },
-  { key: 'memory', labelKey: 'commandCenter.tabs.memory', icon: 'sparkle' },
+  { key: 'memory', labelKey: 'commandCenter.tabs.memory', icon: 'archive' },
   { key: 'graph', labelKey: 'commandCenter.tabs.graph', icon: 'web' },
-  { key: 'activity', labelKey: 'commandCenter.tabs.activity', icon: 'bell' },
+  { key: 'activity', labelKey: 'commandCenter.tabs.activity', icon: 'bars' },
   { key: 'skills', labelKey: 'commandCenter.tabs.skills', icon: 'sparkle' },
   { key: 'workers', labelKey: 'commandCenter.tabs.workers', icon: 'gear' }
 ];
@@ -710,7 +710,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                   border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
                   fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-900)'
                 }}
-              >{a.name}{a.isGod ? ` · ${t('worldsVisual.coordinator')}` : ''}</button>
+              >{a.name}{a.isGod && a.name.trim().toLowerCase() !== t('worldsVisual.coordinator').toLowerCase() ? ` · ${t('worldsVisual.coordinator')}` : ''}</button>
               <PixelBadge status={armed ? 'looping' : a.status} />
               {armed && <span title={breaker?.reason} style={{ color: 'var(--cth-coral)', fontSize: 12 }}>⚠</span>}
               <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--cth-ink-500)' }}>

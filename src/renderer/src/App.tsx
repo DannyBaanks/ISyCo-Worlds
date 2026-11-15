@@ -356,7 +356,7 @@ export function App() {
   }
 
   if (config.onboardingComplete && hiveOpened && !worldProfileStatusReady) {
-    return <div role="status" style={{ width: '100vw', height: '100vh', display: 'grid', placeItems: 'center', background: '#132532', color: '#f4e5bf', fontFamily: 'var(--cth-font-display)', fontSize: 12 }}>Loading your World…</div>;
+    return <div role="status" style={{ width: '100vw', height: '100vh', display: 'grid', placeItems: 'center', background: '#132532', color: '#f4e5bf', fontFamily: 'var(--cth-font-display)', fontSize: 12 }}>{t('shell.loadingWorld')}</div>;
   }
 
   if (shouldShowWorldStartScreen({
@@ -408,32 +408,20 @@ export function App() {
         {/* v0.3.7: the version is no longer inert text — it doubles as the
             update control (check / download / restart to update). */}
         <UpdateBadge /></div>
-        {density === 'full' ? (
-          <span style={{
-            fontFamily: 'var(--cth-font-ui)',
-            fontSize: 13,
-            color: 'var(--cth-ink-500)',
-            whiteSpace: 'nowrap'
-          }}>
-            {config.autoMode ? 'auto mode on' : 'auto mode off'}
-          </span>
-        ) : (
-          // Narrower windows keep the same fact as a badge, never drop it.
-          <span
-            className="cth-tip"
-            data-tip={config.autoMode ? 'auto mode on' : 'auto mode off'}
-            aria-label={config.autoMode ? 'auto mode on' : 'auto mode off'}
-            style={{
-              fontFamily: 'var(--cth-font-display)', fontSize: 7, lineHeight: '10px',
-              padding: '3px 5px 2px', whiteSpace: 'nowrap',
-              color: config.autoMode ? 'var(--cth-on-accent)' : 'var(--cth-ink-500)',
-              background: config.autoMode ? 'var(--cth-lemon)' : 'transparent',
-              boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
-            }}
-          >
-            {config.autoMode ? 'AUTO ON' : 'AUTO OFF'}
-          </span>
-        )}
+        {/* Auto mode is a setting, so its label is the way in to that setting.
+            Narrower windows keep the same fact as a badge, never drop it. */}
+        <button
+          type="button"
+          className={`cth-titlebar-nodrag cth-tip cth-tip-left cth-automode${config.autoMode ? ' is-on' : ''}${density === 'full' ? '' : ' is-badge'}`}
+          data-tip={t('shell.autoMode.open')}
+          aria-label={`${config.autoMode ? t('shell.autoMode.on') : t('shell.autoMode.off')}. ${t('shell.autoMode.open')}`}
+          onClick={() => { setSettingsSection('Autonomy & Budgets'); setSettingsOpen(true); }}
+        >
+          <span className="cth-automode-lamp" aria-hidden="true" />
+          {density === 'full'
+            ? (config.autoMode ? t('shell.autoMode.on') : t('shell.autoMode.off'))
+            : (config.autoMode ? t('shell.autoMode.badgeOn') : t('shell.autoMode.badgeOff'))}
+        </button>
         {/* Global navigation: the product's surfaces as tabs (Office,
             Settings menu, Marketplace). The Settings menu deep-links into the
             one SettingsModal below; it replaces the old gear here. */}
@@ -466,8 +454,8 @@ export function App() {
             // harness agents — the user's global Claude theme is never touched.
             void window.cth.updateConfig({ terminalTheme: next });
           }}
-          data-tip={appThemeNow === 'dark' ? 'Light theme' : 'Dark theme'}
-          aria-label="Toggle dark mode"
+          data-tip={appThemeNow === 'dark' ? t('shell.theme.light') : t('shell.theme.dark')}
+          aria-label={t('shell.theme.toggle')}
           style={{
             marginLeft: 'auto',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -478,7 +466,7 @@ export function App() {
             color: 'var(--cth-ink-900)', fontSize: 13, lineHeight: 1
           }}
         >
-          {appThemeNow === 'dark' ? '☀' : '☾'}
+          {appThemeNow === 'dark' ? <SunGlyph /> : <MoonGlyph />}
         </button>
         {/* Fullscreen. The title bar is chrome, not canvas, so these two use
             clean stroke icons rather than the 16x16 pixel set the rest of the UI
@@ -494,8 +482,8 @@ export function App() {
               ?? all.find((x) => x.ptyId);
             if (target) useStore.getState().setFullscreen(target.id);
           }}
-          data-tip={fullscreenAgentId ? 'Exit focus mode (Esc)' : 'Focus mode'}
-          aria-label="Toggle focus mode"
+          data-tip={fullscreenAgentId ? t('shell.focus.exit') : t('shell.focus.enter')}
+          aria-label={t('shell.focus.toggle')}
           style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             width: 28, height: 28, padding: 0,
@@ -534,14 +522,14 @@ export function App() {
               pointerEvents: 'none'
             }}>
               <div style={{ pointerEvents: 'auto', width: 360 }}>
-                <PixelPanel variant="dialog" title="EMPTY FLOOR" noPadding>
+                <PixelPanel variant="dialog" title={t('shell.emptyFloor.title')} noPadding>
                   <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <p style={{ margin: 0, fontSize: 13, lineHeight: '20px' }}>
-                      No agents on the floor yet. Spawn one to see real claude output stream in here.
+                      {t('shell.emptyFloor.body')}
                     </p>
                     <PixelButton variant="primary" size="md" onClick={() => setAddAgentOpen(true)}>
                       <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
-                        <Icon name="plus" /> add agent
+                        <Icon name="plus" /> {t('agentStrip.addAgent')}
                       </span>
                     </PixelButton>
                   </div>
@@ -582,10 +570,9 @@ export function App() {
               <div style={{
                 fontFamily: 'var(--cth-font-display)', fontSize: 10, lineHeight: '14px',
                 color: 'var(--cth-ink-500)'
-              }}>WAKING THE FLOOR</div>
+              }}>{t('shell.booting.title')}</div>
               <p style={{ margin: 0, fontSize: 13, textAlign: 'center', color: 'var(--cth-ink-700)' }}>
-                {bootingGodName} is clocking in.<br />
-                The terminal will land here once he's seated.
+                {t('shell.booting.body', { name: bootingGodName })}
               </p>
             </PixelPanel>
           ) : (
@@ -597,14 +584,13 @@ export function App() {
               <div style={{
                 fontFamily: 'var(--cth-font-display)', fontSize: 10, lineHeight: '14px',
                 color: 'var(--cth-ink-500)'
-              }}>NO AGENT SELECTED</div>
+              }}>{t('shell.noAgent.title')}</div>
               <p style={{ margin: 0, fontSize: 13, textAlign: 'center', color: 'var(--cth-ink-700)' }}>
-                Spawn an agent from the strip below.<br />
-                The terminal and command bar will land here.
+                {t('shell.noAgent.body')}
               </p>
               <PixelButton variant="secondary" size="md" onClick={() => setAddAgentOpen(true)}>
                 <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
-                  <Icon name="plus" /> add agent
+                  <Icon name="plus" /> {t('agentStrip.addAgent')}
                 </span>
               </PixelButton>
             </PixelPanel>
@@ -685,6 +671,25 @@ function CollapseGlyph() {
   return (
     <Glyph>
       <path d="M3 6.2h3.2V3M13 6.2H9.8V3M3 9.8h3.2V13M13 9.8H9.8V13" />
+    </Glyph>
+  );
+}
+
+/** Sun — switch to the light theme. */
+function SunGlyph() {
+  return (
+    <Glyph>
+      <circle cx="8" cy="8" r="2.6" />
+      <path d="M8 1.6v1.6M8 12.8v1.6M1.6 8h1.6M12.8 8h1.6M3.5 3.5l1.1 1.1M11.4 11.4l1.1 1.1M3.5 12.5l1.1-1.1M11.4 4.6l1.1-1.1" />
+    </Glyph>
+  );
+}
+
+/** Crescent — switch to the dark theme. */
+function MoonGlyph() {
+  return (
+    <Glyph>
+      <path d="M12.6 9.7A5.2 5.2 0 0 1 6.3 3.4a5.2 5.2 0 1 0 6.3 6.3z" />
     </Glyph>
   );
 }

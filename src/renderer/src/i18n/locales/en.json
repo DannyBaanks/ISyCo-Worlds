@@ -1264,7 +1264,8 @@
     "legendPropose": "propose",
     "legendAgreeDone": "agree/done",
     "legendRefuse": "refuse",
-    "legendInformTopic": "inform/topic"
+    "legendInformTopic": "inform/topic",
+    "emptyHint": "No messages yet. Agents are shown as a roster."
   },
   "integrations": {
     "errLabel": "Give it a label.",
@@ -1730,6 +1731,41 @@
       "prepare": "Prepare contribution",
       "pipelineSoon": "Coming soon: the contribution pipeline is not connected yet.",
       "noCatalog": "No catalog is connected yet. Nothing here installs or runs anything."
+    },
+    "autoMode": {
+      "on": "Auto mode on",
+      "off": "Auto mode off",
+      "badgeOn": "AUTO ON",
+      "badgeOff": "AUTO OFF",
+      "open": "Open autonomy settings"
+    },
+    "theme": {
+      "light": "Light theme",
+      "dark": "Dark theme",
+      "toggle": "Toggle dark mode"
+    },
+    "focus": {
+      "enter": "Focus mode",
+      "exit": "Exit focus mode (Esc)",
+      "toggle": "Toggle focus mode"
+    },
+    "loadingWorld": "Loading your world…",
+    "worldLoading": "Loading {{world}}…",
+    "worldRecovery": {
+      "title": "World recovery",
+      "retry": "Retry {{world}}"
+    },
+    "emptyFloor": {
+      "title": "Nobody here yet",
+      "body": "Add an agent and its live output will show up here."
+    },
+    "booting": {
+      "title": "Waking up",
+      "body": "{{name}} is getting ready. The terminal will appear here in a moment."
+    },
+    "noAgent": {
+      "title": "No agent selected",
+      "body": "Pick a teammate from the strip, or add a new one. Its terminal and command bar will show up here."
     }
   },
   "worldsVisual": {

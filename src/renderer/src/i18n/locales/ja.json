@@ -1264,7 +1264,8 @@
     "legendPropose": "提案",
     "legendAgreeDone": "合意/完了",
     "legendRefuse": "拒否",
-    "legendInformTopic": "通知/トピック"
+    "legendInformTopic": "通知/トピック",
+    "emptyHint": "まだメッセージはありません。エージェントは一覧で表示されます。"
   },
   "integrations": {
     "errLabel": "ラベルを付けてください。",
@@ -1730,6 +1731,41 @@
       "prepare": "コントリビューションを準備",
       "pipelineSoon": "近日公開: コントリビューションパイプラインはまだ接続されていません。",
       "noCatalog": "カタログはまだ接続されていません。ここにあるものは何もインストールも実行もしません。"
+    },
+    "autoMode": {
+      "on": "自動モード オン",
+      "off": "自動モード オフ",
+      "badgeOn": "自動 ON",
+      "badgeOff": "自動 OFF",
+      "open": "自律設定を開く"
+    },
+    "theme": {
+      "light": "ライトテーマ",
+      "dark": "ダークテーマ",
+      "toggle": "ダークモードを切り替え"
+    },
+    "focus": {
+      "enter": "集中モード",
+      "exit": "集中モードを終了 (Esc)",
+      "toggle": "集中モードを切り替え"
+    },
+    "loadingWorld": "ワールドを読み込み中…",
+    "worldLoading": "{{world}} を読み込み中…",
+    "worldRecovery": {
+      "title": "ワールドの復旧",
+      "retry": "{{world}} を再試行"
+    },
+    "emptyFloor": {
+      "title": "まだ誰もいません",
+      "body": "エージェントを追加すると、ここにライブ出力が表示されます。"
+    },
+    "booting": {
+      "title": "起動中",
+      "body": "{{name}} が準備中です。まもなくここにターミナルが表示されます。"
+    },
+    "noAgent": {
+      "title": "エージェント未選択",
+      "body": "下の一覧から仲間を選ぶか、新しく追加してください。ターミナルとコマンドバーがここに表示されます。"
     }
   },
   "worldsVisual": {

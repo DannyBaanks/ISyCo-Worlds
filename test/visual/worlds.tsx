@@ -6,6 +6,7 @@ import '../../src/renderer/src/design/global.css';
 import '../../src/renderer/src/design/worlds.css';
 import '../../src/renderer/src/design/skin-office.css';
 import '../../src/renderer/src/design/skin-monster.css';
+import '../../src/renderer/src/design/depth.css';
 import '../../src/renderer/src/design/skin-motion.css';
 const params = new URLSearchParams(location.search);
 localStorage.setItem('cth.language', params.get('lang') || 'es');

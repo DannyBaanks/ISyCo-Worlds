@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Assets } from 'pixi.js';
+import { useTranslation } from 'react-i18next';
 import { PixelButton } from '@/components/PixelButton';
 import type { WorldLifecycleError, WorldMount, WorldResourceResolver } from './WorldEngine';
 import type { WorldPresentationCommand, WorldPresentationComposition, WorldPresentationIntent, WorldPresentationProjection } from '@shared/worldPresentationProtocol';
@@ -85,11 +86,12 @@ export function WorldRuntimeSurface({
   );
 }
 
-export function WorldRecoverySurface({ error, onRetry, retryLabel = 'Retry Office' }: {
+export function WorldRecoverySurface({ error, onRetry, retryLabel }: {
   error?: WorldLifecycleError;
   onRetry: () => void;
   retryLabel?: string;
 }) {
+  const { t } = useTranslation();
   const detail = error
     ? `${error.phase} · ${error.worldId} · ${error.cause.message}`
     : 'World renderer did not reach READY.';
@@ -102,9 +104,9 @@ export function WorldRecoverySurface({ error, onRetry, retryLabel = 'Retry Offic
       }}
     >
       <div style={{ maxWidth: 460, textAlign: 'center', display: 'grid', gap: 12 }}>
-        <strong style={{ fontFamily: 'var(--cth-font-display)', fontSize: 13 }}>WORLD RECOVERY</strong>
+        <strong style={{ fontFamily: 'var(--cth-font-display)', fontSize: 13 }}>{t('shell.worldRecovery.title')}</strong>
         <span style={{ fontFamily: 'monospace', fontSize: 12, whiteSpace: 'pre-wrap' }}>{detail}</span>
-        <div><PixelButton variant="secondary" size="sm" onClick={onRetry}>{retryLabel}</PixelButton></div>
+        <div><PixelButton variant="secondary" size="sm" onClick={onRetry}>{retryLabel ?? t('shell.worldRecovery.retry', { world: t('startScreen.munderDifflin') })}</PixelButton></div>
       </div>
     </div>
   );

@@ -117,7 +117,7 @@ export function AgentNameEditor({
         onClick={(event) => { event.stopPropagation(); beginEditing(); }}
         onMouseDown={(event) => event.stopPropagation()}
         style={{
-          flexShrink: 0, width: 14, height: 14, padding: 0,
+          flexShrink: 0, width: 24, height: 24, margin: '-5px -4px', padding: 0,
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
           border: 'none', background: 'transparent', cursor: 'text',
           color: 'var(--cth-ink-500)', fontFamily: 'var(--cth-font-ui)', fontSize: 9, lineHeight: 1

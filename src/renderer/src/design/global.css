@@ -500,3 +500,15 @@ canvas, img, svg { image-rendering: pixelated; image-rendering: crisp-edges; }
 .cth-md-card hr { margin: 0.8em 0; }
 .cth-md-card table { margin: 0.5em 0; }
 .cth-md-card th, .cth-md-card td { padding: 3px 7px; font-size: 0.9em; }
+
+/* Press Start 2P draws accented capitals (Á É Í Ó Ú Ñ) at lowercase height, so
+   an upper-cased Spanish heading reads as "BúSQUEDA" or "COMPAñEROS". Spanish
+   therefore keeps headings in the case the locale file wrote them in, which is
+   sentence case. The attribute selector reaches inline `textTransform` too. */
+:root:lang(es) [style*='text-transform: uppercase'],
+:root:lang(es) .worlds-brand,
+:root:lang(es) .worlds-hanging-sign,
+:root:lang(es) .worlds-page-heading,
+:root:lang(es) .worlds-panel-title,
+:root:lang(es) .worlds-market-counter h1,
+:root:lang(es) .cth-onboarding-progress { text-transform: none !important; }

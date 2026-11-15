@@ -205,7 +205,7 @@ export function AddAgentModal({ onClose, config, onConfigChange, profileId = 'of
     return m.commandFlags?.length ? `${base} ${m.commandFlags.join(' ')}` : base;
   };
 
-  const [name, setName] = useState(pendingHire?.name ?? 'Jim');
+  const [name, setName] = useState(pendingHire?.name ?? '');
   const [character, setCharacter] = useState<OfficeCharacterName>(knownCharacter(pendingHire?.character));
   const [monsterCharacter, setMonsterCharacter] = useState<MonsterRosterCharacter>('luz');
   const [accent, setAccent] = useState<AccentColorName>(knownAccent(pendingHire?.accent));
